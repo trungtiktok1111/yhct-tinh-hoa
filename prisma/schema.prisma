@@ -1,0 +1,301 @@
+// Ghi chú: dùng SQLite để chạy local ngay (không cần tài khoản ngoài).
+// Khi sẵn sàng deploy lên Supabase, chỉ cần đổi provider = "postgresql"
+// và DATABASE_URL trỏ tới connection string Supabase, rồi chạy lại migrate.
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Trạng thái thẩm định dùng chung cho mọi nội dung chuyên môn (9.2 trong PRD)
+// Draft -> PendingReview -> NeedsRevision / Approved / Rejected -> Retired
+model Source {
+  id          String   @id @default(cuid())
+  title       String
+  authorOrOrg String?
+  sourceType  String // vd: "Sách", "Văn bản pháp quy", "WHO", "Nghiên cứu"
+  year        Int?
+  version     String?
+  publisherOrUrl String?
+  locator     String? // trang/chương/đoạn
+  accessedAt  DateTime?
+  usageRights String?
+  createdAt   DateTime @default(now())
+
+  diseases    Disease[]
+  patterns    Pattern[]
+  principles  TreatmentPrinciple[]
+  formulas    Formula[]
+  herbs       Herb[]
+  points      AcupuncturePoint[]
+  protocols   PointProtocol[]
+  therapies   ManualTherapy[]
+  claims      Claim[]
+}
+
+model Disease {
+  id            String       @id @default(cuid())
+  name          String
+  aliases       String? // phân tách bằng dấu ;
+  nameModern    String? // tên YHHĐ nếu có, để không gộp khái niệm
+  definition    String?
+  category      String?
+  cause         String?
+  mechanism     String? // bệnh cơ
+  symptoms      String?
+  differential  String? // chẩn đoán phân biệt
+  warnings      String?
+  status        String @default("DRAFT")
+  version       Int          @default(1)
+  createdBy     String?
+  updatedBy     String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  sourceId      String?
+  source        Source?      @relation(fields: [sourceId], references: [id])
+
+  patternLinks  DiseasePattern[]
+}
+
+model Pattern {
+  id            String       @id @default(cuid())
+  name          String // tên chứng hậu
+  description   String?
+  supportCriteria String? // tiêu chí ủng hộ
+  againstCriteria String? // tiêu chí không phù hợp
+  keySigns      String?
+  missingDataPrompts String? // dữ kiện cần hỏi thêm
+  status        String @default("DRAFT")
+  version       Int          @default(1)
+  createdBy     String?
+  updatedBy     String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  sourceId      String?
+  source        Source?      @relation(fields: [sourceId], references: [id])
+
+  diseaseLinks  DiseasePattern[]
+  principleLinks PatternPrinciple[]
+}
+
+// Bệnh <-> chứng hậu (nhiều-nhiều, có ghi chú quan hệ)
+model DiseasePattern {
+  id         String   @id @default(cuid())
+  diseaseId  String
+  patternId  String
+  relation   String // "có thể gặp" | "cần phân biệt với"
+  rationale  String?
+  disease    Disease  @relation(fields: [diseaseId], references: [id])
+  pattern    Pattern  @relation(fields: [patternId], references: [id])
+
+  @@unique([diseaseId, patternId, relation])
+}
+
+model TreatmentPrinciple {
+  id          String       @id @default(cuid())
+  name        String // pháp trị
+  aliases     String?
+  description String?
+  goal        String?
+  scope       String? // tình huống áp dụng
+  limitations String?
+  status      String @default("DRAFT")
+  version     Int          @default(1)
+  createdBy   String?
+  updatedBy   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  sourceId    String?
+  source      Source?      @relation(fields: [sourceId], references: [id])
+
+  patternLinks PatternPrinciple[]
+  formulas     Formula[]
+  protocols    PointProtocol[]
+}
+
+model PatternPrinciple {
+  id         String   @id @default(cuid())
+  patternId  String
+  principleId String
+  rationale  String?
+  pattern    Pattern  @relation(fields: [patternId], references: [id])
+  principle  TreatmentPrinciple @relation(fields: [principleId], references: [id])
+
+  @@unique([patternId, principleId])
+}
+
+model Herb {
+  id            String       @id @default(cuid())
+  standardName  String
+  aliases       String?
+  latinName     String?
+  partUsed      String?
+  origin        String?
+  natureFlavor  String? // tính vị
+  meridians     String? // quy kinh
+  actions       String? // công năng
+  indications   String? // chủ trị
+  dosage        String?
+  safetyNotes   String?
+  imageUrl      String?
+  status        String @default("DRAFT")
+  version       Int          @default(1)
+  createdBy     String?
+  updatedBy     String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  sourceId      String?
+  source        Source?      @relation(fields: [sourceId], references: [id])
+
+  formulaLinks  FormulaIngredient[]
+}
+
+model Formula {
+  id            String       @id @default(cuid())
+  name          String
+  aliases       String?
+  origin        String? // cổ điển / biến phương / kinh nghiệm / nội bộ
+  indications   String? // chủ trị
+  preparation   String?
+  modifications String? // gia giảm
+  safetyNotes   String?
+  status        String @default("DRAFT")
+  version       Int          @default(1)
+  createdBy     String?
+  updatedBy     String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  sourceId      String?
+  source        Source?      @relation(fields: [sourceId], references: [id])
+
+  principleId   String?
+  principle     TreatmentPrinciple? @relation(fields: [principleId], references: [id])
+
+  ingredients   FormulaIngredient[]
+}
+
+model FormulaIngredient {
+  id           String  @id @default(cuid())
+  formulaId    String
+  herbId       String
+  amount       String?
+  unit         String?
+  preparation  String?
+  role         String? // quân | thần | tá | sứ
+  note         String?
+  formula      Formula @relation(fields: [formulaId], references: [id])
+  herb         Herb    @relation(fields: [herbId], references: [id])
+}
+
+model AcupuncturePoint {
+  id            String       @id @default(cuid())
+  code          String // vd LI4
+  standardName  String
+  aliases       String?
+  meridian      String?
+  location      String?
+  anatomyNotes  String?
+  actions       String?
+  technique     String?
+  contraindications String?
+  riskNotes     String?
+  imageUrl      String?
+  status        String @default("DRAFT")
+  version       Int          @default(1)
+  createdBy     String?
+  updatedBy     String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  sourceId      String?
+  source        Source?      @relation(fields: [sourceId], references: [id])
+
+  protocolLinks PointProtocolItem[]
+}
+
+model PointProtocol {
+  id          String       @id @default(cuid())
+  name        String
+  goal        String?
+  conditions  String?
+  warnings    String?
+  status      String @default("DRAFT")
+  version     Int          @default(1)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  sourceId    String?
+  source      Source?      @relation(fields: [sourceId], references: [id])
+
+  principleId String?
+  principle   TreatmentPrinciple? @relation(fields: [principleId], references: [id])
+
+  points      PointProtocolItem[]
+}
+
+model PointProtocolItem {
+  id         String   @id @default(cuid())
+  protocolId String
+  pointId    String
+  role       String?
+  note       String?
+  protocol   PointProtocol    @relation(fields: [protocolId], references: [id])
+  point      AcupuncturePoint @relation(fields: [pointId], references: [id])
+}
+
+model ManualTherapy {
+  id            String       @id @default(cuid())
+  name          String
+  techniqueType String?
+  targetArea    String?
+  sequence      String?
+  indications   String?
+  contraindications String?
+  durationForce String?
+  imageUrl      String?
+  status        String @default("DRAFT")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  sourceId      String?
+  source        Source?      @relation(fields: [sourceId], references: [id])
+}
+
+// Ca lâm sàng — chưa bật form nhập đầy đủ ở bản đầu, model sẵn để mở rộng
+model ClinicalCase {
+  id              String   @id @default(cuid())
+  caseCode        String
+  minimalIdentity String? // dữ liệu định danh tối thiểu, đã ẩn danh
+  history         String?
+  observations     String? // tứ chẩn dạng JSON string
+  candidatePatterns String? // JSON: danh sách chứng hậu ứng viên + lý do
+  confirmedConclusion String?
+  plan            String?
+  actualTreatment String?
+  outcome         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Nhận định có căn cứ — dùng để ghi "vì sao X liên quan Y" kèm trích dẫn
+model Claim {
+  id           String       @id @default(cuid())
+  subjectType  String // "Pattern" | "Formula" | ...
+  subjectId    String
+  statement    String
+  relation     String?
+  status       String @default("PENDING_REVIEW")
+  reviewedBy   String?
+  reviewedAt   DateTime?
+
+  sourceId     String?
+  source       Source?      @relation(fields: [sourceId], references: [id])
+}
