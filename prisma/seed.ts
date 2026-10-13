@@ -1,7 +1,9 @@
-// DEMO — KHÔNG DÙNG ĐIỀU TRỊ
-// Dữ liệu minh họa để chứng minh kiến trúc (bệnh -> chứng hậu -> pháp trị -> bài thuốc -> vị thuốc -> huyệt -> nguồn).
-// Đây là kiến thức lý luận YHCT kinh điển, phổ biến trong giáo trình (không trích xuất từ file riêng của người dùng).
-// Trước khi dùng cho mục đích thật, PHẢI được chuyên gia đối chiếu lại với tài liệu chính thức và thẩm định.
+// Dữ liệu seed: phần Thái dương trúng phong / Thái dương thương hàn / Quế chi thang / Ma hoàng thang
+// đã được đối chiếu với nguyên văn thật trong file của người dùng:
+// "D:\Tài liệu đông y\tài liệu y học\BỆNH HỌC YHCT\LÝ LUẬN YHCT - R\thuong han luan Full (Repaired).pdf"
+// (Bài giảng Thương Hàn - Thương hàn luận giảng nghĩa, Học viện Trung Y Nam Kinh Trung Quốc, NXB Y học),
+// điều 12–13 (tr.42–44) và điều 35 (tr.67). Các mục khác (Pháp trị, Huyệt vị, Cảm mạo...) vẫn là dữ liệu
+// MINH HỌA chưa đối chiếu nguồn thật — KHÔNG DÙNG ĐIỀU TRỊ cho đến khi được chuyên gia thẩm định.
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -36,9 +38,11 @@ async function main() {
 
   const srcThuongHan = await prisma.source.create({
     data: {
-      title: "Thương hàn luận (kinh điển)",
-      sourceType: "Kinh điển",
-      authorOrOrg: "Trương Trọng Cảnh — DEMO, cần đối chiếu bản dịch chính thức",
+      title: "Bài giảng Thương Hàn (Thương hàn luận giảng nghĩa)",
+      sourceType: "Giáo trình dịch kinh điển",
+      authorOrOrg: "Học viện Trung Y Nam Kinh Trung Quốc — NXB Y học (bản dịch)",
+      locator: "Điều 12–13 (tr.42–44): Quế chi thang; Điều 35 (tr.67): Ma hoàng thang",
+      usageRights: "Tài liệu nội bộ người dùng cung cấp — cần đối chiếu bản gốc Hán văn trước khi dùng thật",
     },
   });
 
@@ -67,27 +71,50 @@ async function main() {
     },
   });
 
-  // 2. Chứng hậu
-  const phongHan = await prisma.pattern.create({
+  // 2. Chứng hậu — hai thể biểu hàn phân biệt theo Thương hàn luận (có mồ hôi / không mồ hôi)
+  const thuongHanBieuThuc = await prisma.pattern.create({
     data: {
-      name: "Phong hàn phạm biểu",
-      description: "Chứng hậu thuộc biểu hàn, do phong hàn xâm phạm cơ biểu.",
-      supportCriteria: "Sợ lạnh nhiều, sốt nhẹ hoặc không sốt, không ra mồ hôi, rêu lưỡi trắng mỏng, mạch phù khẩn.",
-      againstCriteria: "Sốt cao, khát nước, họng đỏ đau, rêu lưỡi vàng (gợi ý phong nhiệt thay vì phong hàn).",
-      keySigns: "Sợ lạnh rõ, không ra mồ hôi, mạch phù khẩn.",
-      missingDataPrompts: "Cần hỏi: có ra mồ hôi không, tính chất đờm, màu rêu lưỡi, mạch cụ thể.",
+      name: "Thái dương thương hàn (biểu thực)",
+      description:
+        "Hàn tà bó chặt phần biểu, biểu khí uất lại. Theo Thương hàn luận điều 35: 'nhức đầu phát sốt, đau mình, đau lưng, đau khớp xương, ghê gió, không có mồ hôi mà suyễn thở'.",
+      supportCriteria: "Đau mình, đau lưng, đau khớp xương, không ra mồ hôi, suyễn thở, sợ lạnh/ghê gió, phát sốt, nhức đầu",
+      againstCriteria: "Ra mồ hôi tự nhiên (gợi ý biểu hư — Thái dương trúng phong, dùng Quế chi thang chứ không phải Ma hoàng thang)",
+      keySigns: "Không ra mồ hôi, suyễn thở, đau nhức toàn thân",
+      missingDataPrompts: "Cần hỏi rõ: có ra mồ hôi tự nhiên không, mức độ đau nhức, có suyễn thở không",
       status: "APPROVED",
-      sourceId: srcLyLuan.id,
+      sourceId: srcThuongHan.id,
     },
   });
 
-  await prisma.diseasePattern.create({
+  const trungPhongBieuHu = await prisma.pattern.create({
     data: {
-      diseaseId: camMao.id,
-      patternId: phongHan.id,
-      relation: "có thể gặp",
-      rationale: "Cảm mạo thể phong hàn là một trong hai thể lâm sàng thường gặp nhất.",
+      name: "Thái dương trúng phong (biểu hư, vinh vệ bất hòa)",
+      description:
+        "Theo Thương hàn luận điều 12: 'mạch dương phù mà âm nhược, dương phù thì nhiệt tự phát, âm nhược thì mồ hôi tự ra, gai gai ớn lạnh, rợn rợn ghê gió, hâm hấp phát sốt, thở kêu nôn khan'.",
+      supportCriteria: "Mạch phù hoãn, phát sốt, mồ hôi tự ra, sợ gió, ghê gió, nhức đầu, nôn khan",
+      againstCriteria: "Đau khớp xương dữ dội, không ra mồ hôi, suyễn thở (gợi ý thương hàn biểu thực — Ma hoàng thang)",
+      keySigns: "Mồ hôi tự ra, sợ gió, mạch phù hoãn",
+      missingDataPrompts: "Cần hỏi: có ra mồ hôi tự nhiên không, mức độ sợ gió/sợ lạnh, có nôn khan không",
+      status: "APPROVED",
+      sourceId: srcThuongHan.id,
     },
+  });
+
+  await prisma.diseasePattern.createMany({
+    data: [
+      {
+        diseaseId: camMao.id,
+        patternId: thuongHanBieuThuc.id,
+        relation: "có thể gặp",
+        rationale: "Cảm mạo thể biểu thực (không mồ hôi) là một trong hai thể lâm sàng thường gặp.",
+      },
+      {
+        diseaseId: camMao.id,
+        patternId: trungPhongBieuHu.id,
+        relation: "có thể gặp",
+        rationale: "Cảm mạo thể biểu hư (có mồ hôi), cần phân biệt với thể biểu thực.",
+      },
+    ],
   });
 
   // 3. Pháp trị
@@ -96,19 +123,26 @@ async function main() {
       name: "Tân ôn giải biểu",
       description: "Dùng vị thuốc cay ấm để phát tán phong hàn ở biểu.",
       goal: "Giải biểu, khu phong tán hàn, điều hòa dinh vệ.",
-      scope: "Áp dụng cho chứng biểu hàn (phong hàn phạm biểu) ở giai đoạn sớm.",
+      scope: "Áp dụng cho chứng biểu hàn (biểu thực hoặc biểu hư) ở giai đoạn sớm.",
       limitations: "Không dùng khi đã có biểu nhiệt rõ hoặc chính khí quá hư nhược.",
       status: "APPROVED",
       sourceId: srcLyLuan.id,
     },
   });
 
-  await prisma.patternPrinciple.create({
-    data: {
-      patternId: phongHan.id,
-      principleId: tanOnGiaiBieu.id,
-      rationale: "Chứng biểu hàn cần pháp cay ấm để phát tán, không dùng pháp thanh nhiệt.",
-    },
+  await prisma.patternPrinciple.createMany({
+    data: [
+      {
+        patternId: thuongHanBieuThuc.id,
+        principleId: tanOnGiaiBieu.id,
+        rationale: "Biểu thực cần phát hãn mạnh (Ma hoàng thang).",
+      },
+      {
+        patternId: trungPhongBieuHu.id,
+        principleId: tanOnGiaiBieu.id,
+        rationale: "Biểu hư cần giải cơ điều hòa vinh vệ (Quế chi thang), khác với biểu thực dùng phát hãn mạnh.",
+      },
+    ],
   });
 
   // 4. Vị thuốc
@@ -119,9 +153,9 @@ async function main() {
       partUsed: "Cành non",
       natureFlavor: "Cay, ngọt, ấm",
       meridians: "Tâm, Phế, Bàng quang",
-      actions: "Phát hãn giải cơ, ôn thông kinh mạch",
-      indications: "Cảm mạo phong hàn biểu hư, đau khớp do hàn",
-      dosage: "3–9g/ngày (theo nguồn, cần đối chiếu khi dùng thật)",
+      actions: "Tuyên phát phần dương, thông dương khí",
+      indications: "Thái dương trúng phong (biểu hư) và thương hàn (biểu thực, phối Ma hoàng)",
+      dosage: "2–3 lạng theo cổ phương (cần đối chiếu quy đổi dược điển hiện hành)",
       safetyNotes: "Thận trọng khi có nhiệt chứng, phụ nữ có thai cần tham khảo chuyên gia.",
       status: "APPROVED",
       sourceId: srcThuongHan.id,
@@ -134,9 +168,9 @@ async function main() {
       latinName: "Paeoniae Radix Alba",
       natureFlavor: "Đắng, chua, hơi hàn",
       meridians: "Can, Tỳ",
-      actions: "Dưỡng huyết liễm âm, hòa doanh",
+      actions: "Điều hòa phần âm, thông điều huyết mạch",
       indications: "Phối hợp Quế chi điều hòa dinh vệ",
-      dosage: "6–12g/ngày (theo nguồn)",
+      dosage: "3 lạng theo cổ phương (cần đối chiếu quy đổi)",
       status: "APPROVED",
       sourceId: srcThuongHan.id,
     },
@@ -148,9 +182,9 @@ async function main() {
       latinName: "Glycyrrhizae Radix",
       natureFlavor: "Ngọt, bình",
       meridians: "Tỳ, Vị, Phế, Tâm",
-      actions: "Điều hòa các vị thuốc, bổ trung ích khí",
+      actions: "Điều hòa các vị thuốc, hòa trung ích khí",
       indications: "Dùng làm sứ dược trong nhiều bài thuốc",
-      dosage: "3–6g/ngày (theo nguồn)",
+      dosage: "1–2 lạng theo cổ phương (cần đối chiếu quy đổi)",
       safetyNotes: "Dùng liều cao kéo dài có thể ảnh hưởng huyết áp/kali — cần thận trọng.",
       status: "APPROVED",
       sourceId: srcThuongHan.id,
@@ -163,9 +197,9 @@ async function main() {
       latinName: "Zingiberis Rhizoma Recens",
       natureFlavor: "Cay, ấm",
       meridians: "Phế, Tỳ, Vị",
-      actions: "Phát hãn giải biểu, ôn trung chỉ ẩu",
-      indications: "Hỗ trợ Quế chi phát tán phong hàn",
-      dosage: "3–9g/ngày (theo nguồn)",
+      actions: "Tân tán, ấm dạ dày, chống mửa, giúp Quế chi thông dương",
+      indications: "Hỗ trợ Quế chi trong Quế chi thang",
+      dosage: "3 lạng theo cổ phương (cần đối chiếu quy đổi)",
       status: "APPROVED",
       sourceId: srcThuongHan.id,
     },
@@ -177,9 +211,32 @@ async function main() {
       latinName: "Jujubae Fructus",
       natureFlavor: "Ngọt, ấm",
       meridians: "Tỳ, Vị",
-      actions: "Bổ trung ích khí, dưỡng huyết an thần",
+      actions: "Ích khí hòa trung, giúp Bạch thược điều hòa phần âm",
       indications: "Phối hợp điều hòa dinh vệ cùng Quế chi, Sinh khương",
-      dosage: "3–5 quả (theo nguồn)",
+      dosage: "12 quả theo cổ phương (cần đối chiếu quy đổi)",
+      status: "APPROVED",
+      sourceId: srcThuongHan.id,
+    },
+  });
+
+  const maHoang = await prisma.herb.create({
+    data: {
+      standardName: "Ma hoàng",
+      partUsed: "Thân cành (bỏ mắt/đốt theo cổ phương)",
+      actions: "Phát tán phong hàn, mở lông da, phát hãn, cắt cơn suyễn thở",
+      indications: "Thương hàn biểu thực: không ra mồ hôi mà suyễn thở, đau nhức toàn thân",
+      dosage: "3 lạng theo cổ phương (cần đối chiếu quy đổi dược điển hiện hành)",
+      status: "APPROVED",
+      sourceId: srcThuongHan.id,
+    },
+  });
+
+  const hanhNhan = await prisma.herb.create({
+    data: {
+      standardName: "Hạnh nhân",
+      partUsed: "Nhân hạt (bỏ vỏ và đầu nhọn)",
+      actions: "Thông lợi phế khí, cắt cơn suyễn thở",
+      dosage: "70 hạt theo cổ phương (cần đối chiếu quy đổi)",
       status: "APPROVED",
       sourceId: srcThuongHan.id,
     },
@@ -190,10 +247,12 @@ async function main() {
     data: {
       name: "Quế chi thang",
       origin: "Cổ điển",
-      indications: "Cảm mạo phong hàn thể biểu hư (có ra mồ hôi, sợ gió).",
-      preparation: "Sắc uống ấm, sau uống cháo loãng và giữ ấm để ra mồ hôi nhẹ.",
+      indications: "Thái dương trúng phong: mạch phù hoãn, phát sốt, mồ hôi tự ra, sợ gió, nhức đầu, nôn khan (điều 12–13).",
+      preparation:
+        "Sắc với nước, lọc bỏ bã, uống ấm. Uống xong húp cháo nóng loãng để trợ dược lực, đắp chăn cho ra mồ hôi dâm dấp (không để ra đầm dề). Nếu uống một lần đã ra mồ hôi khỏi bệnh thì ngừng, không cần uống hết thang.",
       modifications: "Gia giảm tùy mức độ biểu hư và triệu chứng kèm theo — cần chuyên gia xác nhận.",
-      safetyNotes: "Không dùng khi biểu thực (không ra mồ hôi) hoặc có nhiệt chứng rõ.",
+      safetyNotes:
+        "Cốt yếu ở chỗ CÓ ra mồ hôi — không dùng khi không ra mồ hôi (đó là chứng của Ma hoàng thang). Kiêng đồ sống lạnh, dầu mỡ, thịt miến, gia vị cay nồng (hành, tỏi, hẹ...), rượu sữa, đồ tanh hôi.",
       status: "APPROVED",
       sourceId: srcThuongHan.id,
       principleId: tanOnGiaiBieu.id,
@@ -202,11 +261,35 @@ async function main() {
 
   await prisma.formulaIngredient.createMany({
     data: [
-      { formulaId: queChiThang.id, herbId: queChi.id, amount: "9", unit: "g", role: "Quân", note: "Phát tán phong hàn, giải cơ" },
-      { formulaId: queChiThang.id, herbId: bachThuoc.id, amount: "9", unit: "g", role: "Thần", note: "Liễm âm hòa doanh, phối Quế chi điều hòa dinh vệ" },
-      { formulaId: queChiThang.id, herbId: sinhKhuong.id, amount: "9", unit: "g", role: "Tá", note: "Hỗ trợ phát tán" },
-      { formulaId: queChiThang.id, herbId: daiTao.id, amount: "3", unit: "quả", role: "Tá", note: "Hòa vị, hỗ trợ dinh khí" },
-      { formulaId: queChiThang.id, herbId: camThao.id, amount: "6", unit: "g", role: "Sứ", note: "Điều hòa các vị" },
+      { formulaId: queChiThang.id, herbId: queChi.id, amount: "3", unit: "lạng (cổ phương)", role: "Quân", note: "Tuyên phát phần dương, làm khí vận hành" },
+      { formulaId: queChiThang.id, herbId: bachThuoc.id, amount: "3", unit: "lạng (cổ phương)", role: "Thần", note: "Điều hòa phần âm, phối Quế chi điều hòa dinh vệ" },
+      { formulaId: queChiThang.id, herbId: sinhKhuong.id, amount: "3", unit: "lạng (cổ phương)", role: "Tá", note: "Giúp Quế chi thông phần dương" },
+      { formulaId: queChiThang.id, herbId: daiTao.id, amount: "12", unit: "quả (cổ phương)", role: "Tá", note: "Giúp Bạch thược điều hòa phần âm" },
+      { formulaId: queChiThang.id, herbId: camThao.id, amount: "2", unit: "lạng (cổ phương)", role: "Sứ", note: "Điều hòa các vị" },
+    ],
+  });
+
+  const maHoangThang = await prisma.formula.create({
+    data: {
+      name: "Ma hoàng thang",
+      origin: "Cổ điển",
+      indications:
+        "Thái dương thương hàn (biểu thực): nhức đầu phát sốt, đau mình, đau lưng, đau khớp xương, ghê gió, KHÔNG có mồ hôi mà suyễn thở (điều 35).",
+      preparation:
+        "Nấu Ma hoàng trước cho cạn bớt, vớt bọt, cho các vị còn lại vào sắc, lọc bỏ bã, uống ấm. Đắp chăn kín cho ra mồ hôi (không cần ăn cháo như Quế chi thang).",
+      safetyNotes: "Là phương phát hãn mạnh (tuấn tễ) — không dùng khi biểu đã có mồ hôi hoặc chính khí hư.",
+      status: "APPROVED",
+      sourceId: srcThuongHan.id,
+      principleId: tanOnGiaiBieu.id,
+    },
+  });
+
+  await prisma.formulaIngredient.createMany({
+    data: [
+      { formulaId: maHoangThang.id, herbId: maHoang.id, amount: "3", unit: "lạng (cổ phương)", role: "Quân", note: "Phát tán phong hàn, phát hãn, cắt suyễn" },
+      { formulaId: maHoangThang.id, herbId: queChi.id, amount: "2", unit: "lạng (cổ phương)", role: "Thần", note: "Thông dương khí, giúp Ma hoàng giải biểu phát hãn" },
+      { formulaId: maHoangThang.id, herbId: hanhNhan.id, amount: "70", unit: "hạt (cổ phương)", role: "Tá", note: "Thông lợi phế khí, cắt cơn suyễn thở" },
+      { formulaId: maHoangThang.id, herbId: camThao.id, amount: "1", unit: "lạng (cổ phương)", role: "Sứ", note: "Điều hòa trung tiêu" },
     ],
   });
 
@@ -273,7 +356,7 @@ async function main() {
     ],
   });
 
-  console.log("Seed DEMO hoàn tất — dữ liệu minh họa, không dùng điều trị thật.");
+  console.log("Seed hoàn tất — phần Thái dương trúng phong/thương hàn + Quế chi/Ma hoàng thang có nguồn thật, phần còn lại vẫn là DEMO.");
 }
 
 main()

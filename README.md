@@ -55,11 +55,19 @@ Bảng trạng thái theo từng bản ghi (bản nháp / chờ thẩm định /
 
 ## Dữ liệu seed
 
-`prisma/seed.ts` chứa dữ liệu minh họa dựa trên kiến thức lý luận YHCT kinh điển phổ biến (Quế chi thang,
-phong hàn phạm biểu, Tân ôn giải biểu...), **không phải trích xuất từ tài liệu riêng của người dùng** —
-chỉ để chứng minh chuỗi liên kết bệnh → chứng hậu → pháp trị → bài thuốc → vị thuốc → huyệt → nguồn hoạt động
-đúng. Trước khi dùng cho mục đích thật, toàn bộ nội dung chuyên môn phải được đối chiếu lại với tài liệu
-chính thức và được chuyên gia thẩm định.
+`prisma/seed.ts` nạp dữ liệu minh họa ban đầu (kiến thức lý luận YHCT kinh điển phổ biến, không trích từ
+tài liệu riêng của người dùng) để chứng minh chuỗi liên kết bệnh → chứng hậu → pháp trị → bài thuốc →
+vị thuốc → huyệt → nguồn hoạt động đúng.
+
+Phần **Quế chi thang / Ma hoàng thang / chứng Thái dương trúng phong (biểu hư) / Thái dương thương hàn
+(biểu thực)** sau đó đã được đối chiếu và sửa lại theo đúng nguyên văn trích từ file thật của người dùng:
+`D:\Tài liệu đông y\tài liệu y học\BỆNH HỌC YHCT\LÝ LUẬN YHCT - R\thuong han luan Full (Repaired).pdf`
+(điều 12–13, tr.42–44 và điều 35, tr.67) — kể cả phát hiện và sửa một lỗi phân loại chứng hậu trong bản
+DEMO ban đầu (Quế chi thang là biểu hư có mồ hôi, không phải biểu thực không mồ hôi như seed cũ ghi nhầm).
+
+Các mục khác (Pháp trị, Vị thuốc còn lại, Huyệt vị) **vẫn là dữ liệu DEMO** chưa đối chiếu nguồn thật —
+trước khi dùng cho mục đích thật, toàn bộ nội dung chuyên môn phải được đối chiếu lại với tài liệu chính
+thức và được chuyên gia thẩm định.
 
 ## Ghi chú kiến trúc
 
