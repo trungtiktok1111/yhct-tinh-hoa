@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
 
@@ -37,6 +38,18 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
         </div>
         {herb.aliases && <p className="text-sm text-gray-500">Tên khác: {herb.aliases}</p>}
       </div>
+
+      {herb.imageUrl && (
+        <div className="card flex justify-center">
+          <Image
+            src={herb.imageUrl}
+            alt={herb.standardName}
+            width={400}
+            height={300}
+            className="rounded-lg max-h-64 w-auto object-contain"
+          />
+        </div>
+      )}
 
       <div className="card space-y-3">
         <Field label="Tên khoa học" value={herb.latinName} />
