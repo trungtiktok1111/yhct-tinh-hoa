@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { ModuleHeader } from "@/components/ModuleHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -7,12 +8,12 @@ export default async function ClinicalCaseListPage() {
   const cases = await prisma.clinicalCase.findMany({ orderBy: { updatedAt: "desc" } });
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-2xl font-bold text-brand-deep">Ca lâm sàng</h1>
-        <Link href="/ca-lam-sang/moi" className="bg-brand-deep text-white rounded-lg px-4 py-2 text-sm font-medium">
-          + Tạo ca mới
-        </Link>
-      </div>
+      <ModuleHeader
+        title="Ca lâm sàng"
+        subtitle="Tứ chẩn, đối chiếu chứng hậu, kết luận và theo dõi điều trị."
+        image="/images/jar-herbs.png"
+        action={{ href: "/ca-lam-sang/moi", label: "+ Tạo ca mới" }}
+      />
 
       <div className="warn-box text-sm">
         Dữ liệu demo — không dùng cho người bệnh thật. Phân tích chứng hậu dưới đây dùng phương pháp so khớp

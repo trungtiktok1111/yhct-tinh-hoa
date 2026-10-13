@@ -1,7 +1,13 @@
+import { ModuleHeader } from "@/components/ModuleHeader";
+
 export default function KnowledgeNetworkPage() {
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-brand-deep">Mạng lưới tri thức</h1>
+      <ModuleHeader
+        title="Mạng lưới tri thức"
+        subtitle="Quan hệ bệnh – chứng hậu – pháp trị – bài thuốc – vị thuốc – huyệt."
+        image="/images/ginseng-rock.png"
+      />
       <div className="card">
         <p className="font-semibold mb-2">Chưa triển khai ở bản demo này.</p>
         <p className="text-sm text-gray-600">

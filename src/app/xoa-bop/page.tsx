@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
+import { ModuleHeader } from "@/components/ModuleHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -8,12 +8,12 @@ export default async function ManualTherapyListPage() {
   const therapies = await prisma.manualTherapy.findMany({ orderBy: { name: "asc" }, include: { source: true } });
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-2xl font-bold text-brand-deep">Xoa bóp – Bấm huyệt & phương pháp khác</h1>
-        <Link href="/xoa-bop/moi" className="bg-brand-deep text-white rounded-lg px-4 py-2 text-sm font-medium">
-          + Thêm thủ pháp
-        </Link>
-      </div>
+      <ModuleHeader
+        title="Xoa bóp – Bấm huyệt & phương pháp khác"
+        subtitle="Kỹ thuật, vùng tác động, chỉ định và chống chỉ định theo nguồn."
+        image="/images/acupuncture-needles.png"
+        action={{ href: "/xoa-bop/moi", label: "+ Thêm thủ pháp" }}
+      />
       <div className="grid gap-3">
         {therapies.map((t) => (
           <div key={t.id} className="card">

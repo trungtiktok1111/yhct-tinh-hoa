@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
+import { ModuleHeader } from "@/components/ModuleHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -19,12 +20,12 @@ export default async function DiseaseListPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-2xl font-bold text-brand-deep">Bệnh học</h1>
-        <Link href="/benh-hoc/moi" className="bg-brand-deep text-white rounded-lg px-4 py-2 text-sm font-medium">
-          + Thêm bệnh
-        </Link>
-      </div>
+      <ModuleHeader
+        title="Bệnh học"
+        subtitle="Danh mục, nguyên nhân, bệnh cơ và chẩn đoán phân biệt theo nguồn."
+        image="/images/apothecary-shelf.png"
+        action={{ href: "/benh-hoc/moi", label: "+ Thêm bệnh" }}
+      />
       <form className="flex gap-2">
         <input
           name="q"

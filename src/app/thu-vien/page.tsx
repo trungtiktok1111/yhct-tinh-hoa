@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { ModuleHeader } from "@/components/ModuleHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -7,12 +8,12 @@ export default async function SourceListPage() {
   const sources = await prisma.source.findMany({ orderBy: { title: "asc" } });
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-2xl font-bold text-brand-deep">Thư viện tài liệu / Nguồn</h1>
-        <Link href="/thu-vien/moi" className="bg-brand-deep text-white rounded-lg px-4 py-2 text-sm font-medium">
-          + Thêm nguồn
-        </Link>
-      </div>
+      <ModuleHeader
+        title="Thư viện tài liệu / Nguồn"
+        subtitle="Y thư, giáo trình, dược điển và nghiên cứu — mọi nhận định đều có trích dẫn."
+        image="/images/library-books.png"
+        action={{ href: "/thu-vien/moi", label: "+ Thêm nguồn" }}
+      />
       <div className="grid gap-3">
         {sources.map((s) => (
           <Link key={s.id} href={`/thu-vien/${s.id}`} className="card">

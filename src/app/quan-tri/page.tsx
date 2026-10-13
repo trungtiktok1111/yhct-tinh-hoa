@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { ModuleHeader } from "@/components/ModuleHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,11 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-brand-deep">Quản trị / Thẩm định</h1>
+      <ModuleHeader
+        title="Quản trị / Thẩm định"
+        subtitle="Tài khoản, quy trình duyệt, nguồn và trạng thái hệ thống."
+        image="/images/admin-clinic.png"
+      />
 
       <div className="card">
         <p className="font-semibold mb-2">Chưa triển khai ở bản demo này</p>

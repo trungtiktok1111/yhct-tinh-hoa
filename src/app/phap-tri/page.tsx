@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
+import { ModuleHeader } from "@/components/ModuleHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -8,12 +9,12 @@ export default async function PrincipleListPage() {
   const principles = await prisma.treatmentPrinciple.findMany({ orderBy: { name: "asc" } });
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-2xl font-bold text-brand-deep">Pháp trị</h1>
-        <Link href="/phap-tri/moi" className="bg-brand-deep text-white rounded-lg px-4 py-2 text-sm font-medium">
-          + Thêm pháp trị
-        </Link>
-      </div>
+      <ModuleHeader
+        title="Pháp trị"
+        subtitle="Nguyên tắc điều trị, mục tiêu và căn cứ áp dụng."
+        image="/images/mountain-path.png"
+        action={{ href: "/phap-tri/moi", label: "+ Thêm pháp trị" }}
+      />
       <div className="grid gap-3">
         {principles.map((p) => (
           <Link key={p.id} href={`/phap-tri/${p.id}`} className="card flex items-center justify-between">
