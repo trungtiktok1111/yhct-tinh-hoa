@@ -33,21 +33,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Banner minh họa — dãy núi mực tàu, thương hiệu */}
         <header className="relative h-24 md:h-32 overflow-hidden border-b border-brand-gold/30">
           <Image
-            src="/images/hero-mountain.png"
+            src="/images/hero-banner.png"
             alt=""
             fill
             priority
-            className="object-cover object-[55%_45%]"
+            className="object-cover object-[35%_45%]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper via-brand-deeper/85 to-brand-deeper/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper via-brand-deeper/80 to-brand-deeper/15" />
           <div className="relative h-full max-w-7xl mx-auto px-4 md:px-8 flex items-center gap-3 md:gap-4">
-            <span className="relative h-12 w-12 md:h-16 md:w-16 shrink-0 rounded-full bg-brand-cream ring-2 ring-brand-gold/70 shadow-md flex items-center justify-center overflow-hidden">
+            <span className="relative h-12 w-12 md:h-16 md:w-16 shrink-0 rounded-full ring-2 ring-brand-gold/70 shadow-md overflow-hidden">
               <Image
-                src="/images/seal-emblem.png"
+                src="/images/logo-badge.png"
                 alt="YHCT Tinh Hoa"
-                width={80}
-                height={80}
-                className="h-[115%] w-[115%] object-contain"
+                width={160}
+                height={160}
+                className="h-full w-full object-cover"
               />
             </span>
             <div className="min-w-0">
