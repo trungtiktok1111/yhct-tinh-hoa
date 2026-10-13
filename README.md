@@ -44,8 +44,7 @@ DATABASE_URL="file:./dev.db"
 | Châm cứu / Huyệt vị (CRUD) | Hoàn thành (cơ bản) |
 | Xoa bóp – Bấm huyệt / phương pháp khác | Một phần — chỉ có danh sách + thêm mới, chưa có trang chi tiết riêng |
 | Thư viện tài liệu / Nguồn | Hoàn thành (cơ bản) |
-| Ca lâm sàng | **Chưa làm** — chỉ có model dữ liệu, chưa có UI nhập liệu |
-| Biện chứng luận trị theo từng bước (tứ chẩn → đối chiếu chứng hậu) | **Chưa làm** |
+| Ca lâm sàng & Biện chứng luận trị theo từng bước | Một phần — có nhập tứ chẩn, đối chiếu chứng hậu (so khớp từ khóa, KHÔNG phải suy luận lâm sàng thật), xác nhận kết luận, nối pháp trị/bài thuốc, theo dõi điều trị. Chưa phân quyền, chưa ẩn danh hóa chặt |
 | Mạng lưới tri thức (sơ đồ nút–cạnh) | **Chưa làm** — chỉ điều hướng qua liên kết trang chi tiết |
 | Trợ lý AI / RAG có trích dẫn | **Chưa làm** |
 | Đăng nhập, phân quyền theo vai trò | **Chưa làm** — bản demo mở, ai cũng xem/sửa được |

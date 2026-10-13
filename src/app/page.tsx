@@ -90,8 +90,11 @@ export default async function HomePage() {
       <div className="card text-sm">
         <h2 className="font-semibold text-brand-deep mb-2">Phân hệ chưa triển khai ở bản demo này</h2>
         <ul className="list-disc list-inside text-gray-700 space-y-1">
-          <li>Biện chứng luận trị theo từng bước (nhập tứ chẩn, đối chiếu chứng hậu tự động) — model dữ liệu đã có, UI chưa làm.</li>
-          <li>Ca lâm sàng: chưa có form nhập đầy đủ, chỉ có khung dữ liệu.</li>
+          <li>
+            Ca lâm sàng &amp; biện chứng luận trị theo từng bước: <strong>đã có</strong> (nhập tứ chẩn, đối chiếu
+            chứng hậu, xác nhận kết luận, nối tới pháp trị/bài thuốc) nhưng đối chiếu chỉ dùng so khớp từ khóa đơn
+            giản — chưa phải suy luận lâm sàng thật, cần chuyên gia định nghĩa lại quy tắc.
+          </li>
           <li>Mạng lưới tri thức dạng sơ đồ nút–cạnh tương tác — chưa làm.</li>
           <li>Trợ lý AI / RAG có trích dẫn — chưa làm.</li>
           <li>Đăng nhập, phân quyền theo vai trò, quy trình thẩm định nội dung — chưa làm (bản demo mở, ai cũng sửa được).</li>
