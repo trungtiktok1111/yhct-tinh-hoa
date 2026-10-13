@@ -82,6 +82,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Mọi quyết định chuyên môn cần người hành nghề có thẩm quyền xác nhận.
             </div>
             {children}
+            <footer className="mt-10 pt-4 border-t border-brand-gold/20 text-center text-xs text-brand-ink/50">
+              © {new Date().getFullYear()} YHCT Tinh Hoa — bản demo kỹ thuật, dữ liệu minh họa, không dùng điều trị thật.
+            </footer>
           </main>
 
           {/* Bottom nav mobile */}
