@@ -4,32 +4,38 @@
 > Đây là MVP chứng minh kiến trúc theo "ƯU TIÊN SỐ 1" của tài liệu đặc tả: một luồng dọc hoàn chỉnh
 > Bệnh học → Chứng hậu → Pháp trị → Bài thuốc → Vị thuốc → Nguồn, có thể truy vết hai chiều.
 
+## Chạy thật (production)
+
+- **URL**: https://yhct-tinh-hoa.vercel.app
+- **Hosting**: Vercel (serverless)
+- **Database**: Supabase Postgres (Singapore), project `yhct-tinh-hoa`
+
+Deploy lại sau khi sửa code:
+```bash
+npx vercel --prod
+```
+(đã đăng nhập sẵn bằng tài khoản `trungtiktok1111`; `DATABASE_URL`/`DIRECT_URL` đã cấu hình trong Vercel env production).
+
 ## Cài đặt & chạy local
 
 Yêu cầu: Node.js 20+.
 
 ```bash
 npm install
-npx prisma migrate dev   # tạo database SQLite (prisma/dev.db) theo schema
-npm run seed              # nạp dữ liệu DEMO (có thể chạy lại, sẽ xoá và tạo lại dữ liệu demo)
-npm run dev                # chạy tại http://localhost:3000
+npx prisma generate
+npm run dev                # chạy tại http://localhost:3000, dùng chung database Supabase ở trên
 ```
+
+File `.env` (không commit lên git) cần có:
+```
+DATABASE_URL="postgresql://...pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://...pooler.supabase.com:5432/postgres"
+```
+Lấy 2 chuỗi này từ Supabase Dashboard → Project Settings → Database → Connect → tab ORM → Prisma.
+
+Muốn tạo lại dữ liệu DEMO từ đầu (xoá sạch rồi seed lại): `npm run seed` — **cẩn thận, lệnh này xoá hết dữ liệu hiện có trên Supabase**, chỉ chạy khi chắc chắn.
 
 Không cần tài khoản đăng nhập ở bản demo này (đã chọn phương án "mở, không đăng nhập" cho giai đoạn đầu).
-
-## Cấu hình môi trường
-
-File `.env`:
-```
-DATABASE_URL="file:./dev.db"
-```
-
-### Chuyển sang Supabase (Postgres) khi sẵn sàng triển khai thật
-1. Tạo project trên Supabase (bạn tự làm — việc tạo tài khoản ngoài cần bạn thực hiện).
-2. Lấy connection string Postgres, đặt vào `DATABASE_URL` trong `.env` (hoặc biến môi trường trên Vercel).
-3. Trong `prisma/schema.prisma`, đổi `provider = "sqlite"` thành `provider = "postgresql"`.
-4. Chạy lại `npx prisma migrate dev` (hoặc `prisma migrate deploy` trên production) để tạo schema trên Postgres.
-5. Deploy phần Next.js lên Vercel (kết nối repo GitHub, Vercel tự build/deploy khi push).
 
 ## Trạng thái chức năng (theo mục 13.3 của tài liệu đặc tả)
 
