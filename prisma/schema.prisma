@@ -1,9 +1,9 @@
-// Ghi chú: dùng SQLite để chạy local ngay (không cần tài khoản ngoài).
-// Khi sẵn sàng deploy lên Supabase, chỉ cần đổi provider = "postgresql"
-// và DATABASE_URL trỏ tới connection string Supabase, rồi chạy lại migrate.
+// Database Postgres trên Supabase. DATABASE_URL dùng connection pooler (6543)
+// cho runtime; DIRECT_URL dùng connection trực tiếp (5432) để chạy migration.
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
