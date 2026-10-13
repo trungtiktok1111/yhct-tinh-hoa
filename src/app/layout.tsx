@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             alt=""
             fill
             priority
-            className="object-cover object-[35%_45%]"
+            className="object-cover object-[62%_38%]"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper via-brand-deeper/80 to-brand-deeper/15" />
           <div className="relative h-full max-w-7xl mx-auto px-4 md:px-8 flex items-center gap-3 md:gap-4">
