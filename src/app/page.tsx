@@ -34,7 +34,7 @@ export default async function HomePage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-brand-deep mb-1">Tổng quan</h1>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-brand-ink/70">
           Hệ thống tri thức và lập luận điều trị Y học cổ truyền. Luồng ưu tiên: Bệnh học → Chứng hậu → Pháp trị →
           Bài thuốc → Vị thuốc → Nguồn.
         </p>
@@ -44,19 +44,23 @@ export default async function HomePage() {
         <input
           name="q"
           placeholder="Tìm bệnh, chứng hậu, bài thuốc, vị thuốc, huyệt..."
-          className="flex-1 border border-brand-deep/30 rounded-lg px-4 py-2"
+          className="flex-1 border border-brand-gold/40 rounded-lg px-4 py-2 bg-white/70 focus:outline-none focus:ring-2 focus:ring-brand-gold/50"
         />
-        <button className="bg-brand-deep text-white rounded-lg px-4 py-2 font-medium">Tìm</button>
+        <button className="bg-brand-deep hover:bg-brand-deeper text-brand-goldLight rounded-lg px-5 py-2 font-medium transition-colors">
+          Tìm
+        </button>
       </form>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {stats.map((s) => (
-          <Link key={s.href} href={s.href} className="card hover:shadow-sm transition-shadow">
-            <div className="text-2xl font-bold text-brand-deep">{s.count}</div>
-            <div className="text-sm text-gray-600">{s.label}</div>
+          <Link key={s.href} href={s.href} className="card interactive">
+            <div className="font-display text-2xl font-bold text-brand-deep">{s.count}</div>
+            <div className="text-sm text-brand-ink/70">{s.label}</div>
           </Link>
         ))}
       </div>
+
+      <div className="seal-divider text-xs uppercase tracking-[0.2em]">Cập nhật gần đây</div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div>

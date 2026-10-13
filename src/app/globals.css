@@ -6,9 +6,20 @@
   color-scheme: light;
 }
 
+html {
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
 body {
-  background-color: #faf7ec;
-  color: #14301f;
+  background-color: #f2ead9;
+  background-image:
+    radial-gradient(ellipse at top left, rgba(201, 162, 39, 0.06), transparent 55%),
+    radial-gradient(ellipse at bottom right, rgba(27, 67, 50, 0.05), transparent 60%);
+  color: #2a241d;
+}
+
+h1, h2, .font-display {
+  font-family: var(--font-display), serif;
 }
 
 .status-pill {
@@ -18,6 +29,7 @@ body {
   padding: 0.125rem 0.625rem;
   font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
 }
 .status-DRAFT { background: #e5e7eb; color: #374151; }
 .status-PENDING_REVIEW { background: #fef3c7; color: #92400e; }
@@ -27,16 +39,42 @@ body {
 .status-RETIRED { background: #e5e7eb; color: #6b7280; }
 
 .warn-box {
-  border: 1px solid #fca5a5;
-  background: #fef2f2;
-  color: #991b1b;
-  border-radius: 0.5rem;
+  border: 1px solid #e3b7a8;
+  background: #fbf0ea;
+  color: #8a3a26;
+  border-radius: 0.6rem;
   padding: 0.75rem 1rem;
 }
 
+/* Thẻ giấy cổ: nền kem nhạt, viền mảnh, góc bo nhẹ, đổ bóng ấm.
+   Góc trên-trái có hoạ tiết vân mây nhỏ bằng gradient, gợi cảm giác thủ công. */
 .card {
-  background: white;
-  border: 1px solid #e7e2d2;
-  border-radius: 0.75rem;
-  padding: 1rem;
+  position: relative;
+  background: linear-gradient(180deg, #fffdf8 0%, #fbf5e8 100%);
+  border: 1px solid rgba(201, 162, 39, 0.28);
+  border-radius: 0.85rem;
+  padding: 1.1rem 1.25rem;
+  box-shadow: 0 1px 2px rgba(42, 36, 29, 0.04), 0 8px 20px -12px rgba(27, 67, 50, 0.18);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
+a.card:hover, .card.interactive:hover {
+  border-color: rgba(201, 162, 39, 0.7);
+  box-shadow: 0 2px 4px rgba(42, 36, 29, 0.06), 0 14px 28px -14px rgba(27, 67, 50, 0.3);
+  transform: translateY(-1px);
+}
+
+.seal-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #c9a227;
+}
+.seal-divider::before, .seal-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.5), transparent);
+}
+
+.ink-scrollbar::-webkit-scrollbar { width: 6px; }
+.ink-scrollbar::-webkit-scrollbar-thumb { background: rgba(201, 162, 39, 0.4); border-radius: 999px; }
