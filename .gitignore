@@ -13,3 +13,4 @@ public/images/_source
 .vercel
 scripts/pdf_classification.json
 scripts/*.json
+tsconfig.tsbuildinfo

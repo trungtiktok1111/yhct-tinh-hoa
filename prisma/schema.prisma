@@ -34,6 +34,28 @@ model Source {
   protocols   PointProtocol[]
   therapies   ManualTherapy[]
   claims      Claim[]
+  theoryTopics TheoryTopic[]
+}
+
+// Lý luận cơ bản YHCT: Âm dương, Ngũ hành, Tạng tượng, Kinh lạc, Khí-Huyết-Tân
+// dịch, Tứ chẩn, Bát cương, Bát pháp, và các lý luận nền tảng khác không gắn
+// trực tiếp vào 1 bệnh/chứng/bài thuốc/huyệt cụ thể.
+model TheoryTopic {
+  id          String   @id @default(cuid())
+  name        String // vd "Âm Dương", "Ngũ Hành", "Tứ Chẩn — Vọng chẩn"
+  category    String? // nhóm lớn: "Âm dương - Ngũ hành", "Tạng tượng", "Kinh lạc", "Khí - Huyết - Tân dịch", "Tứ chẩn", "Bát cương", "Bát pháp", "Lịch sử - Triết lý", ...
+  summary     String? // tóm tắt ngắn
+  content     String? // nội dung đầy đủ, có thể dài
+  keyPoints   String? // ứng dụng lâm sàng / điểm cần nhớ
+  status      String @default("DRAFT")
+  version     Int          @default(1)
+  createdBy   String?
+  updatedBy   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  sourceId    String?
+  source      Source?      @relation(fields: [sourceId], references: [id])
 }
 
 model Disease {

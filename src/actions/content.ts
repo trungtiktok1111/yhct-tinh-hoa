@@ -222,6 +222,23 @@ export async function createManualTherapy(formData: FormData) {
   redirect("/xoa-bop");
 }
 
+export async function createTheoryTopic(formData: FormData) {
+  const sourceId = await resolveSourceId(formData);
+  const t = await prisma.theoryTopic.create({
+    data: {
+      name: str(formData, "name") ?? "Chưa đặt tên",
+      category: str(formData, "category"),
+      summary: str(formData, "summary"),
+      content: str(formData, "content"),
+      keyPoints: str(formData, "keyPoints"),
+      status: str(formData, "status") ?? "DRAFT",
+      sourceId,
+    },
+  });
+  revalidatePath("/ly-luan");
+  redirect(`/ly-luan/${t.id}`);
+}
+
 export async function createSource(formData: FormData) {
   const s = await prisma.source.create({
     data: {

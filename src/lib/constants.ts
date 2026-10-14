@@ -11,6 +11,7 @@ export const REVIEW_STATUS_OPTIONS = Object.keys(REVIEW_STATUS_LABEL);
 
 export const NAV_ITEMS = [
   { href: "/", label: "Tổng quan", mobile: true, icon: "LayoutDashboard" },
+  { href: "/ly-luan", label: "Lý luận cơ bản", mobile: true, icon: "ScrollText" },
   { href: "/benh-hoc", label: "Bệnh học", mobile: true, icon: "Stethoscope" },
   { href: "/chung-hau", label: "Chứng hậu", mobile: false, icon: "Fingerprint" },
   { href: "/phap-tri", label: "Pháp trị", mobile: false, icon: "Compass" },
