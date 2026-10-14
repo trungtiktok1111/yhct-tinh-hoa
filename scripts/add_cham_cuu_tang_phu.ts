@@ -70,27 +70,29 @@ async function main() {
     });
     countProtocols++;
 
+    const seen = new Set<string>();
     for (const row of p.points_detail) {
-      const pointName = row["Huyệt"] ?? row["Phối huyệt"];
-      if (!pointName) continue;
+      const cell = row["Huyệt"] ?? row["Phối huyệt"];
+      if (!cell) continue;
       const ynghia = row["Ý nghĩa"] ?? row["Giải thích"] ?? "";
       const congNangHuyet = row["Công năng"] ?? "";
       const note = [ynghia, congNangHuyet].filter(Boolean).join(" — ") || undefined;
-      const point = await findOrCreatePoint(pointName, source.id);
-      await prisma.pointProtocolItem.create({
-        data: { protocolId: protocol.id, pointId: point.id, note },
-      });
-      countPoints++;
+      // Một dòng bảng có thể gộp nhiều huyệt dùng chung ý nghĩa (vd "Phế du\nXích trạch")
+      for (const pointName of cell.split("\n").map((s) => s.trim()).filter(Boolean)) {
+        if (seen.has(pointName)) continue;
+        seen.add(pointName);
+        const point = await findOrCreatePoint(pointName, source.id);
+        await prisma.pointProtocolItem.create({ data: { protocolId: protocol.id, pointId: point.id, note } });
+        countPoints++;
+      }
     }
 
     // Nếu huyệt trong "Công thức" không khớp đủ với points_detail (vd thiếu do trùng tên
     // ở các slide không có bảng chi tiết), vẫn đảm bảo đủ huyệt theo overview.
-    const detailNames = new Set(
-      p.points_detail.map((r) => r["Huyệt"] ?? r["Phối huyệt"]).filter(Boolean)
-    );
     const overviewNames = congThuc.split(/[,，]/).map((s) => s.trim()).filter(Boolean);
     for (const name of overviewNames) {
-      if (!detailNames.has(name)) {
+      if (!seen.has(name)) {
+        seen.add(name);
         const point = await findOrCreatePoint(name, source.id);
         await prisma.pointProtocolItem.create({ data: { protocolId: protocol.id, pointId: point.id } });
         countPoints++;
