@@ -78,3 +78,48 @@ a.card:hover, .card.interactive:hover {
 
 .ink-scrollbar::-webkit-scrollbar { width: 6px; }
 .ink-scrollbar::-webkit-scrollbar-thumb { background: rgba(201, 162, 39, 0.4); border-radius: 999px; }
+
+/* Thẻ nhãn nhỏ dùng cho tính vị / quy kinh — như dấu triện mộc trên nhãn thuốc cổ. */
+.herb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(201, 162, 39, 0.1);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  color: #6b4f0e;
+}
+
+/* Khung "tiêu bản" cho ảnh vị thuốc — gợi nhãn mẫu khô trong tủ thuốc bắc. */
+.specimen-frame {
+  position: relative;
+  background: linear-gradient(180deg, #fffdf8 0%, #f2ead9 100%);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  border-radius: 0.75rem;
+  padding: 0.6rem;
+}
+.specimen-frame::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px dashed rgba(201, 162, 39, 0.35);
+  border-radius: 0.5rem;
+  pointer-events: none;
+}
+
+/* Huy hiệu tiêu đề — vòng tròn viền vàng quanh icon mở đầu mỗi khối nội dung. */
+.section-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  width: 2rem;
+  border-radius: 9999px;
+  background: linear-gradient(145deg, #1b4332, #0d2818);
+  color: #e3c565;
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.25);
+  flex-shrink: 0;
+}
