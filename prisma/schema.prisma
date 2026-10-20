@@ -153,19 +153,26 @@ model PatternPrinciple {
 }
 
 model Herb {
-  id            String       @id @default(cuid())
-  standardName  String
-  aliases       String?
-  latinName     String?
-  partUsed      String?
-  origin        String?
-  natureFlavor  String? // tính vị
-  meridians     String? // quy kinh
-  actions       String? // công năng
-  indications   String? // chủ trị
-  dosage        String?
-  safetyNotes   String?
-  imageUrl      String?
+  id                  String       @id @default(cuid())
+  standardName        String
+  aliases             String?
+  latinName           String?
+  family              String? // họ thực vật/động vật/khoáng vật
+  partUsed            String?
+  origin              String?
+  botanicalDescription String? // đặc điểm thực vật/hình thái (thân, lá, hoa, quả...)
+  distribution        String? // phân bố
+  harvestProcessing   String? // thu hái và sơ chế / bào chế
+  storage             String? // bảo quản
+  chemicalComposition String? // thành phần hóa học
+  natureFlavor        String? // tính vị
+  meridians           String? // quy kinh
+  actions             String? // công năng (Đông y)
+  indications         String? // chủ trị
+  modernPharmacology  String? // tác dụng dược lý theo nghiên cứu hiện đại
+  dosage              String?
+  safetyNotes         String?
+  imageUrl            String?
   status        String @default("DRAFT")
   version       Int          @default(1)
   createdBy     String?

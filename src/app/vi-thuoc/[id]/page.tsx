@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Microscope, Sprout, Thermometer, Route, ShieldAlert, ScrollText, Link2 } from "lucide-react";
+import { Microscope, Sprout, Thermometer, Route, ShieldAlert, ScrollText, Link2, FlaskConical, MapPin, Warehouse, TestTube, Leaf } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
 import { MeridianWheel } from "@/components/MeridianWheel";
@@ -31,6 +31,16 @@ function Fact({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
+function Prose({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-wide text-brand-ink/45 font-semibold mb-1">{label}</div>
+      <p className="text-sm text-brand-ink whitespace-pre-wrap leading-relaxed">{value}</p>
+    </div>
+  );
+}
+
 export default async function HerbDetailPage({ params }: { params: { id: string } }) {
   const herb = await prisma.herb.findUnique({
     where: { id: params.id },
@@ -43,7 +53,9 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
 
   const actionClauses = herb.actions ? splitClauses(herb.actions) : [];
   const indicationClauses = herb.indications ? splitClauses(herb.indications) : [];
+  const pharmacologyClauses = herb.modernPharmacology ? splitClauses(herb.modernPharmacology) : [];
   const natureItems = herb.natureFlavor ? herb.natureFlavor.split(/[,，]/).map((s) => s.trim()).filter(Boolean) : [];
+  const hasHarvestInfo = herb.distribution || herb.harvestProcessing || herb.storage || herb.chemicalComposition;
 
   return (
     <div className="space-y-5">
@@ -97,11 +109,44 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
         {/* Đặc điểm dược liệu */}
         <div className="card space-y-2.5">
           <SectionTitle icon={Microscope}>Đặc điểm dược liệu</SectionTitle>
+          <Fact label="Họ" value={herb.family} />
           <Fact label="Bộ phận dùng" value={herb.partUsed} />
           <Fact label="Nguồn gốc" value={herb.origin} />
           <Fact label="Liều dùng" value={herb.dosage} />
         </div>
       </div>
+
+      {/* Mô tả thực vật */}
+      {herb.botanicalDescription && (
+        <div className="card">
+          <SectionTitle icon={Leaf}>Đặc điểm thực vật</SectionTitle>
+          <p className="text-sm text-brand-ink whitespace-pre-wrap leading-relaxed">
+            {herb.botanicalDescription}
+          </p>
+        </div>
+      )}
+
+      {/* Phân bố - Thu hái sơ chế - Bảo quản - Thành phần hóa học */}
+      {hasHarvestInfo && (
+        <div className="card grid sm:grid-cols-2 gap-4">
+          <div className="flex gap-2.5">
+            <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-brand-gold" strokeWidth={1.75} />
+            <Prose label="Phân bố" value={herb.distribution} />
+          </div>
+          <div className="flex gap-2.5">
+            <FlaskConical className="h-4 w-4 shrink-0 mt-0.5 text-brand-gold" strokeWidth={1.75} />
+            <Prose label="Thu hái — Sơ chế / Bào chế" value={herb.harvestProcessing} />
+          </div>
+          <div className="flex gap-2.5">
+            <Warehouse className="h-4 w-4 shrink-0 mt-0.5 text-brand-gold" strokeWidth={1.75} />
+            <Prose label="Bảo quản" value={herb.storage} />
+          </div>
+          <div className="flex gap-2.5">
+            <TestTube className="h-4 w-4 shrink-0 mt-0.5 text-brand-gold" strokeWidth={1.75} />
+            <Prose label="Thành phần hóa học" value={herb.chemicalComposition} />
+          </div>
+        </div>
+      )}
 
       {/* Tính vị - Quy kinh */}
       <div className="grid md:grid-cols-[1fr_auto] gap-5 items-stretch">
@@ -139,6 +184,18 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
           <SectionTitle icon={Sprout}>Công năng</SectionTitle>
           <div className="grid sm:grid-cols-2 gap-2">
             {actionClauses.map((c, i) => (
+              <ClauseCard key={i} clause={c} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tác dụng dược lý hiện đại */}
+      {pharmacologyClauses.length > 0 && (
+        <div className="card">
+          <SectionTitle icon={FlaskConical}>Tác dụng dược lý (nghiên cứu hiện đại)</SectionTitle>
+          <div className="grid sm:grid-cols-2 gap-2">
+            {pharmacologyClauses.map((c, i) => (
               <ClauseCard key={i} clause={c} />
             ))}
           </div>
