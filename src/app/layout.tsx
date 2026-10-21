@@ -63,7 +63,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <div className="flex-1 overflow-y-auto p-3 ink-scrollbar">
                 <SideNav clinic={clinic} knowledge={knowledge} admin={admin} />
               </div>
-              <div className="px-4 py-3 border-t border-white/10 text-[11px] text-white/50">Bản demo · dữ liệu minh họa</div>
+              <div className="relative h-36 shrink-0 overflow-hidden border-t border-white/10">
+                <Image src="/images/ginseng-rock.png" alt="" fill className="object-cover opacity-25 mix-blend-luminosity" />
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-deeper via-brand-deeper/60 to-transparent" />
+                <div className="absolute bottom-3 left-4 right-4 text-brand-goldLight">
+                  <div className="text-[11px] font-semibold tracking-[0.12em] uppercase">Y học cổ truyền</div>
+                  <div className="text-[11px] tracking-[0.12em] uppercase text-white/70">Tinh hoa dân tộc</div>
+                  <div className="mt-1 text-[10px] text-white/40">Bản demo · dữ liệu minh họa</div>
+                </div>
+              </div>
             </aside>
 
             <div className="flex-1 min-w-0 flex flex-col">
@@ -71,18 +79,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <header className="sticky top-0 z-20 flex items-center gap-3 bg-white/95 backdrop-blur border-b border-slate-200 px-4 md:px-8 h-16">
                 <Link href="/" className="md:hidden font-display font-bold text-brand-deep">YHCT Tinh Hoa</Link>
                 <Suspense fallback={null}><BranchSwitch branches={branches} /></Suspense>
-                <form action="/benh-nhan" className="flex-1 max-w-xl hidden sm:block">
+                <form action="/benh-nhan" className="relative flex-1 max-w-xl hidden sm:block">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">⌕</span>
                   <input
                     name="q"
                     placeholder="Tìm bệnh nhân: tên, số điện thoại, mã BN…"
-                    className="w-full rounded-full border border-slate-300 bg-slate-50 px-5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-deep/30 focus:bg-white"
+                    className="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-deep/30"
                   />
                 </form>
                 <details className="relative ml-auto">
                   <summary className="flex cursor-pointer list-none items-center gap-3 rounded-full py-1 pl-1 pr-3 hover:bg-slate-100">
                     <span className="h-9 w-9 rounded-full bg-brand-deep text-brand-goldLight grid place-items-center text-sm font-bold">{initials}</span>
                     <span className="hidden sm:block text-left leading-tight">
-                      <span className="block text-sm font-semibold">{staff.fullName}</span>
+                      <span className="block text-sm font-bold uppercase">{staff.fullName}</span>
                       <span className="block text-[11px] text-brand-ink/60">{rolesLabel(staff.role)}</span>
                     </span>
                   </summary>
