@@ -23,12 +23,12 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
   const hello = hour < 11 ? "Chào buổi sáng" : hour < 14 ? "Chào buổi trưa" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
 
   const header = (
-    <section className="relative overflow-hidden rounded-2xl bg-brand-deeper text-white min-h-[11rem]">
+    <section className="relative overflow-hidden rounded-2xl bg-brand-deeper text-white min-h-[9rem]">
       <Image src="/images/art/panorama.jpg" alt="" width={1800} height={600} priority className="absolute inset-0 h-full w-full object-cover object-right" />
       <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper via-brand-deeper/85 to-brand-deeper/10" />
-      <div className="relative p-6 md:p-8">
+      <div className="relative p-5 md:px-8 md:py-5">
         <div className="text-sm text-brand-goldLight capitalize">{dateText}</div>
-        <h1 className="brand-serif text-3xl md:text-4xl font-bold mt-1 uppercase leading-tight">{hello},<br />{staff.fullName}</h1>
+        <h1 className="brand-serif text-2xl md:text-3xl font-bold mt-0.5 uppercase leading-tight">{hello},<br />{staff.fullName}</h1>
         <p className="mt-2 font-semibold">{branch ? branch.name : "Chưa có chi nhánh"}</p>
         <p className="text-white/70 text-sm">Kế thừa tinh hoa · Phụng sự sức khỏe cộng đồng</p>
       </div>
@@ -120,16 +120,16 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
   ].filter((a) => a.ok);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {header}
-      <div className="grid xl:grid-cols-[1fr_21rem] gap-5 items-start">
-        <div className="space-y-5 min-w-0">
+      <div className="grid xl:grid-cols-[1fr_22rem] gap-5 items-start">
+        <div className="space-y-4 min-w-0">
           <div className={`grid grid-cols-2 ${revenue ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-3`}>
             {cards.map((c) => {
               const body = (
                 <>
                   <div className="font-bold">{c.label}</div>
-                  <div className={`mt-1 text-4xl font-bold ${c.cls}`}>{c.n}</div>
+                  <div className={`text-3xl font-bold ${c.cls}`}>{c.n}</div>
                   <div className="text-sm text-brand-ink/60">bệnh nhân</div>
                 </>
               );
@@ -147,7 +147,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
           {actions.length > 0 && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {actions.map((a, i) => (
-                <Link key={a.href} href={a.href} className={`rounded-xl px-4 py-3.5 text-center font-semibold ${i === 0 ? "bg-brand-deep text-white hover:bg-brand-deeper" : "bg-white border border-slate-200 hover:border-brand-deep"}`}>{a.label}</Link>
+                <Link key={a.href} href={a.href} className={`rounded-xl px-4 py-3 text-center font-semibold ${i === 0 ? "bg-brand-deep text-white hover:bg-brand-deeper" : "bg-white border border-slate-200 hover:border-brand-deep"}`}>{a.label}</Link>
               ))}
             </div>
           )}
@@ -222,7 +222,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
           </div>
         </div>
 
-        <aside className="space-y-5">
+        <aside className="space-y-4">
           <section className="card">
             <div className="font-bold mb-3">Lịch khám hôm nay <span className="text-brand-ink/50 font-medium">({visits.length})</span></div>
             {visits.length === 0 ? <p className="text-sm text-brand-ink/60">Chưa có.</p> : (
@@ -251,7 +251,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
               ))}
             </dl>
           </section>
-          <div className="relative overflow-hidden rounded-2xl h-40">
+          <div className="relative overflow-hidden rounded-2xl h-32">
             <Image src="/images/art/mortar.jpg" alt="" fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-brand-deeper/80 to-transparent" />
             <div className="absolute bottom-3 left-4 brand-serif italic text-brand-goldLight text-lg">Sức khỏe hôm nay<br />Hạnh phúc ngày mai</div>
