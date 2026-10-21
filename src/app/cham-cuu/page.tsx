@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/Pagination";
+import { PAGE_SIZE, pageOf } from "@/lib/paging";
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/db";
@@ -5,8 +7,27 @@ import { StatusPill } from "@/components/StatusPill";
 
 export const dynamic = "force-dynamic";
 
-export default async function PointListPage() {
-  const points = await prisma.acupuncturePoint.findMany({ orderBy: { meridian: "asc" } });
+export default async function PointListPage({ searchParams }: { searchParams: { q?: string; trang?: string } }) {
+  const q = searchParams.q?.trim();
+  const page = pageOf(searchParams.trang);
+  const where = q
+    ? {
+        OR: [
+          { standardName: { contains: q, mode: "insensitive" as const } },
+          { code: { contains: q, mode: "insensitive" as const } },
+          { meridian: { contains: q, mode: "insensitive" as const } },
+        ],
+      }
+    : undefined;
+  const [points, total] = await Promise.all([
+    prisma.acupuncturePoint.findMany({
+      where,
+      orderBy: [{ meridian: "asc" }, { code: "asc" }],
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.acupuncturePoint.count({ where }),
+  ]);
   return (
     <div className="space-y-4">
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-deep to-brand-deeper px-5 py-4 flex items-center justify-between gap-3">
@@ -24,6 +45,10 @@ export default async function PointListPage() {
           + Thêm huyệt
         </Link>
       </div>
+      <form className="flex gap-2">
+        <input name="q" defaultValue={q} placeholder="Lọc theo tên, mã huyệt, kinh..." className="flex-1 border rounded-lg px-3 py-2" />
+        <button className="border border-brand-deep text-brand-deep rounded-lg px-4 py-2 text-sm">Lọc</button>
+      </form>
       <div className="grid md:grid-cols-2 gap-3">
         {points.map((p) => (
           <Link key={p.id} href={`/cham-cuu/${p.id}`} className="card flex items-center justify-between">
@@ -39,6 +64,7 @@ export default async function PointListPage() {
         ))}
         {points.length === 0 && <p className="text-sm text-gray-500">Chưa có dữ liệu huyệt vị.</p>}
       </div>
+      <Pagination path="/cham-cuu" page={page} total={total} params={{ q }} />
     </div>
   );
 }

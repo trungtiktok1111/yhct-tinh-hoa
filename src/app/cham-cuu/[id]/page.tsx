@@ -1,3 +1,4 @@
+import { EntityToolbar } from "@/components/EntityToolbar";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
@@ -28,6 +29,7 @@ export default async function PointDetailPage({ params }: { params: { id: string
         <Link href="/cham-cuu" className="text-sm text-brand-deep underline">
           ← Danh mục huyệt vị
         </Link>
+        <EntityToolbar entity="cham-cuu" id={params.id} />
         <div className="flex items-center gap-3 flex-wrap mt-1">
           <h1 className="text-2xl font-bold text-brand-deep">
             {point.code ? `${point.code} — ` : ""}

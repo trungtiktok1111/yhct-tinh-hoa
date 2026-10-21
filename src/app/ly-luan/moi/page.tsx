@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/BackLink";
 import { createTheoryTopic } from "@/actions/content";
 import { SourceFields } from "@/components/SourceFields";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -5,6 +6,7 @@ import { StatusSelect } from "@/components/StatusSelect";
 export default function NewTheoryTopicPage() {
   return (
     <div className="space-y-4 max-w-2xl">
+      <BackLink href="/ly-luan" label="Quay lại danh sách lý luận" />
       <h1 className="text-2xl font-bold text-brand-deep">Thêm lý luận cơ bản</h1>
       <form action={createTheoryTopic} className="space-y-3">
         <input name="name" required placeholder="Tên lý luận (bắt buộc, vd Âm Dương, Ngũ Hành, Vọng chẩn...)" className="w-full border rounded px-3 py-2" />

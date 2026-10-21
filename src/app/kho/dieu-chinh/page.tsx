@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { STOCK_WRITE_ROLES } from "@/lib/permissions";
 import { adjustStock } from "@/actions/stock";
+import { BackLink } from "@/components/BackLink";
 import { branchesFor, input, btn } from "@/lib/stock";
 import { qty } from "@/lib/format";
 
@@ -22,6 +23,7 @@ export default async function AdjustPage({ searchParams }: { searchParams: { loi
 
   return (
     <div className="space-y-6">
+      <BackLink href="/kho" label="Quay lại Kho" />
       <h1 className="text-2xl font-bold font-display">Điều chỉnh / kiểm kê</h1>
       <p className="text-sm text-gray-600">
         Dùng khi kiểm kê lệch, hao hụt, hỏng, hết hạn. Số âm là giảm, số dương là tăng. Bắt buộc ghi lý do; mọi điều chỉnh đều lưu vết.
@@ -29,6 +31,9 @@ export default async function AdjustPage({ searchParams }: { searchParams: { loi
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
       {searchParams.ok && <div className="card !bg-green-50 text-sm text-green-800">Đã điều chỉnh.</div>}
 
+      {items.length === 0 && (
+        <div className="warn-box text-sm">Chưa có mặt hàng nào. Quản lý cần thêm mặt hàng ở “Mặt hàng và giá” trước.</div>
+      )}
       <form action={adjustStock} className="card grid gap-3 sm:grid-cols-2">
         <label className="text-sm">Chi nhánh
           <select name="branchId" className={input} required>

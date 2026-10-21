@@ -1,8 +1,10 @@
+import { BackLink } from "@/components/BackLink";
 import { createCase } from "@/actions/case";
 
 export default function NewCasePage() {
   return (
     <div className="space-y-4 max-w-2xl">
+      <BackLink href="/ca-lam-sang" label="Quay lại danh sách ca lâm sàng" />
       <h1 className="text-2xl font-bold text-brand-deep">Tạo ca lâm sàng</h1>
       <div className="warn-box text-sm">
         Chỉ nhập dữ liệu định danh tối thiểu/đã ẩn danh. Đây là bản demo mở, chưa có phân quyền bảo vệ hồ sơ.

@@ -1,3 +1,4 @@
+import { EntityToolbar } from "@/components/EntityToolbar";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
@@ -32,6 +33,7 @@ export default async function SourceDetailPage({ params }: { params: { id: strin
       <Link href="/thu-vien" className="text-sm text-brand-deep underline">
         ← Thư viện tài liệu
       </Link>
+      <EntityToolbar entity="thu-vien" id={params.id} />
       <h1 className="text-2xl font-bold text-brand-deep">{source.title}</h1>
       <div className="card space-y-1 text-sm">
         <div>Loại nguồn: {source.sourceType}</div>

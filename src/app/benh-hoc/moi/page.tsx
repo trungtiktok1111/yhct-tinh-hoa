@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/BackLink";
 import { createDisease } from "@/actions/content";
 import { SourceFields } from "@/components/SourceFields";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -5,6 +6,7 @@ import { StatusSelect } from "@/components/StatusSelect";
 export default function NewDiseasePage() {
   return (
     <div className="space-y-4 max-w-2xl">
+      <BackLink href="/benh-hoc" label="Quay lại danh sách bệnh học" />
       <h1 className="text-2xl font-bold text-brand-deep">Thêm bệnh học</h1>
       <form action={createDisease} className="space-y-3">
         <input name="name" required placeholder="Tên bệnh (bắt buộc)" className="w-full border rounded px-3 py-2" />

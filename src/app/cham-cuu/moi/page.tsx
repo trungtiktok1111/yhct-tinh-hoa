@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/BackLink";
 import { createPoint } from "@/actions/content";
 import { SourceFields } from "@/components/SourceFields";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -5,6 +6,7 @@ import { StatusSelect } from "@/components/StatusSelect";
 export default function NewPointPage() {
   return (
     <div className="space-y-4 max-w-2xl">
+      <BackLink href="/cham-cuu" label="Quay lại danh sách huyệt vị" />
       <h1 className="text-2xl font-bold text-brand-deep">Thêm huyệt vị</h1>
       <form action={createPoint} className="space-y-3">
         <div className="grid grid-cols-2 gap-2">

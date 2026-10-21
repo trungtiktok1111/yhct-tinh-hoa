@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { ITEM_MANAGER_ROLES } from "@/lib/permissions";
-import { createItem, updateItem, setItemActive } from "@/actions/stock";
+import { createItem, updateItem, setItemActive, deleteItem } from "@/actions/stock";
+import { BackLink } from "@/components/BackLink";
+import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { UNITS, input, btn } from "@/lib/stock";
 import { dateVN, vnd } from "@/lib/format";
 
@@ -19,6 +21,7 @@ export default async function ItemsPage({ searchParams }: { searchParams: { loi?
 
   return (
     <div className="space-y-6">
+      <BackLink href="/kho" label="Quay lại Kho" />
       <h1 className="text-2xl font-bold font-display">{canManage ? "Mặt hàng và giá bán" : "Bảng giá"}</h1>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
 
@@ -82,6 +85,12 @@ export default async function ItemsPage({ searchParams }: { searchParams: { loi?
                 <div className="flex flex-wrap items-end gap-2">
                   <form action={updateItem} className="flex flex-wrap items-end gap-2">
                     <input type="hidden" name="id" value={it.id} />
+                    <label className="text-xs">Tên
+                      <input name="name" defaultValue={it.name} required className="block w-44 rounded-lg border border-brand-gold/40 bg-white px-2 py-2 text-base" />
+                    </label>
+                    <label className="text-xs">Ghi chú
+                      <input name="note" defaultValue={it.note ?? ""} className="block w-40 rounded-lg border border-brand-gold/40 bg-white px-2 py-2 text-base" />
+                    </label>
                     <label className="text-xs">Giá bán
                       <input name="price" defaultValue={cur?.price ?? ""} inputMode="numeric" className="block w-28 rounded-lg border border-brand-gold/40 bg-white px-2 py-2 text-base" />
                     </label>
@@ -96,6 +105,10 @@ export default async function ItemsPage({ searchParams }: { searchParams: { loi?
                     <button className="rounded-lg border border-brand-gold/50 px-3 py-2 text-sm">
                       {it.active ? "Ngừng bán" : "Bán lại"}
                     </button>
+                  </form>
+                  <form action={deleteItem}>
+                    <input type="hidden" name="id" value={it.id} />
+                    <ConfirmSubmit message={`Xóa mặt hàng "${it.name}"? Chỉ xóa được khi chưa có giao dịch kho.`}>Xóa</ConfirmSubmit>
                   </form>
                 </div>
               )}

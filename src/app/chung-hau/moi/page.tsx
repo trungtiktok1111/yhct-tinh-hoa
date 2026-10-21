@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/BackLink";
 import { createPattern } from "@/actions/content";
 import { SourceFields } from "@/components/SourceFields";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -5,6 +6,7 @@ import { StatusSelect } from "@/components/StatusSelect";
 export default function NewPatternPage() {
   return (
     <div className="space-y-4 max-w-2xl">
+      <BackLink href="/chung-hau" label="Quay lại danh sách chứng hậu" />
       <h1 className="text-2xl font-bold text-brand-deep">Thêm chứng hậu</h1>
       <form action={createPattern} className="space-y-3">
         <input name="name" required placeholder="Tên chứng hậu (bắt buộc)" className="w-full border rounded px-3 py-2" />

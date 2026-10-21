@@ -1,3 +1,4 @@
+import { EntityToolbar } from "@/components/EntityToolbar";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -62,6 +63,7 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
       <Link href="/vi-thuoc" className="text-sm text-brand-deep underline">
         ← Danh mục vị thuốc
       </Link>
+      <EntityToolbar entity="vi-thuoc" id={params.id} />
 
       {/* Tiêu đề — như mảng trích từ cuốn bản thảo cổ */}
       <div className="card relative overflow-hidden">

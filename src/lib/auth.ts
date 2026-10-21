@@ -1,4 +1,5 @@
 // Phía server: lấy nhân viên hiện tại, kiểm tra quyền, ghi nhật ký.
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -15,7 +16,7 @@ export type CurrentStaff = {
 };
 
 // Đọc cookie, rồi đối chiếu database để nhân viên bị khóa hoặc đổi vai trò có hiệu lực ngay.
-export async function getCurrentStaff(): Promise<CurrentStaff | null> {
+export const getCurrentStaff = cache(async function getCurrentStaff(): Promise<CurrentStaff | null> {
   const session = await verifySession(cookies().get(SESSION_COOKIE)?.value);
   if (!session) return null;
   const staff = await prisma.staff.findUnique({
@@ -31,7 +32,7 @@ export async function getCurrentStaff(): Promise<CurrentStaff | null> {
     branchIds: staff.branches.map((b) => b.branchId),
     isOwner: staff.role === "OWNER",
   };
-}
+});
 
 export async function requireStaff(): Promise<CurrentStaff> {
   const staff = await getCurrentStaff();

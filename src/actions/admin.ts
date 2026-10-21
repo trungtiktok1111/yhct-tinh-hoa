@@ -160,3 +160,61 @@ export async function resetStaffPassword(formData: FormData) {
   revalidatePath("/quan-tri/nhan-vien");
   back("/quan-tri/nhan-vien");
 }
+
+export async function updateBranch(formData: FormData) {
+  const owner = await requireRole("OWNER");
+  const id = str(formData, "id");
+  const name = str(formData, "name");
+  if (!id) back("/quan-tri/chi-nhanh");
+  if (!name) back("/quan-tri/chi-nhanh", "Tên chi nhánh không được để trống.");
+  await prisma.branch.update({
+    where: { id },
+    data: { name, address: str(formData, "address") ?? null, phone: str(formData, "phone") ?? null },
+  });
+  await logAudit({
+    staffId: owner.id, staffName: owner.fullName, branchId: id,
+    action: "UPDATE", entity: "Branch", entityId: id, detail: name,
+  });
+  revalidatePath("/quan-tri/chi-nhanh");
+  back("/quan-tri/chi-nhanh");
+}
+
+// Chỉ xóa được chi nhánh chưa có nhân viên và chưa có giao dịch kho; còn lại thì dùng "Ngừng hoạt động".
+export async function deleteBranch(formData: FormData) {
+  const owner = await requireRole("OWNER");
+  const id = str(formData, "id");
+  if (!id) back("/quan-tri/chi-nhanh");
+  const b = await prisma.branch.findUnique({ where: { id } });
+  if (!b) back("/quan-tri/chi-nhanh");
+  const [staff, lots, moves] = await Promise.all([
+    prisma.staffBranch.count({ where: { branchId: id } }),
+    prisma.stockLot.count({ where: { branchId: id } }),
+    prisma.stockMove.count({ where: { branchId: id } }),
+  ]);
+  if (staff > 0) back("/quan-tri/chi-nhanh", `Còn ${staff} nhân viên thuộc chi nhánh này. Gỡ họ khỏi chi nhánh trước, hoặc chọn "Ngừng hoạt động".`);
+  if (lots + moves > 0) back("/quan-tri/chi-nhanh", 'Chi nhánh đã có dữ liệu kho nên không xóa được. Hãy chọn "Ngừng hoạt động".');
+  await prisma.branch.delete({ where: { id } });
+  await logAudit({
+    staffId: owner.id, staffName: owner.fullName, action: "DELETE", entity: "Branch", entityId: id, detail: b.name,
+  });
+  revalidatePath("/quan-tri/chi-nhanh");
+  back("/quan-tri/chi-nhanh");
+}
+
+export async function deleteStaff(formData: FormData) {
+  const owner = await requireRole("OWNER");
+  const id = str(formData, "id");
+  if (!id) back("/quan-tri/nhan-vien");
+  if (id === owner.id) back("/quan-tri/nhan-vien", "Không thể tự xóa tài khoản của mình.");
+  const target = await prisma.staff.findUnique({ where: { id } });
+  if (!target) back("/quan-tri/nhan-vien");
+  if (target.role === "OWNER" && (await otherActiveOwners(id)) === 0)
+    back("/quan-tri/nhan-vien", "Phải còn ít nhất một tài khoản Chủ đang hoạt động.");
+  await prisma.staff.delete({ where: { id } }); // nhật ký cũ vẫn giữ tên người thao tác
+  await logAudit({
+    staffId: owner.id, staffName: owner.fullName, action: "DELETE", entity: "Staff", entityId: id,
+    detail: `${target.username} · ${target.role}`,
+  });
+  revalidatePath("/quan-tri/nhan-vien");
+  back("/quan-tri/nhan-vien");
+}

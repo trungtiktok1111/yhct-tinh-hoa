@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/BackLink";
 import { createFormula } from "@/actions/content";
 import { SourceFields } from "@/components/SourceFields";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -7,6 +8,7 @@ export default async function NewFormulaPage() {
   const principles = await prisma.treatmentPrinciple.findMany({ orderBy: { name: "asc" } });
   return (
     <div className="space-y-4 max-w-2xl">
+      <BackLink href="/bai-thuoc" label="Quay lại danh sách bài thuốc" />
       <h1 className="text-2xl font-bold text-brand-deep">Thêm bài thuốc</h1>
       <form action={createFormula} className="space-y-3">
         <input name="name" required placeholder="Tên bài thuốc (bắt buộc)" className="w-full border rounded px-3 py-2" />

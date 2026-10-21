@@ -85,10 +85,11 @@ export async function updateItem(formData: FormData) {
   const minStock = num(formData, "minStock") ?? 0;
   if (minStock < 0) back(P, "Mức tối thiểu không được âm.");
 
+  const name = str(formData, "name") ?? item.name;
   const oldPrice = item.prices[0]?.price;
   await prisma.$transaction(async (tx) => {
     if (oldPrice !== price) await tx.itemPrice.create({ data: { itemId: id, price, staffName: staff.fullName } });
-    await tx.item.update({ where: { id }, data: { minStock } });
+    await tx.item.update({ where: { id }, data: { name, minStock, note: str(formData, "note") ?? null } });
   });
   await logAudit({
     staffId: staff.id, staffName: staff.fullName, action: "UPDATE", entity: "Item", entityId: id,
@@ -206,4 +207,44 @@ export async function adjustStock(formData: FormData) {
   revalidatePath("/kho");
   revalidatePath("/kho/dieu-chinh");
   back(P + "?ok=1");
+}
+
+// Chỉ xóa được mặt hàng chưa có giao dịch kho; còn lại dùng "Ngừng bán".
+export async function deleteItem(formData: FormData) {
+  const staff = await requireRole(...ITEM_MANAGER_ROLES);
+  const P = "/kho/mat-hang";
+  const id = str(formData, "id");
+  if (!id) back(P);
+  const item = await prisma.item.findUnique({ where: { id } });
+  if (!item) back(P);
+  const used = (await prisma.stockLot.count({ where: { itemId: id } })) + (await prisma.stockMove.count({ where: { itemId: id } }));
+  if (used > 0) back(P, `"${item.name}" đã có giao dịch kho nên không xóa được. Hãy chọn "Ngừng bán".`);
+  await prisma.item.delete({ where: { id } });
+  await logAudit({ staffId: staff.id, staffName: staff.fullName, action: "DELETE", entity: "Item", entityId: id, detail: item.name });
+  revalidatePath("/kho/mat-hang");
+  back(P);
+}
+
+// Hủy một lần nhập nhầm: chỉ khi lô chưa bị xuất/điều chỉnh gì.
+export async function cancelLot(formData: FormData) {
+  const staff = await requireRole(...STOCK_WRITE_ROLES);
+  const P = "/kho/nhap";
+  const id = str(formData, "id");
+  if (!id) back(P);
+  const lot = await prisma.stockLot.findUnique({ where: { id }, include: { item: true } });
+  if (!lot) back(P);
+  assertBranch(staff, lot.branchId, P);
+  if (lot.qtyRemaining !== lot.qtyReceived)
+    back(P, "Lô này đã được xuất hoặc điều chỉnh nên không hủy được. Dùng Điều chỉnh để giảm tồn.");
+  await prisma.$transaction([
+    prisma.stockMove.deleteMany({ where: { lotId: id } }),
+    prisma.stockLot.delete({ where: { id } }),
+  ]);
+  await logAudit({
+    staffId: staff.id, staffName: staff.fullName, branchId: lot.branchId, action: "CANCEL_RECEIPT", entity: "StockLot",
+    entityId: id, detail: `${lot.item.name} -${lot.qtyReceived}${lot.item.unit}`,
+  });
+  revalidatePath("/kho");
+  revalidatePath("/kho/nhap");
+  back(P);
 }

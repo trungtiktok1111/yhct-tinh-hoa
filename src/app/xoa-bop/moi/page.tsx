@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/BackLink";
 import { createManualTherapy } from "@/actions/content";
 import { SourceFields } from "@/components/SourceFields";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -5,6 +6,7 @@ import { StatusSelect } from "@/components/StatusSelect";
 export default function NewManualTherapyPage() {
   return (
     <div className="space-y-4 max-w-2xl">
+      <BackLink href="/xoa-bop" label="Quay lại danh sách xoa bóp" />
       <h1 className="text-2xl font-bold text-brand-deep">Thêm thủ pháp xoa bóp / phương pháp khác</h1>
       <form action={createManualTherapy} className="space-y-3">
         <input name="name" required placeholder="Tên thủ pháp (bắt buộc)" className="w-full border rounded px-3 py-2" />

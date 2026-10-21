@@ -1,8 +1,14 @@
+import { EntityToolbar } from "@/components/EntityToolbar";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
 import { addFormulaIngredient } from "@/actions/content";
+import { removeFormulaIngredient, updateFormulaIngredient } from "@/actions/entity";
+import { ConfirmSubmit } from "@/components/ConfirmSubmit";
+import { getCurrentStaff } from "@/lib/auth";
+import { canEditKnowledge } from "@/lib/permissions";
+
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +32,10 @@ export default async function FormulaDetailPage({ params }: { params: { id: stri
     },
   });
   if (!formula) notFound();
+  const staff = await getCurrentStaff();
+  const canEdit = !!staff && canEditKnowledge(staff.role);
 
-  const allHerbs = await prisma.herb.findMany({ orderBy: { standardName: "asc" } });
+  const allHerbs = canEdit ? await prisma.herb.findMany({ orderBy: { standardName: "asc" }, select: { id: true, standardName: true } }) : [];
 
   return (
     <div className="space-y-6">
@@ -35,6 +43,7 @@ export default async function FormulaDetailPage({ params }: { params: { id: stri
         <Link href="/bai-thuoc" className="text-sm text-brand-deep underline">
           ← Danh mục bài thuốc
         </Link>
+        <EntityToolbar entity="bai-thuoc" id={params.id} />
         <div className="flex items-center gap-3 flex-wrap mt-1">
           <h1 className="text-2xl font-bold text-brand-deep">{formula.name}</h1>
           <StatusPill status={formula.status} />
@@ -74,6 +83,7 @@ export default async function FormulaDetailPage({ params }: { params: { id: stri
                 <th className="py-1 pr-2">Lượng</th>
                 <th className="py-1 pr-2">Vai trò</th>
                 <th className="py-1 pr-2">Ghi chú</th>
+                {canEdit && <th className="py-1 pr-2"></th>}
               </tr>
             </thead>
             <tbody>
@@ -89,11 +99,36 @@ export default async function FormulaDetailPage({ params }: { params: { id: stri
                   </td>
                   <td className="py-1.5 pr-2">{ing.role ?? "—"}</td>
                   <td className="py-1.5 pr-2 text-gray-500">{ing.note ?? ""}</td>
+                  {canEdit && (
+                    <td className="py-1.5 pr-2 align-top">
+                      <details>
+                        <summary className="cursor-pointer text-brand-deep underline text-xs">Sửa</summary>
+                        <form action={updateFormulaIngredient} className="mt-2 grid gap-1 min-w-[12rem]">
+                          <input type="hidden" name="ingredientId" value={ing.id} />
+                          <input name="amount" defaultValue={ing.amount ?? ""} placeholder="Lượng" className="border rounded px-2 py-1" />
+                          <input name="unit" defaultValue={ing.unit ?? ""} placeholder="Đơn vị" className="border rounded px-2 py-1" />
+                          <select name="role" defaultValue={ing.role ?? ""} className="border rounded px-2 py-1">
+                            <option value="">Vai trò</option>
+                            <option value="Quân">Quân</option>
+                            <option value="Thần">Thần</option>
+                            <option value="Tá">Tá</option>
+                            <option value="Sứ">Sứ</option>
+                          </select>
+                          <input name="note" defaultValue={ing.note ?? ""} placeholder="Ghi chú" className="border rounded px-2 py-1" />
+                          <button className="rounded bg-brand-deep text-brand-cream px-2 py-1 text-xs">Lưu</button>
+                        </form>
+                      </details>
+                      <form action={removeFormulaIngredient} className="mt-1">
+                        <input type="hidden" name="ingredientId" value={ing.id} />
+                        <ConfirmSubmit message="Bỏ vị thuốc này khỏi bài thuốc?" className="text-red-800 underline text-xs">Bỏ</ConfirmSubmit>
+                      </form>
+                    </td>
+                  )}
                 </tr>
               ))}
               {formula.ingredients.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="text-gray-500 py-2">
+                  <td colSpan={5} className="text-gray-500 py-2">
                     Chưa có thành phần.
                   </td>
                 </tr>
@@ -102,7 +137,7 @@ export default async function FormulaDetailPage({ params }: { params: { id: stri
           </table>
         </div>
 
-        <form action={addFormulaIngredient} className="grid md:grid-cols-5 gap-2 text-sm">
+        {canEdit && <form action={addFormulaIngredient} className="grid md:grid-cols-5 gap-2 text-sm">
           <input type="hidden" name="formulaId" value={formula.id} />
           <select name="herbId" required className="border rounded px-2 py-1.5 md:col-span-2">
             <option value="">— Chọn vị thuốc —</option>
@@ -123,10 +158,10 @@ export default async function FormulaDetailPage({ params }: { params: { id: stri
           </select>
           <input name="note" placeholder="Ghi chú" className="border rounded px-2 py-1.5 md:col-span-4" />
           <button className="border border-brand-deep text-brand-deep rounded px-3 py-1.5">Thêm thành phần</button>
-        </form>
-        <p className="text-xs text-gray-400 mt-1">
+        </form>}
+        {canEdit && <p className="text-xs text-gray-400 mt-1">
           Chưa có vị thuốc cần? <Link href="/vi-thuoc/moi" className="underline">Thêm vị thuốc mới</Link>.
-        </p>
+        </p>}
       </div>
     </div>
   );

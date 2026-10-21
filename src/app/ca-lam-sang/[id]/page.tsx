@@ -1,3 +1,4 @@
+import { EntityToolbar } from "@/components/EntityToolbar";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
@@ -32,6 +33,7 @@ export default async function ClinicalCaseDetailPage({ params }: { params: { id:
         <Link href="/ca-lam-sang" className="text-sm text-brand-deep underline">
           ← Danh mục ca lâm sàng
         </Link>
+        <EntityToolbar entity="ca-lam-sang" id={params.id} />
         <h1 className="text-2xl font-bold text-brand-deep mt-1">{kase.caseCode}</h1>
         {kase.minimalIdentity && <p className="text-sm text-gray-500">{kase.minimalIdentity}</p>}
         {kase.history && <p className="text-sm text-gray-700 mt-1">{kase.history}</p>}

@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/Pagination";
+import { PAGE_SIZE, pageOf } from "@/lib/paging";
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/db";
@@ -5,14 +7,22 @@ import { StatusPill } from "@/components/StatusPill";
 
 export const dynamic = "force-dynamic";
 
-export default async function HerbListPage({ searchParams }: { searchParams: { q?: string } }) {
+export default async function HerbListPage({ searchParams }: { searchParams: { q?: string; trang?: string } }) {
   const q = searchParams.q?.trim();
-  const herbs = await prisma.herb.findMany({
-    where: q
-      ? { OR: [{ standardName: { contains: q } }, { aliases: { contains: q } }, { indications: { contains: q } }] }
-      : undefined,
-    orderBy: { standardName: "asc" },
-  });
+  const page = pageOf(searchParams.trang);
+  const where = q
+    ? {
+        OR: [
+          { standardName: { contains: q, mode: "insensitive" as const } },
+          { aliases: { contains: q, mode: "insensitive" as const } },
+          { indications: { contains: q, mode: "insensitive" as const } },
+        ],
+      }
+    : undefined;
+  const [herbs, total] = await Promise.all([
+    prisma.herb.findMany({ where, orderBy: { standardName: "asc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+    prisma.herb.count({ where }),
+  ]);
   return (
     <div className="space-y-4">
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-deep to-brand-deeper px-5 py-4 flex items-center justify-between gap-3">
@@ -34,7 +44,7 @@ export default async function HerbListPage({ searchParams }: { searchParams: { q
         <input name="q" defaultValue={q} placeholder="Lọc theo tên, chủ trị..." className="flex-1 border rounded-lg px-3 py-2" />
         <button className="border border-brand-deep text-brand-deep rounded-lg px-4 py-2 text-sm">Lọc</button>
       </form>
-      <p className="text-xs text-brand-ink/50">{herbs.length} vị thuốc</p>
+      <Pagination path="/vi-thuoc" page={page} total={total} params={{ q }} />
       <div className="grid md:grid-cols-2 gap-3">
         {herbs.map((h) => (
           <Link key={h.id} href={`/vi-thuoc/${h.id}`} className="card flex items-center gap-3 justify-between">
@@ -56,8 +66,9 @@ export default async function HerbListPage({ searchParams }: { searchParams: { q
             <StatusPill status={h.status} />
           </Link>
         ))}
-        {herbs.length === 0 && <p className="text-sm text-gray-500">Chưa có dữ liệu vị thuốc.</p>}
+        {herbs.length === 0 && <p className="text-sm text-gray-500">Không có vị thuốc nào.</p>}
       </div>
+      <Pagination path="/vi-thuoc" page={page} total={total} params={{ q }} />
     </div>
   );
 }

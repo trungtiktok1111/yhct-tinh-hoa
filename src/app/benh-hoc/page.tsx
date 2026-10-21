@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/Pagination";
+import { PAGE_SIZE, pageOf } from "@/lib/paging";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
@@ -8,15 +10,23 @@ export const dynamic = "force-dynamic";
 export default async function DiseaseListPage({
   searchParams,
 }: {
-  searchParams: { q?: string };
+  searchParams: { q?: string; trang?: string };
 }) {
   const q = searchParams.q?.trim();
-  const diseases = await prisma.disease.findMany({
-    where: q
-      ? { OR: [{ name: { contains: q } }, { aliases: { contains: q } }, { symptoms: { contains: q } }] }
-      : undefined,
-    orderBy: { name: "asc" },
-  });
+  const page = pageOf(searchParams.trang);
+  const where = q
+    ? {
+        OR: [
+          { name: { contains: q, mode: "insensitive" as const } },
+          { aliases: { contains: q, mode: "insensitive" as const } },
+          { symptoms: { contains: q, mode: "insensitive" as const } },
+        ],
+      }
+    : undefined;
+  const [diseases, total] = await Promise.all([
+    prisma.disease.findMany({ where, orderBy: { name: "asc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+    prisma.disease.count({ where }),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -47,6 +57,7 @@ export default async function DiseaseListPage({
         ))}
         {diseases.length === 0 && <p className="text-sm text-gray-500">Chưa có dữ liệu bệnh học.</p>}
       </div>
+      <Pagination path="/benh-hoc" page={page} total={total} params={{ q }} />
     </div>
   );
 }

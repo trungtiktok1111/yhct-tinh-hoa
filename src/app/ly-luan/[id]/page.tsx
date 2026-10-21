@@ -1,3 +1,4 @@
+import { EntityToolbar } from "@/components/EntityToolbar";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
@@ -28,6 +29,7 @@ export default async function TheoryTopicDetailPage({ params }: { params: { id: 
         <Link href="/ly-luan" className="text-sm text-brand-deep underline">
           ← Lý luận cơ bản
         </Link>
+        <EntityToolbar entity="ly-luan" id={params.id} />
         <div className="flex items-center gap-3 flex-wrap mt-1">
           <h1 className="text-2xl font-bold text-brand-deep">{topic.name}</h1>
           <StatusPill status={topic.status} />

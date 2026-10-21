@@ -1,7 +1,13 @@
+import { EntityToolbar } from "@/components/EntityToolbar";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
+import { unlinkPatternPrinciple } from "@/actions/entity";
+import { ConfirmSubmit } from "@/components/ConfirmSubmit";
+import { getCurrentStaff } from "@/lib/auth";
+import { canEditKnowledge } from "@/lib/permissions";
+
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +32,8 @@ export default async function PrincipleDetailPage({ params }: { params: { id: st
     },
   });
   if (!principle) notFound();
+  const staff = await getCurrentStaff();
+  const canEdit = !!staff && canEditKnowledge(staff.role);
 
   return (
     <div className="space-y-6">
@@ -33,6 +41,7 @@ export default async function PrincipleDetailPage({ params }: { params: { id: st
         <Link href="/phap-tri" className="text-sm text-brand-deep underline">
           ← Danh mục pháp trị
         </Link>
+        <EntityToolbar entity="phap-tri" id={params.id} />
         <div className="flex items-center gap-3 flex-wrap mt-1">
           <h1 className="text-2xl font-bold text-brand-deep">{principle.name}</h1>
           <StatusPill status={principle.status} />
@@ -58,6 +67,12 @@ export default async function PrincipleDetailPage({ params }: { params: { id: st
               <Link href={`/chung-hau/${l.pattern.id}`} className="text-brand-deep underline">
                 {l.pattern.name}
               </Link>
+              {canEdit && (
+                <form action={unlinkPatternPrinciple} className="inline ml-2">
+                  <input type="hidden" name="linkId" value={l.id} />
+                  <ConfirmSubmit message="Gỡ liên kết này?" className="rounded border border-red-300 text-red-800 px-2 py-0.5 text-xs">Gỡ</ConfirmSubmit>
+                </form>
+              )}
             </li>
           ))}
           {principle.patternLinks.length === 0 && <p className="text-sm text-gray-500">Chưa liên kết.</p>}

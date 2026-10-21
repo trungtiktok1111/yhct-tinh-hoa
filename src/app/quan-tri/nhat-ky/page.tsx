@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
+import { BackLink } from "@/components/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,7 @@ export default async function AuditPage() {
 
   return (
     <div className="space-y-4">
+      <BackLink href="/quan-tri" label="Quay lại Quản trị" />
       <h1 className="text-2xl font-bold font-display">Nhật ký thao tác</h1>
       <p className="text-sm text-gray-600">200 thao tác gần nhất. Nhật ký chỉ thêm, không sửa hoặc xóa.</p>
       <div className="space-y-2">

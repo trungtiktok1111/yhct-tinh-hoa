@@ -8,12 +8,12 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
 
   const [diseases, patterns, principles, formulas, herbs, points] = q
     ? await Promise.all([
-        prisma.disease.findMany({ where: { OR: [{ name: { contains: q } }, { aliases: { contains: q } }] }, take: 10 }),
-        prisma.pattern.findMany({ where: { name: { contains: q } }, take: 10 }),
-        prisma.treatmentPrinciple.findMany({ where: { name: { contains: q } }, take: 10 }),
-        prisma.formula.findMany({ where: { OR: [{ name: { contains: q } }, { aliases: { contains: q } }] }, take: 10 }),
-        prisma.herb.findMany({ where: { OR: [{ standardName: { contains: q } }, { aliases: { contains: q } }] }, take: 10 }),
-        prisma.acupuncturePoint.findMany({ where: { OR: [{ standardName: { contains: q } }, { code: { contains: q } }] }, take: 10 }),
+        prisma.disease.findMany({ where: { OR: [{ name: { contains: q, mode: "insensitive" } }, { aliases: { contains: q, mode: "insensitive" } }] }, take: 10 }),
+        prisma.pattern.findMany({ where: { name: { contains: q, mode: "insensitive" } }, take: 10 }),
+        prisma.treatmentPrinciple.findMany({ where: { name: { contains: q, mode: "insensitive" } }, take: 10 }),
+        prisma.formula.findMany({ where: { OR: [{ name: { contains: q, mode: "insensitive" } }, { aliases: { contains: q, mode: "insensitive" } }] }, take: 10 }),
+        prisma.herb.findMany({ where: { OR: [{ standardName: { contains: q, mode: "insensitive" } }, { aliases: { contains: q, mode: "insensitive" } }] }, take: 10 }),
+        prisma.acupuncturePoint.findMany({ where: { OR: [{ standardName: { contains: q, mode: "insensitive" } }, { code: { contains: q, mode: "insensitive" } }] }, take: 10 }),
       ])
     : [[], [], [], [], [], []];
 

@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/Pagination";
+import { PAGE_SIZE, pageOf } from "@/lib/paging";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
@@ -5,8 +7,12 @@ import { ModuleHeader } from "@/components/ModuleHeader";
 
 export const dynamic = "force-dynamic";
 
-export default async function PrincipleListPage() {
-  const principles = await prisma.treatmentPrinciple.findMany({ orderBy: { name: "asc" } });
+export default async function PrincipleListPage({ searchParams }: { searchParams: { trang?: string } }) {
+  const page = pageOf(searchParams.trang);
+  const [principles, total] = await Promise.all([
+    prisma.treatmentPrinciple.findMany({ orderBy: { name: "asc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+    prisma.treatmentPrinciple.count(),
+  ]);
   return (
     <div className="space-y-4">
       <ModuleHeader
@@ -24,6 +30,7 @@ export default async function PrincipleListPage() {
         ))}
         {principles.length === 0 && <p className="text-sm text-gray-500">Chưa có dữ liệu pháp trị.</p>}
       </div>
+      <Pagination path="/phap-tri" page={page} total={total} />
     </div>
   );
 }

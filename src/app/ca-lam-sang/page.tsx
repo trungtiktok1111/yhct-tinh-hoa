@@ -1,11 +1,17 @@
+import { Pagination } from "@/components/Pagination";
+import { PAGE_SIZE, pageOf } from "@/lib/paging";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ModuleHeader } from "@/components/ModuleHeader";
 
 export const dynamic = "force-dynamic";
 
-export default async function ClinicalCaseListPage() {
-  const cases = await prisma.clinicalCase.findMany({ orderBy: { updatedAt: "desc" } });
+export default async function ClinicalCaseListPage({ searchParams }: { searchParams: { trang?: string } }) {
+  const page = pageOf(searchParams.trang);
+  const [cases, total] = await Promise.all([
+    prisma.clinicalCase.findMany({ orderBy: { updatedAt: "desc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+    prisma.clinicalCase.count(),
+  ]);
   return (
     <div className="space-y-4">
       <ModuleHeader
@@ -30,6 +36,7 @@ export default async function ClinicalCaseListPage() {
         ))}
         {cases.length === 0 && <p className="text-sm text-gray-500">Chưa có ca nào.</p>}
       </div>
+      <Pagination path="/ca-lam-sang" page={page} total={total} />
     </div>
   );
 }

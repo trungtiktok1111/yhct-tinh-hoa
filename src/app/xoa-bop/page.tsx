@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
 import { ModuleHeader } from "@/components/ModuleHeader";
+import { EntityToolbar } from "@/components/EntityToolbar";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export default async function ManualTherapyListPage() {
               <div className="warn-box mt-2 text-sm">Chống chỉ định: {t.contraindications}</div>
             )}
             {t.source && <div className="text-xs text-gray-500 mt-2">Nguồn: {t.source.title}</div>}
+            <EntityToolbar entity="xoa-bop" id={t.id} />
           </div>
         ))}
         {therapies.length === 0 && <p className="text-sm text-gray-500">Chưa có dữ liệu thủ pháp.</p>}

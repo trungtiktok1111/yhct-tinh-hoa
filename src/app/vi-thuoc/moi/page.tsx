@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/BackLink";
 import { createHerb } from "@/actions/content";
 import { SourceFields } from "@/components/SourceFields";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -5,6 +6,7 @@ import { StatusSelect } from "@/components/StatusSelect";
 export default function NewHerbPage() {
   return (
     <div className="space-y-4 max-w-2xl">
+      <BackLink href="/vi-thuoc" label="Quay lại danh sách vị thuốc" />
       <h1 className="text-2xl font-bold text-brand-deep">Thêm vị thuốc</h1>
       <form action={createHerb} className="space-y-3">
         <input name="standardName" required placeholder="Tên chuẩn (bắt buộc)" className="w-full border rounded px-3 py-2" />

@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { ROLES, ROLE_KEYS } from "@/lib/permissions";
-import { createStaff, resetStaffPassword, setStaffActive, updateStaff } from "@/actions/admin";
+import { createStaff, resetStaffPassword, setStaffActive, updateStaff, deleteStaff } from "@/actions/admin";
+import { BackLink } from "@/components/BackLink";
+import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,7 @@ export default async function StaffPage({ searchParams }: { searchParams: { loi?
 
   return (
     <div className="space-y-6">
+      <BackLink href="/quan-tri" label="Quay lại Quản trị" />
       <h1 className="text-2xl font-bold font-display">Nhân viên</h1>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
 
@@ -93,13 +96,21 @@ export default async function StaffPage({ searchParams }: { searchParams: { loi?
               </form>
 
               {s.id !== me.id && (
-                <form action={setStaffActive}>
-                  <input type="hidden" name="id" value={s.id} />
-                  <input type="hidden" name="active" value={s.active ? "0" : "1"} />
-                  <button type="submit" className="rounded-lg border border-red-300 text-red-800 px-4 py-2 text-sm">
-                    {s.active ? "Khóa tài khoản" : "Mở khóa tài khoản"}
-                  </button>
-                </form>
+                <div className="flex flex-wrap gap-2">
+                  <form action={setStaffActive}>
+                    <input type="hidden" name="id" value={s.id} />
+                    <input type="hidden" name="active" value={s.active ? "0" : "1"} />
+                    <button type="submit" className="rounded-lg border border-brand-gold/50 px-4 py-2 text-sm">
+                      {s.active ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                    </button>
+                  </form>
+                  <form action={deleteStaff}>
+                    <input type="hidden" name="id" value={s.id} />
+                    <ConfirmSubmit message={`Xóa tài khoản "${s.fullName}"? Không thể hoàn tác. Nếu chỉ muốn ngăn đăng nhập, hãy chọn Khóa.`} className="rounded-lg border border-red-300 text-red-800 px-4 py-2 text-sm hover:bg-red-50">
+                      Xóa tài khoản
+                    </ConfirmSubmit>
+                  </form>
+                </div>
               )}
             </div>
           </details>

@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { STOCK_WRITE_ROLES, COST_VIEW_ROLES } from "@/lib/permissions";
-import { receiveStock } from "@/actions/stock";
+import { receiveStock, cancelLot } from "@/actions/stock";
+import { BackLink } from "@/components/BackLink";
+import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { branchesFor, input, btn } from "@/lib/stock";
 import { dateVN, qty, vnd } from "@/lib/format";
 
@@ -24,6 +26,7 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
 
   return (
     <div className="space-y-6">
+      <BackLink href="/kho" label="Quay lại Kho" />
       <h1 className="text-2xl font-bold font-display">Nhập kho</h1>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
       {searchParams.ok && <div className="card !bg-green-50 text-sm text-green-800">Đã nhập kho.</div>}
@@ -70,6 +73,12 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
             {showCost && <span>giá nhập {vnd(l.unitCost)}</span>}
             {l.expiryDate && <span>HSD {dateVN(l.expiryDate)}</span>}
             <span className="text-gray-600">{l.branch.name}{l.supplier ? ` · ${l.supplier}` : ""} · {l.staffName}</span>
+            {l.qtyRemaining === l.qtyReceived && (
+              <form action={cancelLot} className="ml-auto">
+                <input type="hidden" name="id" value={l.id} />
+                <ConfirmSubmit message="Hủy lần nhập này (nhập nhầm)? Số lượng sẽ bị trừ khỏi kho." className="rounded border border-red-300 text-red-800 px-2 py-0.5 text-xs">Hủy phiếu</ConfirmSubmit>
+              </form>
+            )}
           </div>
         ))}
       </div>

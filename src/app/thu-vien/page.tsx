@@ -1,11 +1,17 @@
+import { Pagination } from "@/components/Pagination";
+import { PAGE_SIZE, pageOf } from "@/lib/paging";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ModuleHeader } from "@/components/ModuleHeader";
 
 export const dynamic = "force-dynamic";
 
-export default async function SourceListPage() {
-  const sources = await prisma.source.findMany({ orderBy: { title: "asc" } });
+export default async function SourceListPage({ searchParams }: { searchParams: { trang?: string } }) {
+  const page = pageOf(searchParams.trang);
+  const [sources, total] = await Promise.all([
+    prisma.source.findMany({ orderBy: { title: "asc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+    prisma.source.count(),
+  ]);
   return (
     <div className="space-y-4">
       <ModuleHeader
@@ -28,6 +34,7 @@ export default async function SourceListPage() {
         ))}
         {sources.length === 0 && <p className="text-sm text-gray-500">Chưa có nguồn tài liệu nào.</p>}
       </div>
+      <Pagination path="/thu-vien" page={page} total={total} />
     </div>
   );
 }

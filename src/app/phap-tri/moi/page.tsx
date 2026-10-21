@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/BackLink";
 import { createPrinciple } from "@/actions/content";
 import { SourceFields } from "@/components/SourceFields";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -5,6 +6,7 @@ import { StatusSelect } from "@/components/StatusSelect";
 export default function NewPrinciplePage() {
   return (
     <div className="space-y-4 max-w-2xl">
+      <BackLink href="/phap-tri" label="Quay lại danh sách pháp trị" />
       <h1 className="text-2xl font-bold text-brand-deep">Thêm pháp trị</h1>
       <form action={createPrinciple} className="space-y-3">
         <input name="name" required placeholder="Tên pháp trị (bắt buộc)" className="w-full border rounded px-3 py-2" />

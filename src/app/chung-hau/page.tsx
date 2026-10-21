@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/Pagination";
+import { PAGE_SIZE, pageOf } from "@/lib/paging";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
@@ -5,8 +7,12 @@ import { ModuleHeader } from "@/components/ModuleHeader";
 
 export const dynamic = "force-dynamic";
 
-export default async function PatternListPage() {
-  const patterns = await prisma.pattern.findMany({ orderBy: { name: "asc" } });
+export default async function PatternListPage({ searchParams }: { searchParams: { trang?: string } }) {
+  const page = pageOf(searchParams.trang);
+  const [patterns, total] = await Promise.all([
+    prisma.pattern.findMany({ orderBy: { name: "asc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+    prisma.pattern.count(),
+  ]);
   return (
     <div className="space-y-4">
       <ModuleHeader
@@ -24,6 +30,7 @@ export default async function PatternListPage() {
         ))}
         {patterns.length === 0 && <p className="text-sm text-gray-500">Chưa có dữ liệu chứng hậu.</p>}
       </div>
+      <Pagination path="/chung-hau" page={page} total={total} />
     </div>
   );
 }

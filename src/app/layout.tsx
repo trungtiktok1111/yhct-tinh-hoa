@@ -64,12 +64,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
             {staff && (
               <form action={logout} className="ml-auto flex items-center gap-3 text-brand-cream">
-                <div className="text-right leading-tight min-w-0">
+                <Link href="/tai-khoan" title="Tài khoản, đổi mật khẩu" className="text-right leading-tight min-w-0 hover:underline">
                   <div className="text-xs md:text-sm font-semibold truncate max-w-[9rem] md:max-w-none">
                     {staff.fullName}
                   </div>
                   <div className="text-[10px] md:text-xs text-brand-cream/70">{ROLES[staff.role]}</div>
-                </div>
+                </Link>
                 <button
                   type="submit"
                   className="rounded-lg border border-brand-gold/50 px-3 py-1.5 text-xs md:text-sm hover:bg-white/10"

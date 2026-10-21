@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/Pagination";
+import { PAGE_SIZE, pageOf } from "@/lib/paging";
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/db";
@@ -5,11 +7,28 @@ import { StatusPill } from "@/components/StatusPill";
 
 export const dynamic = "force-dynamic";
 
-export default async function FormulaListPage() {
-  const formulas = await prisma.formula.findMany({
-    orderBy: { name: "asc" },
-    include: { principle: true, ingredients: { include: { herb: true } } },
-  });
+export default async function FormulaListPage({ searchParams }: { searchParams: { q?: string; trang?: string } }) {
+  const q = searchParams.q?.trim();
+  const page = pageOf(searchParams.trang);
+  const where = q
+    ? {
+        OR: [
+          { name: { contains: q, mode: "insensitive" as const } },
+          { aliases: { contains: q, mode: "insensitive" as const } },
+          { indications: { contains: q, mode: "insensitive" as const } },
+        ],
+      }
+    : undefined;
+  const [formulas, total] = await Promise.all([
+    prisma.formula.findMany({
+      where,
+      orderBy: { name: "asc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: { principle: true, ingredients: { include: { herb: { select: { standardName: true } } } } },
+    }),
+    prisma.formula.count({ where }),
+  ]);
   return (
     <div className="space-y-4">
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-deep to-brand-deeper px-5 py-4 flex items-center justify-between gap-3">
@@ -27,6 +46,10 @@ export default async function FormulaListPage() {
           + Thêm bài thuốc
         </Link>
       </div>
+      <form className="flex gap-2">
+        <input name="q" defaultValue={q} placeholder="Lọc theo tên, chủ trị..." className="flex-1 border rounded-lg px-3 py-2" />
+        <button className="border border-brand-deep text-brand-deep rounded-lg px-4 py-2 text-sm">Lọc</button>
+      </form>
       <div className="grid gap-3">
         {formulas.map((f) => (
           <Link key={f.id} href={`/bai-thuoc/${f.id}`} className="card">
@@ -40,8 +63,9 @@ export default async function FormulaListPage() {
             </div>
           </Link>
         ))}
-        {formulas.length === 0 && <p className="text-sm text-gray-500">Chưa có dữ liệu bài thuốc.</p>}
+        {formulas.length === 0 && <p className="text-sm text-gray-500">Không có bài thuốc nào.</p>}
       </div>
+      <Pagination path="/bai-thuoc" page={page} total={total} params={{ q }} />
     </div>
   );
 }
