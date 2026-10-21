@@ -10,7 +10,9 @@ import {
 } from "@/actions/exam";
 import { BAT_CUONG, BAT_PHAP, parseDoseRange } from "@/lib/exam";
 import { input } from "@/lib/stock";
-import { BackLink } from "@/components/BackLink";
+import Image from "next/image";
+import { AlertTriangle, FolderOpen } from "lucide-react";
+import { ExamTabs } from "@/components/ExamTabs";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { SEX_LABEL, VISIT_STATUS, patientCode, qty as fmtQty, bmiText } from "@/lib/format";
 import { ageOf, toDateInput } from "@/lib/person";
@@ -51,14 +53,46 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
   const p = visit.patient;
   const exam = visit.exam;
 
+  const vitals = [
+    visit.pulse != null && ["Mạch", `${visit.pulse}/phút`],
+    visit.bloodPressure && ["HA", visit.bloodPressure],
+    visit.temperature != null && ["Nhiệt độ", `${visit.temperature}°C`],
+    visit.weightKg != null && ["Cân nặng", `${visit.weightKg} kg`],
+    visit.heightCm != null && ["Chiều cao", `${visit.heightCm} cm`],
+    bmiText(visit.weightKg, visit.heightCm) && ["BMI", bmiText(visit.weightKg, visit.heightCm) as string],
+  ].filter(Boolean) as [string, string][];
+  const initials = p.fullName.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase();
   const header = (
-    <div className="space-y-2">
-      <BackLink href="/kham" label="Danh sách khám" />
-      <h1 className="text-2xl font-bold font-display">{p.fullName}</h1>
-      <div className="text-sm text-gray-700">
-        {patientCode(p.seq)} · {SEX_LABEL[p.sex] ?? p.sex} · {ageOf(p.birthDate, p.birthYear)} tuổi · Số {visit.queueNo} · {visit.branch.name} · {VISIT_STATUS[visit.status] ?? visit.status}
+    <>
+      <div className="sticky top-14 z-20 overflow-hidden rounded-2xl bg-brand-deeper text-white shadow-md">
+        <Image src="/images/art/herbs-wide.jpg" alt="" width={900} height={300} className="absolute right-0 top-0 h-full w-1/2 object-cover opacity-70" />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper from-50% via-brand-deeper/85 to-transparent" />
+        <div className="relative flex flex-wrap items-center gap-4 p-4">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white/15 text-lg font-bold ring-2 ring-brand-goldLight/60">{initials}</span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold">{p.fullName}</h1>
+              <span className="text-brand-goldLight">{p.sex === "M" ? "♂" : p.sex === "F" ? "♀" : ""}</span>
+              <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs">{VISIT_STATUS[visit.status] ?? visit.status}</span>
+            </div>
+            <div className="text-sm text-white/80">
+              {patientCode(p.seq)} · {SEX_LABEL[p.sex] ?? p.sex} · {ageOf(p.birthDate, p.birthYear)} tuổi · {p.phone} · Số {visit.queueNo} · {visit.branch.name}
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {vitals.length === 0 ? <span className="text-xs text-white/60">Chưa ghi sinh hiệu</span> : vitals.map(([k, v]) => (
+                <span key={k} className="rounded-lg bg-white/12 px-2 py-0.5 text-xs"><span className="text-white/60">{k}: </span><b>{v}</b></span>
+              ))}
+            </div>
+          </div>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${p.allergies ? "border-red-300 bg-red-600/90 font-semibold" : "border-white/25 bg-white/10 text-white/85"}`}>
+              <AlertTriangle className="h-4 w-4" /> Dị ứng: {p.allergies || "chưa ghi nhận"}
+            </div>
+            <Link href={`/benh-nhan/${p.id}`} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-brand-deep hover:bg-emerald-50"><FolderOpen className="h-4 w-4" />Hồ sơ bệnh nhân</Link>
+            <Link href="/kham" className="rounded-xl border border-white/30 px-3 py-2 text-sm hover:bg-white/10">◂ Danh sách khám</Link>
+          </div>
+        </div>
       </div>
-      {p.allergies && <div className="warn-box text-sm"><b>Dị ứng:</b> {p.allergies}</div>}
       {(p.pastHistory || p.chronicConditions || p.familyHistory) && (
         <div className="card text-sm space-y-1">
           {p.chronicConditions && <div><b>Bệnh mạn tính:</b> {p.chronicConditions}</div>}
@@ -66,18 +100,8 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
           {p.familyHistory && <div><b>Gia đình:</b> {p.familyHistory}</div>}
         </div>
       )}
-      <div className="text-sm text-gray-700">
-        Sinh hiệu: {[
-          visit.pulse != null && `mạch ${visit.pulse}/phút`,
-          visit.bloodPressure && `HA ${visit.bloodPressure}`,
-          visit.temperature != null && `${visit.temperature}°C`,
-          visit.weightKg != null && `${visit.weightKg} kg`,
-          bmiText(visit.weightKg, visit.heightCm) && `BMI ${bmiText(visit.weightKg, visit.heightCm)}`,
-          visit.heightCm != null && `${visit.heightCm} cm`,
-        ].filter(Boolean).join(" · ") || "chưa ghi"}
-      </div>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
-    </div>
+    </>
   );
 
   if (!exam) {
@@ -146,12 +170,8 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
   const hidden = <input type="hidden" name="visitId" value={visit.id} />;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {header}
-
-      <div className="warn-box text-xs">
-        Dữ liệu tri thức trong hệ thống là DEMO. Mọi gợi ý chỉ để tham khảo; chẩn đoán và đơn thuốc do bác sĩ quyết định.
-      </div>
 
       {locked && (
         <div className="card !bg-green-50 text-sm text-green-800 flex flex-wrap items-center gap-3">
@@ -160,9 +180,11 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         </div>
       )}
 
+      <ExamTabs tabs={[
+        { key: "tu-chan", label: "Tứ chẩn", ids: ["tu-chan", "tong-hop", "de-xuat"], content: (<>
       {/* 1. Hỏi bệnh và tứ chẩn */}
       <section className="card space-y-3" id="tu-chan">
-        <h2 className="font-semibold text-brand-deep">1. Hỏi bệnh và tứ chẩn</h2>
+        <h2 className="font-semibold text-brand-deep">Hỏi bệnh và tứ chẩn</h2>
         <form action={saveFindings} className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
@@ -290,9 +312,11 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         </section>
       )}
 
+</>) },
+        { key: "chan-doan", label: "Chẩn đoán", ids: ["chan-doan"], content: (<>
       {/* 3. Chẩn đoán */}
       <section className="card space-y-3" id="chan-doan">
-        <h2 className="font-semibold text-brand-deep">2. Chẩn đoán và pháp trị</h2>
+        <h2 className="font-semibold text-brand-deep">Chẩn đoán và pháp trị</h2>
         <form action={saveDiagnosis} className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
@@ -336,9 +360,11 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         </form>
       </section>
 
+</>) },
+        { key: "don-thuoc", label: "Đơn thuốc", ids: ["don-thuoc"], content: (<>
       {/* 4. Đơn thuốc */}
       <section className="card space-y-3" id="don-thuoc">
-        <h2 className="font-semibold text-brand-deep">3. Đơn thuốc</h2>
+        <h2 className="font-semibold text-brand-deep">Đơn thuốc</h2>
         {!locked && formulas.length > 0 && (
           <div className="rounded-lg border border-brand-gold/30 p-3 space-y-2">
             <div className="text-sm font-semibold">Bài thuốc theo pháp trị “{exam.principleText}”</div>
@@ -446,9 +472,11 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         )}
       </section>
 
+</>) },
+        { key: "cham-cuu", label: "Châm cứu", ids: ["cham-cuu"], content: (<>
       {/* 5. Châm cứu, xoa bóp */}
       <section className="card space-y-3" id="cham-cuu">
-        <h2 className="font-semibold text-brand-deep">4. Châm cứu và xoa bóp</h2>
+        <h2 className="font-semibold text-brand-deep">Châm cứu và xoa bóp</h2>
         {exam.points.length === 0 && exam.therapies.length === 0 && <p className="text-sm text-gray-600">Chưa chỉ định.</p>}
         {exam.points.map((x) => (
           <div key={x.id} className="flex items-center gap-2 text-sm">
@@ -490,9 +518,11 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         )}
       </section>
 
+</>) },
+        { key: "hoan-tat", label: "Xong", ids: ["hoan-tat"], content: (<>
       {/* 6. Hoàn tất */}
       <section className="card space-y-3" id="hoan-tat">
-        <h2 className="font-semibold text-brand-deep">5. Dặn dò và hoàn tất</h2>
+        <h2 className="font-semibold text-brand-deep">Dặn dò và hoàn tất</h2>
         <form action={finishExam} className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
@@ -510,6 +540,9 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
           )}
         </form>
       </section>
+
+</>) },
+      ]} />
 
       <p className="text-xs text-gray-500">
         <Link href={`/benh-nhan/${p.id}`} className="underline">Hồ sơ bệnh nhân</Link>

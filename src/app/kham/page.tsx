@@ -5,9 +5,11 @@ import { EXAM_ROLES } from "@/lib/permissions";
 import { startExam } from "@/actions/exam";
 import { createSampleCase } from "@/actions/sample";
 import { SAMPLE_NAME } from "@/lib/sampleCase";
-import { branchesFor, input } from "@/lib/stock";
+import { branchesFor } from "@/lib/stock";
 import { SEX_LABEL, VISIT_STATUS, patientCode, timeVN, vnDayStart } from "@/lib/format";
 import { ageOf } from "@/lib/person";
+import { PageHead, Stat, Panel } from "@/components/ui";
+import { HeartPulse, Users, Clock, Stethoscope, CheckCircle2, AlertTriangle, BookOpenCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -36,59 +38,65 @@ export default async function ExamQueuePage({ searchParams }: { searchParams: { 
   const order = (s: string) => (s === "IN_EXAM" ? 0 : s === "WAITING" ? 1 : 2);
   visits.sort((a, b) => order(a.status) - order(b.status) || a.queueNo - b.queueNo);
 
+  const count = (st: string) => visits.filter((v) => v.status === st).length;
+  const chip: Record<string, [string, string]> = { WAITING: ["Chờ khám", "chip-amber"], IN_EXAM: ["Đang khám", "chip-blue"], DONE: ["Đã khám", "chip-green"] };
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold font-display">Khám bệnh hôm nay</h1>
-      <div className="card !py-3 flex flex-wrap items-center gap-3 border-brand-gold/60">
-        <div className="min-w-0 flex-1 text-sm">
-          <b className="text-brand-deep">Ca mẫu hướng dẫn</b>
-          <div className="text-xs text-gray-600">Một bệnh án khám hoàn chỉnh (tứ chẩn, chẩn đoán, đơn thuốc, châm cứu, hóa đơn) để xem và làm theo.</div>
-        </div>
+      <PageHead icon={HeartPulse} title="Khám bệnh hôm nay" sub="Danh sách bệnh nhân chờ khám và đang khám" img="/images/art/needles.jpg">
         {sampleVisitId ? (
-          <Link href={`/kham/${sampleVisitId}`} className="rounded-lg bg-brand-deep text-brand-cream px-4 py-2 font-semibold">Xem ca mẫu</Link>
+          <Link href={`/kham/${sampleVisitId}`} className="flex items-center gap-2 rounded-xl border border-brand-deep px-4 py-2.5 font-semibold text-brand-deep hover:bg-emerald-50"><BookOpenCheck className="h-5 w-5" />Xem ca mẫu</Link>
         ) : (
           <form action={createSampleCase}>
-            <button className="rounded-lg bg-brand-deep text-brand-cream px-4 py-2 font-semibold">Tạo ca mẫu</button>
+            <button className="flex items-center gap-2 rounded-xl border border-brand-deep px-4 py-2.5 font-semibold text-brand-deep hover:bg-emerald-50"><BookOpenCheck className="h-5 w-5" />Tạo ca mẫu hướng dẫn</button>
           </form>
         )}
-      </div>
+      </PageHead>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
-      <form method="get" className="flex items-end gap-2">
-        <label className="text-sm flex-1">Chi nhánh
-          <select name="cn" defaultValue={branch.id} className={input}>
-            {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
-        </label>
-        <button className="rounded-lg border border-brand-gold/50 px-4 py-2.5">Xem</button>
-      </form>
-      <div className="space-y-2">
-        {visits.length === 0 && <p className="text-sm text-gray-600">Hôm nay chưa có lượt khám nào. Lễ tân cần tiếp đón bệnh nhân trước.</p>}
-        {visits.map((v) => (
-          <div key={v.id} className="card !py-3 flex flex-wrap items-center gap-3">
-            <div className="text-2xl font-bold tabular-nums w-10 text-center">{v.queueNo}</div>
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-brand-deep">{v.patient.fullName}</div>
-              <div className="text-xs text-gray-600">
-                {patientCode(v.patient.seq)} · {SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi · {timeVN(v.createdAt)}
-                {v.reason ? ` · ${v.reason}` : ""}
-              </div>
-              {v.patient.allergies && <div className="text-xs text-red-700 font-semibold">Dị ứng: {v.patient.allergies}</div>}
-              {v.exam?.doctorName && <div className="text-xs text-gray-500">Bác sĩ: {v.exam.doctorName}</div>}
-            </div>
-            <span className="text-sm">{VISIT_STATUS[v.status] ?? v.status}</span>
-            {v.status === "DONE" ? (
-              <Link href={`/kham/${v.id}`} className="rounded-lg border border-brand-gold/50 px-4 py-2">Xem bệnh án</Link>
-            ) : (
-              <form action={startExam}>
-                <input type="hidden" name="visitId" value={v.id} />
-                <button className="rounded-lg bg-brand-deep text-brand-cream px-4 py-2 font-semibold">
-                  {v.status === "IN_EXAM" ? "Tiếp tục khám" : "Bắt đầu khám"}
-                </button>
-              </form>
-            )}
-          </div>
-        ))}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Stat icon={Users} label="Tổng lượt khám" value={visits.length} unit="hôm nay" tone="green" />
+        <Stat icon={Clock} label="Chờ khám" value={count("WAITING")} unit="bệnh nhân" tone="amber" />
+        <Stat icon={Stethoscope} label="Đang khám" value={count("IN_EXAM")} unit="bệnh nhân" tone="blue" />
+        <Stat icon={CheckCircle2} label="Đã khám" value={count("DONE")} unit="bệnh nhân" tone="green" />
       </div>
+      <Panel pad={false} icon={Users} title={`Danh sách khám (${visits.length})`}>
+        {visits.length === 0 ? <p className="p-5 text-brand-ink/60">Hôm nay chưa có lượt khám nào. Lễ tân cần tiếp đón bệnh nhân trước.</p> : (
+          <div className="overflow-x-auto">
+            <table>
+              <thead><tr><th className="w-14">STT</th><th>Bệnh nhân</th><th>Mã BN</th><th>Giờ đến</th><th>Lý do khám</th><th>Bác sĩ</th><th>Trạng thái</th><th className="text-center">Thao tác</th></tr></thead>
+              <tbody>
+                {visits.map((v) => {
+                  const [t, c] = chip[v.status] ?? [v.status, "chip-gray"];
+                  return (
+                    <tr key={v.id}>
+                      <td className="font-bold text-brand-deep">{v.queueNo}</td>
+                      <td>
+                        <span className="font-semibold">{v.patient.fullName}</span>
+                        {v.patient.allergies && <AlertTriangle className="inline h-4 w-4 ml-1 text-red-600" aria-label={`Dị ứng: ${v.patient.allergies}`} />}
+                        <div className="text-xs text-brand-ink/55">{SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi</div>
+                      </td>
+                      <td className="text-brand-ink/70">{patientCode(v.patient.seq)}</td>
+                      <td>{timeVN(v.createdAt)}</td>
+                      <td className="max-w-xs text-brand-ink/80">{v.reason ?? "—"}</td>
+                      <td className="text-brand-ink/70">{v.exam?.doctorName ?? "—"}</td>
+                      <td><span className={`chip ${c}`}>{t}</span></td>
+                      <td className="text-center">
+                        {v.status === "DONE" ? (
+                          <Link href={`/kham/${v.id}`} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Xem bệnh án</Link>
+                        ) : (
+                          <form action={startExam}>
+                            <input type="hidden" name="visitId" value={v.id} />
+                            <button className="rounded-lg bg-brand-deep px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-deeper">{v.status === "IN_EXAM" ? "Tiếp tục khám" : "Bắt đầu khám"}</button>
+                          </form>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
     </div>
   );
 }
