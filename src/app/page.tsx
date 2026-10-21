@@ -24,7 +24,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
 
   const header = (
     <section className="relative overflow-hidden rounded-2xl bg-brand-deeper text-white min-h-[11rem]">
-      <Image src="/images/jar-herbs.png" alt="" width={483} height={239} priority className="absolute right-0 top-0 h-full w-3/4 object-cover" />
+      <Image src="/images/art/panorama.jpg" alt="" width={1800} height={600} priority className="absolute inset-0 h-full w-full object-cover object-right" />
       <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper via-brand-deeper/85 to-brand-deeper/10" />
       <div className="relative p-6 md:p-8">
         <div className="text-sm text-brand-goldLight capitalize">{dateText}</div>
@@ -252,7 +252,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
             </dl>
           </section>
           <div className="relative overflow-hidden rounded-2xl h-40">
-            <Image src="/images/mortar-pestle.png" alt="" fill className="object-cover" />
+            <Image src="/images/art/mortar.jpg" alt="" fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-brand-deeper/80 to-transparent" />
             <div className="absolute bottom-3 left-4 brand-serif italic text-brand-goldLight text-lg">Sức khỏe hôm nay<br />Hạnh phúc ngày mai</div>
           </div>

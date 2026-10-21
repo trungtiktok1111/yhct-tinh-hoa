@@ -64,7 +64,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <SideNav clinic={clinic} knowledge={knowledge} admin={admin} />
               </div>
               <div className="relative h-36 shrink-0 overflow-hidden border-t border-white/10">
-                <Image src="/images/ginseng-rock.png" alt="" fill className="object-cover opacity-25 mix-blend-luminosity" />
+                <Image src="/images/art/tall.jpg" alt="" fill className="object-cover opacity-40" />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-deeper via-brand-deeper/60 to-transparent" />
                 <div className="absolute bottom-3 left-4 right-4 text-brand-goldLight">
                   <div className="text-[11px] font-semibold tracking-[0.12em] uppercase">Y học cổ truyền</div>

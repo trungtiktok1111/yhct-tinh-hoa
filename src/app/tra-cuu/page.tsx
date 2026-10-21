@@ -5,14 +5,14 @@ import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 const TILES = [
-  { href: "/ly-luan", label: "Lý luận cơ bản", note: "Âm dương, ngũ hành, tạng phủ", img: "/images/library-books.png" },
-  { href: "/benh-hoc", label: "Bệnh học", note: "Bệnh danh, nguyên nhân, biểu hiện", img: "/images/admin-clinic.png" },
-  { href: "/chung-hau", label: "Chứng hậu", note: "Bát cương, tạng phủ, kinh lạc", img: "/images/teapot.png" },
-  { href: "/bai-thuoc", label: "Bài thuốc", note: "Thành phần, liều, gia giảm", img: "/images/jar-herbs.png" },
-  { href: "/vi-thuoc", label: "Vị thuốc", note: "Hình ảnh, tính vị, quy kinh", img: "/images/scale-herbs.png" },
-  { href: "/cham-cuu", label: "Châm cứu – Huyệt vị", note: "Huyệt, đường kinh, thủ pháp", img: "/images/meridian-chart.png" },
-  { href: "/xoa-bop", label: "Xoa bóp – Bấm huyệt", note: "Thủ thuật theo vùng, theo chứng", img: "/images/acupuncture-needles.png" },
-  { href: "/thu-vien", label: "Thư viện tài liệu", note: "Nguồn trích dẫn", img: "/images/apothecary-shelf.png" },
+  { href: "/ly-luan", label: "Lý luận cơ bản", note: "Âm dương, ngũ hành, tạng phủ", img: "/images/art/landscape.jpg" },
+  { href: "/benh-hoc", label: "Bệnh học", note: "Bệnh danh, nguyên nhân, biểu hiện", img: "/images/art/pharmacy.jpg" },
+  { href: "/chung-hau", label: "Chứng hậu", note: "Bát cương, tạng phủ, kinh lạc", img: "/images/art/tea.jpg" },
+  { href: "/bai-thuoc", label: "Bài thuốc", note: "Thành phần, liều, gia giảm", img: "/images/art/scale.jpg" },
+  { href: "/vi-thuoc", label: "Vị thuốc", note: "Hình ảnh, tính vị, quy kinh", img: "/images/art/mortar.jpg" },
+  { href: "/cham-cuu", label: "Châm cứu – Huyệt vị", note: "Huyệt, đường kinh, thủ pháp", img: "/images/art/needles.jpg" },
+  { href: "/xoa-bop", label: "Xoa bóp – Bấm huyệt", note: "Thủ thuật theo vùng, theo chứng", img: "/images/art/meridian.jpg" },
+  { href: "/thu-vien", label: "Thư viện tài liệu", note: "Nguồn trích dẫn", img: "/images/art/tall.jpg" },
 ];
 
 export default async function ReferenceHome() {
@@ -36,7 +36,7 @@ export default async function ReferenceHome() {
   return (
     <div className="space-y-8">
       <section className="relative overflow-hidden rounded-2xl">
-        <Image src="/images/apothecary-shelf.png" alt="" width={1000} height={400} priority className="h-56 md:h-64 w-full object-cover" />
+        <Image src="/images/art/herbs-wide.jpg" alt="" width={1672} height={941} priority className="h-56 md:h-64 w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper/90 via-brand-deeper/60 to-transparent" />
         <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-center text-white">
           <div className="text-xs uppercase tracking-[0.2em] text-brand-goldLight">Tra cứu y học</div>
