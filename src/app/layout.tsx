@@ -81,7 +81,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <header className="sticky top-0 z-20 flex items-center gap-3 bg-white/95 backdrop-blur border-b border-slate-200 px-4 md:px-8 h-14">
                 <Link href="/" className="md:hidden font-display font-bold text-brand-deep">YHCT Tinh Hoa</Link>
                 <Suspense fallback={null}><BranchSwitch branches={branches} /></Suspense>
-                <form action="/benh-nhan" className="relative flex-1 max-w-xl hidden sm:block">
+                <form action="/benh-nhan" className="relative min-w-0 flex-1 max-w-xl hidden sm:block">
                   <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     name="q"
