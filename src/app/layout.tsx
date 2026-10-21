@@ -10,6 +10,7 @@ import { NavIcon } from "@/components/NavIcon";
 import { SideNav } from "@/components/SideNav";
 import { BranchSwitch } from "@/components/BranchSwitch";
 import { branchesFor } from "@/lib/stock";
+import { NotificationBell } from "@/components/NotificationBell";
 import { getCurrentStaff } from "@/lib/auth";
 import { rolesLabel, canAccessPath } from "@/lib/permissions";
 import { logout } from "@/actions/auth";
@@ -88,7 +89,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     className="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-deep/30"
                   />
                 </form>
-                <details className="relative ml-auto">
+                <div className="ml-auto flex items-center gap-2">
+                <NotificationBell staff={staff} branchIds={branches.map((b) => b.id)} />
+                <details className="relative">
                   <summary className="flex cursor-pointer list-none items-center gap-3 rounded-full py-1 pl-1 pr-3 hover:bg-slate-100">
                     <span className="h-9 w-9 rounded-full bg-brand-deep text-brand-goldLight grid place-items-center text-sm font-bold">{initials}</span>
                     <span className="hidden sm:block text-left leading-tight">
@@ -104,6 +107,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     </form>
                   </div>
                 </details>
+                </div>
               </header>
 
               <main className="flex-1 p-4 md:px-5 md:py-4 pb-24 md:pb-4 w-full">

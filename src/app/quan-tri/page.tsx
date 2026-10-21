@@ -4,10 +4,12 @@ import { PageHead, Stat, Panel } from "@/components/ui";
 import { ShieldCheck, FileText, Clock, CheckCircle2, FilePenLine, Building2, UserCog, ScrollText, BookOpen, Leaf, Stethoscope, Fingerprint, Compass, FlaskConical, Target, type LucideIcon } from "lucide-react";
 import { timeVN, dateVN } from "@/lib/format";
 import { getCurrentStaff } from "@/lib/auth";
+import { seedDemoData, clearDemoData } from "@/actions/demo";
+import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }: { searchParams: { ok?: string; loi?: string } }) {
   const staff = await getCurrentStaff();
   const entities = [
     { label: "Bệnh học", model: prisma.disease },
@@ -42,6 +44,15 @@ export default async function AdminPage() {
     <div className="space-y-4">
       <PageHead icon={ShieldCheck} title="Quản trị & Thẩm định nội dung" sub="Tài khoản, phân quyền, quy trình thẩm định nội dung và trạng thái hệ thống" img="/images/art/pharmacy.jpg" />
 
+      {searchParams.ok && <div className="card !bg-green-50 text-sm text-green-800">{searchParams.ok}</div>}
+      {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
+      {staff?.isOwner && (
+        <div className="card flex flex-wrap items-center gap-3 !border-amber-300 !bg-amber-50">
+          <div className="min-w-0 flex-1 text-sm"><b>Dữ liệu demo</b><div className="text-xs text-brand-ink/70">Tạo bệnh nhân, lượt khám, hóa đơn, kho mẫu để xem đủ giao diện. Đánh dấu [DEMO] và xóa được hết khi chạy thật.</div></div>
+          <form action={seedDemoData}><button className="rounded-xl bg-brand-deep px-4 py-2.5 font-semibold text-white hover:bg-brand-deeper">Tạo dữ liệu demo</button></form>
+          <form action={clearDemoData}><ConfirmSubmit message="Xóa toàn bộ dữ liệu demo (bệnh nhân, lượt khám, hóa đơn, lô kho đánh dấu [DEMO])?">Xóa dữ liệu demo</ConfirmSubmit></form>
+        </div>
+      )}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Stat icon={FileText} label="Bản nháp" value={sum("DRAFT")} tone="amber" />
         <Stat icon={Clock} label="Chờ thẩm định" value={sum("PENDING_REVIEW")} tone="blue" />
