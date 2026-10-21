@@ -4,7 +4,8 @@ import { REPORT_ROLES } from "@/lib/permissions";
 import { branchesFor, input } from "@/lib/stock";
 import { dateVN, qty as fq, vnd } from "@/lib/format";
 import { PageHead, Stat, Panel } from "@/components/ui";
-import { BarChart3, Banknote, FileText, Users, FileX, Leaf, AlertTriangle, CalendarClock, PieChart, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import { Download, Stethoscope, ReceiptText, BarChart3, Banknote, FileText, Users, FileX, Leaf, AlertTriangle, CalendarClock, PieChart, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ const DAY = 86400000;
 const vnDate = (d: Date) => new Date(d.getTime() + 7 * 3600000).toISOString().slice(0, 10);
 const okDate = (v?: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v)) ? v : undefined);
 
-export default async function ReportPage({ searchParams }: { searchParams: { cn?: string; tu?: string; den?: string } }) {
+export default async function ReportPage({ searchParams }: { searchParams: { cn?: string; tu?: string; den?: string; tab?: string } }) {
   const staff = await requireRole(...REPORT_ROLES);
   const branches = await branchesFor(staff);
   const today = vnDate(new Date());
@@ -26,7 +27,9 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
   const branchIds = chosen ? [chosen.id] : branches.map((b) => b.id);
   if (branchIds.length === 0) return <div className="warn-box text-sm">Bạn chưa được gán chi nhánh nào.</div>;
 
-  const [paid, voided, visitGroups, lines, items, lots] = await Promise.all([
+  const span = end.getTime() - start.getTime();
+  const pStart = new Date(start.getTime() - span);
+  const [paid, voided, visitGroups, lines, items, lots, prevPaid, prevVisits, dis, recent] = await Promise.all([
     prisma.invoice.findMany({
       where: { branchId: { in: branchIds }, status: "PAID", paidAt: { gte: start, lt: end } },
       select: { paidAt: true, total: true, method: true, kind: true, discount: true },
@@ -42,7 +45,16 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
       where: { branchId: { in: branchIds }, qtyRemaining: { gt: 0 } },
       select: { itemId: true, branchId: true, qtyRemaining: true, expiryDate: true, item: { select: { name: true, unit: true } }, branch: { select: { name: true } } },
     }),
+    prisma.invoice.aggregate({ _sum: { total: true }, _count: true, where: { branchId: { in: branchIds }, status: "PAID", paidAt: { gte: pStart, lt: start } } }),
+    prisma.visit.count({ where: { branchId: { in: branchIds }, createdAt: { gte: pStart, lt: start } } }),
+    prisma.exam.groupBy({ by: ["diseaseText"], where: { status: "FINAL", diseaseText: { not: null }, visit: { branchId: { in: branchIds }, createdAt: { gte: start, lt: end } } }, _count: { _all: true }, orderBy: { _count: { diseaseText: "desc" } }, take: 6 }),
+    prisma.invoice.findMany({ where: { branchId: { in: branchIds }, status: "PAID", paidAt: { gte: start, lt: end } }, orderBy: { paidAt: "desc" }, take: 8, include: { patient: { select: { fullName: true } }, lines: { select: { kind: true } } } }),
   ]);
+  const tab = ["doanh-thu", "kham-benh", "thuoc-kho"].includes(searchParams.tab ?? "") ? (searchParams.tab as string) : "tong-quan";
+  const show = (...t: string[]) => tab === "tong-quan" || t.includes(tab);
+  const pct = (cur: number, prev: number) => (prev > 0 ? ((cur - prev) / prev) * 100 : null);
+  const trend = (cur: number, prev: number) => { const v = pct(cur, prev); return v === null ? "chưa có kỳ trước" : `${v >= 0 ? "▲ +" : "▼ "}${v.toFixed(1).replace(".", ",")}% so với kỳ trước`; };
+  const qs = (t: string) => `?${new URLSearchParams({ ...(chosen ? { cn: chosen.id } : {}), tu: from, den: to, tab: t })}`;
 
   const total = paid.reduce((s, i) => s + i.total, 0);
   const byMethod = new Map<string, number>();
@@ -84,10 +96,18 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
   const mTotal = Object.keys(METHOD).reduce((x, k) => x + (byMethod.get(k) ?? 0), 0) || 1;
   let acc = 0;
   const stops = Object.keys(METHOD).map((k) => { const from = (acc / mTotal) * 100; acc += byMethod.get(k) ?? 0; return `${COL[k]} ${from}% ${(acc / mTotal) * 100}%`; }).join(", ");
+  const rxInv = recent.length; void rxInv;
+  const maxDis = Math.max(1, ...dis.map((d) => d._count._all));
   const maxTop = Math.max(1, ...topList.map((t) => t.sum));
   return (
     <div className="space-y-4">
       <PageHead icon={BarChart3} title="Báo cáo & phân tích" sub="Doanh thu, khám bệnh, thuốc và kho của phòng khám" img="/images/art/herbs-wide.jpg" />
+      <nav className="flex flex-wrap gap-2">
+        {([["tong-quan", "Tổng quan", BarChart3], ["doanh-thu", "Doanh thu", Banknote], ["kham-benh", "Khám bệnh", Stethoscope], ["thuoc-kho", "Thuốc & kho", Leaf]] as const).map(([k, l, I]) => (
+          <Link key={k} href={qs(k)} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 font-semibold ${tab === k ? "bg-brand-deep text-white" : "border border-slate-200 bg-white hover:border-brand-deep"}`}><I className="h-4 w-4" />{l}</Link>
+        ))}
+        <a href={`/bao-cao/xuat?${new URLSearchParams({ ...(chosen ? { cn: chosen.id } : {}), tu: from, den: to })}`} className="ml-auto flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold hover:border-brand-deep"><Download className="h-4 w-4" />Xuất báo cáo (CSV)</a>
+      </nav>
       <form method="get" className="card !p-3 flex flex-wrap items-end gap-3">
         <label className="text-sm font-medium">Chi nhánh
           <select name="cn" defaultValue={chosen?.id ?? ""} className={`${input} min-w-[14rem]`}>
@@ -95,19 +115,19 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
             {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </label>
-        <label className="text-sm font-medium">Từ ngày<input type="date" name="tu" defaultValue={from} className={input} /></label>
+        <label className="text-sm font-medium">Từ ngày<input type="hidden" name="tab" value={tab} /><input type="date" name="tu" defaultValue={from} className={input} /></label>
         <label className="text-sm font-medium">Đến ngày<input type="date" name="den" defaultValue={to} className={input} /></label>
         <button className="rounded-xl bg-brand-deep px-6 py-2.5 font-semibold text-white hover:bg-brand-deeper">Xem báo cáo</button>
       </form>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat icon={Banknote} label="Doanh thu đã thu" value={vnd(total)} tone="gold" />
-        <Stat icon={FileText} label="Số hóa đơn" value={paid.length} unit="đã thanh toán" tone="blue" />
-        <Stat icon={Users} label="Lượt khám" value={visitTotal} unit={`xong ${visitCount("DONE")} · hủy ${visitCount("CANCELLED")}`} tone="green" />
+        <Stat icon={Banknote} label="Doanh thu đã thu" value={vnd(total)} unit={trend(total, prevPaid._sum.total ?? 0)} tone="gold" />
+        <Stat icon={FileText} label="Số hóa đơn" value={paid.length} unit={trend(paid.length, prevPaid._count)} tone="blue" />
+        <Stat icon={Users} label="Lượt khám" value={visitTotal} unit={trend(visitTotal, prevVisits)} tone="green" />
         <Stat icon={FileX} label="Hóa đơn đã hủy" value={voided} tone="red" />
       </div>
 
-      <div className="grid xl:grid-cols-[1fr_22rem] gap-4 items-start">
+      {show("doanh-thu") && <div className="grid xl:grid-cols-[1fr_22rem] gap-4 items-start">
         <Panel icon={TrendingUp} title="Doanh thu theo ngày">
           {days.length <= 31 ? (
             <>
@@ -141,9 +161,54 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
             </ul>
           </div>
         </Panel>
-      </div>
+      </div>}
 
-      <div className="grid lg:grid-cols-3 gap-4 items-start">
+      {show("kham-benh") && (
+        <div className="grid lg:grid-cols-2 gap-4 items-start">
+          <Panel icon={Stethoscope} title="Top bệnh lý khám nhiều nhất">
+            {dis.length === 0 && <p className="text-sm text-brand-ink/60">Chưa có bệnh án hoàn tất trong kỳ.</p>}
+            <ul className="space-y-2.5">
+              {dis.map((d) => (
+                <li key={d.diseaseText} className="text-sm">
+                  <div className="flex justify-between"><span>{d.diseaseText}</span><b>{d._count._all}</b></div>
+                  <div className="mt-1 h-2 rounded bg-slate-100"><div className="h-2 rounded bg-amber-500" style={{ width: `${(d._count._all / maxDis) * 100}%` }} /></div>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+          <Panel icon={Users} title="Lượt khám theo trạng thái">
+            <ul className="space-y-2 text-sm">
+              {[["Đã khám", "DONE", "chip-green"], ["Đang khám", "IN_EXAM", "chip-blue"], ["Chờ khám", "WAITING", "chip-amber"], ["Đã hủy", "CANCELLED", "chip-gray"]].map(([l, k, c]) => (
+                <li key={k} className="flex items-center justify-between"><span className={`chip ${c}`}>{l}</span><b className="text-lg">{visitCount(k)}</b></li>
+              ))}
+            </ul>
+          </Panel>
+        </div>
+      )}
+
+      {show("doanh-thu") && (
+        <Panel icon={ReceiptText} title="Giao dịch gần đây" pad={false}>
+          <div className="overflow-x-auto">
+            <table>
+              <thead><tr><th>Ngày giờ</th><th>Loại giao dịch</th><th>Bệnh nhân</th><th className="text-right">Số tiền</th><th>Hình thức</th></tr></thead>
+              <tbody>
+                {recent.length === 0 && <tr><td colSpan={5} className="p-4 text-center text-brand-ink/60">Chưa có giao dịch.</td></tr>}
+                {recent.map((i) => (
+                  <tr key={i.id}>
+                    <td>{dateVN(i.paidAt as Date)} {new Date((i.paidAt as Date).getTime() + 7 * 3600000).toISOString().slice(11, 16)}</td>
+                    <td>{i.kind === "RETAIL" ? "Bán thuốc" : i.lines.some((l) => l.kind !== "FEE") ? "Khám bệnh + Thuốc" : "Khám bệnh"}</td>
+                    <td className="font-semibold">{i.patient?.fullName ?? i.customerName ?? "Khách lẻ"}</td>
+                    <td className="text-right font-semibold tabular-nums">{vnd(i.total)}</td>
+                    <td>{i.method ? METHOD[i.method] : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+      )}
+
+      {show("thuoc-kho") && <div className="grid lg:grid-cols-3 gap-4 items-start">
         <Panel icon={Leaf} title="Thuốc bán nhiều nhất (theo tiền)">
           {topList.length === 0 && <p className="text-sm text-brand-ink/60">Chưa có.</p>}
           <ul className="space-y-2.5">
@@ -173,7 +238,7 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
             ))}
           </ul>
         </Panel>
-      </div>
+      </div>}
     </div>
   );
 }
