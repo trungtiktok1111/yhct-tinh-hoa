@@ -54,8 +54,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="min-h-screen md:flex">
             {/* Sidebar PC */}
             <aside className="hidden md:flex md:w-64 md:shrink-0 flex-col bg-gradient-to-b from-brand-deep to-brand-deeper text-white sticky top-0 h-screen">
-              <Link href="/" className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
-                <span className="relative h-14 w-14 shrink-0 rounded-full ring-2 ring-brand-goldLight/70 overflow-hidden">
+              <Link href="/" className="flex shrink-0 items-center gap-3 px-4 py-3 border-b border-white/10">
+                <span className="relative h-12 w-12 shrink-0 rounded-full ring-2 ring-brand-goldLight/70 overflow-hidden">
                   <Image src="/images/logo-badge.png" alt="" width={160} height={160} className="h-full w-full object-cover" />
                 </span>
                 <span className="leading-tight">
@@ -63,16 +63,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <span className="block text-[11px] text-white/60">Phòng khám Đông y</span>
                 </span>
               </Link>
-              <div className="flex-1 overflow-y-auto p-3 ink-scrollbar">
+              <div className="min-h-0 flex-1 overflow-y-auto p-3 ink-scrollbar">
                 <SideNav clinic={clinic} knowledge={knowledge} admin={admin} adminSub={adminSub} />
-              </div>
-              <div className="relative h-36 shrink-0 overflow-hidden border-t border-white/10">
-                <Image src="/images/art/tall.jpg" alt="" fill className="object-cover opacity-40" />
-                <div className="absolute inset-0 bg-gradient-to-t from-brand-deeper via-brand-deeper/60 to-transparent" />
-                <div className="absolute bottom-3 left-4 right-4 text-brand-goldLight">
-                  <div className="text-[11px] font-semibold tracking-[0.12em] uppercase">Y học cổ truyền</div>
-                  <div className="text-[11px] tracking-[0.12em] uppercase text-white/70">Tinh hoa dân tộc</div>
-                  <div className="mt-1 text-[10px] text-white/40">Bản demo · dữ liệu minh họa</div>
+                <div className="relative mt-4 h-28 overflow-hidden rounded-xl border border-white/10">
+                  <Image src="/images/art/tall.jpg" alt="" fill className="object-cover opacity-40" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-brand-deeper via-brand-deeper/60 to-transparent" />
+                  <div className="absolute bottom-2.5 left-3 right-3 text-brand-goldLight">
+                    <div className="text-[11px] font-semibold tracking-[0.12em] uppercase">Y học cổ truyền</div>
+                    <div className="text-[11px] tracking-[0.12em] uppercase text-white/70">Tinh hoa dân tộc</div>
+                  </div>
                 </div>
               </div>
             </aside>

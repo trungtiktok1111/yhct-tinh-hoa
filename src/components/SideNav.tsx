@@ -11,11 +11,11 @@ function Item({ item, path }: { item: NavLink; path: string }) {
   return (
     <Link
       href={item.href}
-      className={`flex items-center gap-3 rounded-xl px-3 py-3 text-[15px] font-medium transition-colors ${
+      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors ${
         on ? "bg-gradient-to-r from-[#e9d48a] to-[#c9a227] text-brand-deeper shadow font-bold" : "text-white/90 hover:bg-white/10"
       }`}
     >
-      <NavIcon name={item.icon} className={`h-[22px] w-[22px] shrink-0 ${on ? "text-brand-deep" : "text-brand-goldLight"}`} />
+      <NavIcon name={item.icon} className={`h-5 w-5 shrink-0 ${on ? "text-brand-deep" : "text-brand-goldLight"}`} />
       <span className="truncate">{item.label}</span>
     </Link>
   );

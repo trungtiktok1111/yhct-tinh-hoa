@@ -18,7 +18,7 @@ export function BranchSwitch({ branches }: { branches: { id: string; name: strin
           p.set("cn", e.target.value);
           router.push(`${path}?${p.toString()}`);
         }}
-        className="max-w-[16rem] rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-bold uppercase text-brand-ink"
+        className="max-w-[22rem] rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-bold uppercase text-brand-ink"
       >
         {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
       </select>

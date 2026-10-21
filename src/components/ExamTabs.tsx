@@ -24,7 +24,7 @@ export function ExamTabs({ tabs }: { tabs: ExamTab[] }) {
   const move = (i: number) => { setCur(tabs[i].key); window.scrollTo({ top: 0, behavior: "smooth" }); };
   return (
     <div className="space-y-4">
-      <div className="sticky top-[11.5rem] z-10 -mx-1 flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm">
+      <div className="sticky top-[3.75rem] z-10 -mx-1 flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm">
         {tabs.map((t, i) => (
           <button
             key={t.key} type="button" onClick={() => move(i)}

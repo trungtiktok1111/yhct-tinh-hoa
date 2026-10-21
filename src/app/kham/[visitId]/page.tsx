@@ -66,7 +66,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
   const initials = p.fullName.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase();
   const header = (
     <>
-      <div className="sticky top-14 z-20 overflow-hidden rounded-2xl bg-brand-deeper text-white shadow-md">
+      <div className="relative overflow-hidden rounded-2xl bg-brand-deeper text-white shadow-md">
         <Image src="/images/art/herbs-wide.jpg" alt="" width={900} height={300} className="absolute right-0 top-0 h-full w-1/2 object-cover opacity-70" />
         <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper from-50% via-brand-deeper/85 to-transparent" />
         <div className="relative flex flex-wrap items-center gap-4 p-4">

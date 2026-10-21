@@ -149,3 +149,5 @@ main input:not([type=checkbox]):not([type=radio]), main select, main textarea { 
   main { padding: 0 !important; }
   footer { display: none; }
 }
+
+html { scrollbar-gutter: stable; }
