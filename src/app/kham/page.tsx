@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { EXAM_ROLES } from "@/lib/permissions";
 import { startExam } from "@/actions/exam";
+import { createSampleCase } from "@/actions/sample";
+import { SAMPLE_NAME } from "@/lib/sampleCase";
 import { branchesFor, input } from "@/lib/stock";
 import { SEX_LABEL, VISIT_STATUS, patientCode, timeVN, vnDayStart } from "@/lib/format";
 import { ageOf } from "@/lib/person";
@@ -26,12 +28,30 @@ export default async function ExamQueuePage({ searchParams }: { searchParams: { 
     orderBy: { queueNo: "asc" },
     include: { patient: true, exam: { select: { doctorName: true, status: true } } },
   });
+  const sample = await prisma.patient.findFirst({
+    where: { fullName: SAMPLE_NAME },
+    select: { visits: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true } } },
+  });
+  const sampleVisitId = sample?.visits[0]?.id;
   const order = (s: string) => (s === "IN_EXAM" ? 0 : s === "WAITING" ? 1 : 2);
   visits.sort((a, b) => order(a.status) - order(b.status) || a.queueNo - b.queueNo);
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold font-display">Khám bệnh hôm nay</h1>
+      <div className="card !py-3 flex flex-wrap items-center gap-3 border-brand-gold/60">
+        <div className="min-w-0 flex-1 text-sm">
+          <b className="text-brand-deep">Ca mẫu hướng dẫn</b>
+          <div className="text-xs text-gray-600">Một bệnh án khám hoàn chỉnh (tứ chẩn, chẩn đoán, đơn thuốc, châm cứu, hóa đơn) để xem và làm theo.</div>
+        </div>
+        {sampleVisitId ? (
+          <Link href={`/kham/${sampleVisitId}`} className="rounded-lg bg-brand-deep text-brand-cream px-4 py-2 font-semibold">Xem ca mẫu</Link>
+        ) : (
+          <form action={createSampleCase}>
+            <button className="rounded-lg bg-brand-deep text-brand-cream px-4 py-2 font-semibold">Tạo ca mẫu</button>
+          </form>
+        )}
+      </div>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
       <form method="get" className="flex items-end gap-2">
         <label className="text-sm flex-1">Chi nhánh
