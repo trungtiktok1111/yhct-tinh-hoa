@@ -142,3 +142,10 @@ main tbody td { padding: .6rem .75rem; }
 main tbody tr { border-bottom: 1px solid #eef2ef; }
 main tbody tr:hover { background: #f8faf9; }
 main input:not([type=checkbox]):not([type=radio]), main select, main textarea { border-radius: .6rem; }
+
+@media print {
+  body { background: #fff; }
+  aside, nav, body > div > div > header, .no-print { display: none !important; }
+  main { padding: 0 !important; }
+  footer { display: none; }
+}
