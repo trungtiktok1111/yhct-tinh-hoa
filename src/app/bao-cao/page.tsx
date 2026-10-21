@@ -3,6 +3,8 @@ import { requireRole } from "@/lib/auth";
 import { REPORT_ROLES } from "@/lib/permissions";
 import { branchesFor, input } from "@/lib/stock";
 import { dateVN, qty as fq, vnd } from "@/lib/format";
+import { PageHead, Stat, Panel } from "@/components/ui";
+import { BarChart3, Banknote, FileText, Users, FileX, Leaf, AlertTriangle, CalendarClock, PieChart, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -78,76 +80,99 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
     .sort((a, b) => (a.expiryDate as Date).getTime() - (b.expiryDate as Date).getTime())
     .slice(0, 30);
 
-  const card = "card !py-3";
+  const COL: Record<string, string> = { CASH: "#15803d", TRANSFER: "#d4a017", CARD: "#2563eb" };
+  const mTotal = Object.keys(METHOD).reduce((x, k) => x + (byMethod.get(k) ?? 0), 0) || 1;
+  let acc = 0;
+  const stops = Object.keys(METHOD).map((k) => { const from = (acc / mTotal) * 100; acc += byMethod.get(k) ?? 0; return `${COL[k]} ${from}% ${(acc / mTotal) * 100}%`; }).join(", ");
+  const maxTop = Math.max(1, ...topList.map((t) => t.sum));
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-bold font-display">Báo cáo</h1>
-      <form method="get" className="flex flex-wrap items-end gap-2">
-        <label className="text-sm">Chi nhánh
-          <select name="cn" defaultValue={chosen?.id ?? ""} className={input}>
+    <div className="space-y-4">
+      <PageHead icon={BarChart3} title="Báo cáo & phân tích" sub="Doanh thu, khám bệnh, thuốc và kho của phòng khám" img="/images/art/herbs-wide.jpg" />
+      <form method="get" className="card !p-3 flex flex-wrap items-end gap-3">
+        <label className="text-sm font-medium">Chi nhánh
+          <select name="cn" defaultValue={chosen?.id ?? ""} className={`${input} min-w-[14rem]`}>
             <option value="">Tất cả ({branches.length})</option>
             {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </label>
-        <label className="text-sm">Từ ngày<input type="date" name="tu" defaultValue={from} className={input} /></label>
-        <label className="text-sm">Đến ngày<input type="date" name="den" defaultValue={to} className={input} /></label>
-        <button className="rounded-lg bg-brand-deep text-brand-cream px-4 py-2.5 font-semibold">Xem</button>
+        <label className="text-sm font-medium">Từ ngày<input type="date" name="tu" defaultValue={from} className={input} /></label>
+        <label className="text-sm font-medium">Đến ngày<input type="date" name="den" defaultValue={to} className={input} /></label>
+        <button className="rounded-xl bg-brand-deep px-6 py-2.5 font-semibold text-white hover:bg-brand-deeper">Xem báo cáo</button>
       </form>
 
-      <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 text-sm">
-        <div className={card}><div className="text-gray-600">Doanh thu đã thu</div><div className="text-xl font-bold">{vnd(total)}</div></div>
-        <div className={card}><div className="text-gray-600">Số hóa đơn</div><div className="text-xl font-bold">{paid.length}</div></div>
-        <div className={card}><div className="text-gray-600">Lượt khám</div><div className="text-xl font-bold">{visitTotal}</div><div className="text-xs text-gray-600">xong {visitCount("DONE")} · hủy {visitCount("CANCELLED")}</div></div>
-        <div className={card}><div className="text-gray-600">Hóa đơn đã hủy</div><div className="text-xl font-bold">{voided}</div></div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Stat icon={Banknote} label="Doanh thu đã thu" value={vnd(total)} tone="gold" />
+        <Stat icon={FileText} label="Số hóa đơn" value={paid.length} unit="đã thanh toán" tone="blue" />
+        <Stat icon={Users} label="Lượt khám" value={visitTotal} unit={`xong ${visitCount("DONE")} · hủy ${visitCount("CANCELLED")}`} tone="green" />
+        <Stat icon={FileX} label="Hóa đơn đã hủy" value={voided} tone="red" />
       </div>
 
-      <section className="card space-y-1 text-sm">
-        <h2 className="font-semibold text-brand-deep">Theo nguồn và hình thức</h2>
-        <div>Khám: {byKind.get("EXAM")?.n ?? 0} HĐ · {vnd(byKind.get("EXAM")?.sum ?? 0)}</div>
-        <div>Bán lẻ: {byKind.get("RETAIL")?.n ?? 0} HĐ · {vnd(byKind.get("RETAIL")?.sum ?? 0)}</div>
-        {Object.entries(METHOD).map(([k, v]) => <div key={k}>{v}: {vnd(byMethod.get(k) ?? 0)}</div>)}
-      </section>
-
-      <section className="card space-y-1">
-        <h2 className="font-semibold text-brand-deep">Doanh thu theo ngày</h2>
-        {days.map((d) => {
-          const e = byDay.get(d);
-          return (
-            <div key={d} className="flex items-center gap-2 text-sm">
-              <span className="w-24 tabular-nums">{dateVN(new Date(`${d}T00:00:00+07:00`))}</span>
-              <div className="flex-1 h-3 bg-brand-gold/10 rounded"><div className="h-3 rounded bg-brand-deep" style={{ width: `${((e?.sum ?? 0) / maxDay) * 100}%` }} /></div>
-              <span className="w-32 text-right tabular-nums">{vnd(e?.sum ?? 0)}</span>
-              <span className="w-12 text-right text-gray-600">{e?.n ?? 0} HĐ</span>
+      <div className="grid xl:grid-cols-[1fr_22rem] gap-4 items-start">
+        <Panel icon={TrendingUp} title="Doanh thu theo ngày">
+          {days.length <= 31 ? (
+            <>
+              <div className="flex h-44 items-end gap-1.5">
+                {days.map((d) => { const e = byDay.get(d); return (
+                  <div key={d} className="flex h-full flex-1 flex-col justify-end" title={`${dateVN(new Date(`${d}T00:00:00+07:00`))}: ${vnd(e?.sum ?? 0)} · ${e?.n ?? 0} HĐ`}>
+                    <div className="rounded-t bg-emerald-600/85 hover:bg-emerald-700" style={{ height: `${Math.max(((e?.sum ?? 0) / maxDay) * 100, 2)}%` }} />
+                  </div>); })}
+              </div>
+              <div className="mt-1 flex gap-1.5 text-[10px] text-brand-ink/55">{days.map((d, i) => <div key={d} className="flex-1 text-center">{days.length <= 10 || i % Math.ceil(days.length / 10) === 0 ? d.slice(8) + "/" + d.slice(5, 7) : ""}</div>)}</div>
+            </>
+          ) : (
+            <div className="max-h-72 space-y-1 overflow-y-auto">
+              {days.map((d) => { const e = byDay.get(d); return (
+                <div key={d} className="flex items-center gap-2 text-sm"><span className="w-24 tabular-nums">{dateVN(new Date(`${d}T00:00:00+07:00`))}</span><div className="h-3 flex-1 rounded bg-slate-100"><div className="h-3 rounded bg-emerald-600" style={{ width: `${((e?.sum ?? 0) / maxDay) * 100}%` }} /></div><span className="w-28 text-right tabular-nums">{vnd(e?.sum ?? 0)}</span></div>); })}
             </div>
-          );
-        })}
-      </section>
+          )}
+        </Panel>
 
-      <section className="card space-y-1 text-sm">
-        <h2 className="font-semibold text-brand-deep">Thuốc bán nhiều nhất (theo tiền)</h2>
-        {topList.length === 0 && <p className="text-gray-600">Chưa có.</p>}
-        {topList.map((t, i) => (
-          <div key={t.name} className="flex gap-2"><span className="w-6">{i + 1}.</span><span className="flex-1">{t.name}</span><span className="tabular-nums">{fq(t.qty)} {t.unit}</span><span className="w-32 text-right tabular-nums">{vnd(t.sum)}</span></div>
-        ))}
-      </section>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <section className="card space-y-1 text-sm">
-          <h2 className="font-semibold text-brand-deep">Sắp hết hàng (dưới mức tối thiểu)</h2>
-          <p className="text-xs text-gray-600">Tính tồn của các chi nhánh đang chọn, không tính lô hết hạn.</p>
-          {low.length === 0 && <p className="text-gray-600">Không có.</p>}
-          {low.map((i) => <div key={i.id} className="flex justify-between gap-2"><span>{i.name}</span><span className="text-red-700 tabular-nums">{fq(i.have)}/{fq(i.minStock)} {i.unit}</span></div>)}
-        </section>
-        <section className="card space-y-1 text-sm">
-          <h2 className="font-semibold text-brand-deep">Hết hạn trong 30 ngày</h2>
-          {expiring.length === 0 && <p className="text-gray-600">Không có.</p>}
-          {expiring.map((l, n) => (
-            <div key={n} className="flex justify-between gap-2">
-              <span>{l.item.name}{branchIds.length > 1 ? ` · ${l.branch.name}` : ""}</span>
-              <span className={`tabular-nums ${(l.expiryDate as Date) < new Date() ? "text-red-700 font-semibold" : ""}`}>{fq(l.qtyRemaining)} {l.item.unit} · {dateVN(l.expiryDate as Date)}</span>
+        <Panel icon={PieChart} title="Cơ cấu theo hình thức thanh toán">
+          <div className="flex items-center gap-4">
+            <div className="relative h-32 w-32 shrink-0 rounded-full" style={{ background: total > 0 ? `conic-gradient(${stops})` : "#e5e7eb" }}>
+              <div className="absolute inset-[22%] grid place-items-center rounded-full bg-white text-center text-xs font-bold leading-tight">{vnd(total)}</div>
             </div>
-          ))}
-        </section>
+            <ul className="space-y-1.5 text-sm">
+              {Object.entries(METHOD).map(([k, v]) => (
+                <li key={k} className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm" style={{ background: COL[k] }} />{v}<b className="ml-auto pl-3 tabular-nums">{vnd(byMethod.get(k) ?? 0)}</b></li>
+              ))}
+              <li className="border-t pt-1.5 text-brand-ink/70">Khám: {byKind.get("EXAM")?.n ?? 0} HĐ · {vnd(byKind.get("EXAM")?.sum ?? 0)}</li>
+              <li className="text-brand-ink/70">Bán lẻ: {byKind.get("RETAIL")?.n ?? 0} HĐ · {vnd(byKind.get("RETAIL")?.sum ?? 0)}</li>
+            </ul>
+          </div>
+        </Panel>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-4 items-start">
+        <Panel icon={Leaf} title="Thuốc bán nhiều nhất (theo tiền)">
+          {topList.length === 0 && <p className="text-sm text-brand-ink/60">Chưa có.</p>}
+          <ul className="space-y-2.5">
+            {topList.slice(0, 8).map((t, i) => (
+              <li key={t.name} className="text-sm">
+                <div className="flex justify-between"><span><b className="mr-1.5 text-brand-ink/50">{i + 1}.</b>{t.name}</span><span className="tabular-nums text-brand-ink/70">{fq(t.qty)} {t.unit} · <b className="text-brand-ink">{vnd(t.sum)}</b></span></div>
+                <div className="mt-1 h-2 rounded bg-slate-100"><div className="h-2 rounded bg-brand-deep" style={{ width: `${(t.sum / maxTop) * 100}%` }} /></div>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+        <Panel icon={AlertTriangle} title="Sắp hết hàng (dưới tối thiểu)" tone="text-red-600">
+          <p className="mb-2 text-xs text-brand-ink/60">Tính tồn của chi nhánh đang chọn, không tính lô hết hạn.</p>
+          {low.length === 0 && <p className="text-sm text-brand-ink/60">Không có.</p>}
+          <ul className="space-y-1.5 text-sm">
+            {low.map((i) => <li key={i.id} className="flex justify-between gap-2"><span>{i.name}</span><span className="chip chip-red tabular-nums">{fq(i.have)}/{fq(i.minStock)} {i.unit}</span></li>)}
+          </ul>
+        </Panel>
+        <Panel icon={CalendarClock} title="Hết hạn trong 30 ngày" tone="text-amber-600">
+          {expiring.length === 0 && <p className="text-sm text-brand-ink/60">Không có.</p>}
+          <ul className="space-y-1.5 text-sm">
+            {expiring.map((l, n) => (
+              <li key={n} className="flex justify-between gap-2">
+                <span>{l.item.name}{branchIds.length > 1 ? ` · ${l.branch.name}` : ""}</span>
+                <span className={`tabular-nums ${(l.expiryDate as Date) < new Date() ? "font-semibold text-red-700" : ""}`}>{fq(l.qtyRemaining)} {l.item.unit} · {dateVN(l.expiryDate as Date)}</span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
       </div>
     </div>
   );

@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
-import { branchesFor, input } from "@/lib/stock";
+import { branchesFor } from "@/lib/stock";
 import { STOCK_WRITE_ROLES, ITEM_MANAGER_ROLES, hasAny } from "@/lib/permissions";
-import { dateVN, qty } from "@/lib/format";
+import { dateVN, qty, vnd } from "@/lib/format";
+import Image from "next/image";
+import { PageHead, Stat, Panel } from "@/components/ui";
+import { Package, Boxes, AlertTriangle, CalendarClock, PackageX, PackagePlus, ClipboardCheck, Tag, Leaf } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +35,7 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
     prisma.item.findMany({
       where: { active: true, ...(q ? { name: { contains: q, mode: "insensitive" } } : {}) },
       orderBy: { name: "asc" },
-      include: { prices: { orderBy: { effectiveFrom: "desc" }, take: 1 } },
+      include: { prices: { orderBy: { effectiveFrom: "desc" }, take: 1 }, herb: { select: { imageUrl: true } } },
     }),
     prisma.stockLot.findMany({
       where: { branchId: branch.id, qtyRemaining: { gt: 0 } },
@@ -61,72 +64,77 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
       return { it, a, low: it.minStock > 0 && a.total < it.minStock };
     })
     .filter((r) => !onlyLow || r.low);
+  const names = items.filter((i) => !i.herb?.imageUrl).map((i) => i.name);
+  const herbPics = names.length ? await prisma.herb.findMany({ where: { standardName: { in: names }, imageUrl: { not: null } }, select: { standardName: true, imageUrl: true } }) : [];
+  const picOf = new Map(herbPics.map((h) => [h.standardName, h.imageUrl as string]));
+  const soonCount = items.filter((it) => (agg.get(it.id)?.soon ?? 0) > 0).length;
+  const expiredCount = items.filter((it) => (agg.get(it.id)?.expired ?? 0) > 0).length;
   const lowCount = items.filter((it) => it.minStock > 0 && (agg.get(it.id)?.total ?? 0) < it.minStock).length;
 
+  const btn = "flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold hover:border-brand-deep";
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-bold font-display">Kho và giá</h1>
+    <div className="space-y-4">
+      <PageHead icon={Package} title="Kho và giá" sub={`Quản lý vị thuốc, dược liệu, giá bán và tồn kho · ${branch.name}`} img="/images/art/mortar.jpg">
+        {canWrite && <Link href="/kho/nhap" className="flex items-center gap-2 rounded-xl bg-brand-deep px-4 py-2.5 font-semibold text-white hover:bg-brand-deeper"><PackagePlus className="h-5 w-5" />Nhập kho</Link>}
+        {canWrite && <Link href="/kho/dieu-chinh" className={btn}><ClipboardCheck className="h-5 w-5" />Điều chỉnh / Kiểm kê</Link>}
+        <Link href="/kho/mat-hang" className={btn}><Tag className="h-5 w-5" />{canManage ? "Mặt hàng và giá" : "Bảng giá"}</Link>
+      </PageHead>
 
-      <div className="flex flex-wrap gap-2">
-        {canWrite && <Link href="/kho/nhap" className="rounded-lg bg-brand-deep text-brand-cream px-4 py-2.5 font-semibold">Nhập kho</Link>}
-        {canWrite && <Link href="/kho/dieu-chinh" className="rounded-lg border border-brand-gold/50 px-4 py-2.5">Điều chỉnh / kiểm kê</Link>}
-        <Link href="/kho/mat-hang" className="rounded-lg border border-brand-gold/50 px-4 py-2.5">
-          {canManage ? "Mặt hàng và giá" : "Bảng giá"}
-        </Link>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Stat icon={Boxes} label="Tổng số mặt hàng" value={items.length} unit="vị thuốc, thành phẩm" tone="green" />
+        <Stat icon={AlertTriangle} label="Dưới mức tối thiểu" value={lowCount} unit="mặt hàng cần nhập" tone="red" href={`/kho?cn=${branch.id}&chi=thap`} />
+        <Stat icon={CalendarClock} label="Gần hết hạn" value={soonCount} unit={`mặt hàng (≤ ${SOON_DAYS} ngày)`} tone="amber" />
+        <Stat icon={PackageX} label="Đã hết hạn" value={expiredCount} unit="mặt hàng" tone="purple" />
       </div>
 
-      <form className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] items-end" method="get">
-        <label className="text-sm">
-          Chi nhánh
-          <select name="cn" defaultValue={branch.id} className={input}>
-            {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
+      <form className="card !p-3 flex flex-wrap items-center gap-3" method="get">
+        <input type="hidden" name="cn" value={branch.id} />
+        <input name="q" defaultValue={q} placeholder="Tìm theo tên thuốc…" className="min-w-[14rem] flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5" />
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" name="chi" value="thap" defaultChecked={onlyLow} className="h-5 w-5" /> Chỉ sắp hết
         </label>
-        <label className="text-sm">
-          Tìm mặt hàng
-          <input name="q" defaultValue={q} placeholder="Tên..." className={input} />
-        </label>
-        <div className="flex items-center gap-3">
-          <label className="text-sm flex items-center gap-2">
-            <input type="checkbox" name="chi" value="thap" defaultChecked={onlyLow} className="h-5 w-5" /> Chỉ sắp hết
-          </label>
-          <button type="submit" className="rounded-lg border border-brand-gold/50 px-4 py-2.5">Lọc</button>
-        </div>
+        <button type="submit" className="rounded-xl bg-brand-deep px-6 py-2.5 font-semibold text-white">Tìm</button>
       </form>
 
-      {lowCount > 0 && !onlyLow && (
-        <div className="warn-box text-sm">{lowCount} mặt hàng dưới mức tồn tối thiểu tại {branch.name}.</div>
-      )}
-
-      <div className="space-y-2">
-        {items.length === 0 && (
-          <p className="text-sm text-gray-600">
-            Chưa có mặt hàng nào. {canManage ? "Vào “Mặt hàng và giá” để thêm." : "Nhờ quản lý thêm mặt hàng."}
-          </p>
-        )}
-        {rows.map(({ it, a, low }) => (
-          <div key={it.id} className="card !py-3 flex flex-wrap items-center justify-between gap-2">
-            <div className="min-w-0">
-              <div className="font-semibold">
-                {it.name}{" "}
-                <span className="text-xs text-gray-500">({it.type === "HERB" ? "dược liệu" : "thành phẩm"})</span>
-              </div>
-              <div className="text-xs text-gray-600 space-x-2">
-                {a.expired > 0 && <span className="text-red-700 font-semibold">Hết hạn: {qty(a.expired)}{it.unit}</span>}
-                {a.soon > 0 && <span className="text-amber-700">Sắp hết hạn (≤{SOON_DAYS} ngày): {qty(a.soon)}{it.unit}</span>}
-                {a.nearest && <span>Hạn gần nhất: {dateVN(a.nearest)}</span>}
-                {it.minStock > 0 && <span>Tối thiểu: {qty(it.minStock)}{it.unit}</span>}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className={`text-lg font-bold tabular-nums ${low ? "text-red-700" : ""}`}>
-                {qty(a.total)} {it.unit}
-              </div>
-              {low && <div className="text-xs text-red-700 font-semibold">Sắp hết</div>}
-            </div>
+      <Panel pad={false} icon={Leaf} title={`Tồn kho (${rows.length} mặt hàng)`}>
+        {items.length === 0 ? (
+          <p className="p-4 text-sm text-brand-ink/60">Chưa có mặt hàng nào. {canManage ? "Vào “Mặt hàng và giá” để thêm." : "Nhờ quản lý thêm mặt hàng."}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table>
+              <thead><tr><th className="w-12">STT</th><th>Tên mặt hàng</th><th>Loại</th><th>Hạn gần nhất</th><th className="text-right">Tồn kho</th><th>ĐV</th><th className="text-right">Tối thiểu</th><th className="text-right">Giá bán</th><th>Trạng thái</th></tr></thead>
+              <tbody>
+                {rows.map(({ it, a, low }, k) => {
+                  const pic = it.herb?.imageUrl ?? picOf.get(it.name);
+                  return (
+                    <tr key={it.id}>
+                      <td className="text-brand-ink/60">{k + 1}</td>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          {pic ? <Image src={pic} alt="" width={44} height={44} className="h-11 w-11 rounded-lg object-cover ring-1 ring-slate-200" /> : <span className="grid h-11 w-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700"><Leaf className="h-5 w-5" /></span>}
+                          <span className="font-semibold">{it.name}</span>
+                        </div>
+                      </td>
+                      <td>{it.type === "HERB" ? "Vị thuốc" : "Thành phẩm"}</td>
+                      <td>{a.nearest ? dateVN(a.nearest) : "—"}</td>
+                      <td className={`text-right font-bold tabular-nums ${low ? "text-red-700" : ""}`}>{qty(a.total)}</td>
+                      <td>{it.unit}</td>
+                      <td className="text-right text-brand-ink/70">{it.minStock > 0 ? qty(it.minStock) : "—"}</td>
+                      <td className="text-right tabular-nums">{it.prices[0] ? `${vnd(it.prices[0].price)}/${it.unit}` : "—"}</td>
+                      <td>
+                        {a.expired > 0 ? <span className="chip chip-red">Có lô hết hạn</span>
+                          : low ? <span className="chip chip-red">Dưới tối thiểu</span>
+                          : a.soon > 0 ? <span className="chip chip-amber">Gần hết hạn</span>
+                          : <span className="chip chip-green">Còn hàng</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        ))}
-      </div>
+        )}
+      </Panel>
     </div>
   );
 }
