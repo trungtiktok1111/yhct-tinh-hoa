@@ -47,6 +47,11 @@ const PATIENTS: [string, "M" | "F", number, string, string | null, string | null
   ["Phan Thị Ngọc", "F", 1998, "0933445566", null, null, "Y tá"],
 ];
 
+const ICD: Record<string, string> = {
+  "Thoái hóa cột sống cổ": "M47.8", "Đau thần kinh tọa": "M54.3", "Viêm xoang": "J32.9", "Viêm loét dạ dày": "K25.9",
+  "Mất ngủ": "G47.0", "Cảm mạo": "J00", "Thoái hóa khớp": "M19.9", "Rối loạn tiêu hóa": "K30",
+};
+
 const COMPLAINTS: [string, string][] = [
   ["Đau vai gáy 2 tuần nay, tăng khi làm việc", "Thoái hóa cột sống cổ"],
   ["Đau lưng, mỏi gối", "Đau thần kinh tọa"],
@@ -78,6 +83,12 @@ export async function seedDemoData() {
   const herbs = await prisma.herb.findMany({ select: { id: true, standardName: true } });
   const moves: Prisma.StockMoveCreateManyInput[] = [];
   const itemOf = new Map<string, { id: string; name: string; unit: string; type: string; price: number }>();
+  const supMap = new Map<string, string>();
+  for (const sn of Array.from(new Set(ITEMS.map((i) => i[8])))) {
+    const found = await prisma.supplier.findFirst({ where: { name: sn } });
+    const sup = found ?? await prisma.supplier.create({ data: { name: sn, phone: "02543" + String(100000 + Math.floor(R() * 899999)), address: "Việt Nam", note: TAG } });
+    supMap.set(sn, sup.id);
+  }
   for (const [name, type, unit, price, cost, min, stock, expDays, supplier] of ITEMS) {
     let it = existing.find((x) => fold(x.name) === fold(name));
     if (!it) {
@@ -87,7 +98,7 @@ export async function seedDemoData() {
     const hasPrice = await prisma.itemPrice.findFirst({ where: { itemId: it.id }, orderBy: { effectiveFrom: "desc" } });
     if (!hasPrice) await prisma.itemPrice.create({ data: { itemId: it.id, price, staffName: staff.fullName } });
     const lot = await prisma.stockLot.create({
-      data: { itemId: it.id, branchId: branch.id, supplier, receivedAt: new Date(Date.now() - 40 * DAY), expiryDate: new Date(Date.now() + expDays * DAY), unitCost: cost, qtyReceived: stock * 1.6, qtyRemaining: stock, note: TAG, staffName: staff.fullName },
+      data: { itemId: it.id, branchId: branch.id, supplier, supplierId: supMap.get(supplier) ?? null, receivedAt: new Date(Date.now() - 40 * DAY), expiryDate: new Date(Date.now() + expDays * DAY), unitCost: cost, qtyReceived: stock * 1.6, qtyRemaining: stock, note: TAG, staffName: staff.fullName },
     });
     moves.push({ itemId: it.id, branchId: branch.id, lotId: lot.id, type: "RECEIPT", qty: stock * 1.6, at: new Date(Date.now() - 40 * DAY), reason: `${TAG} Nhập kho`, staffName: staff.fullName });
     // xuất dùng rải 30 ngày để vẽ biểu đồ
@@ -139,8 +150,8 @@ export async function seedDemoData() {
       const [cc, dis] = COMPLAINTS[Math.floor(R() * COMPLAINTS.length)];
       const when = at(d, 8 + k * 2, Math.floor(R() * 50));
       const vid = randomUUID();
-      V.push({ id: vid, patientId: pt.id, branchId: branch.id, queueNo: nextQ(when), status: "DONE", reason: cc, pulse: 70 + Math.floor(R() * 14), bloodPressure: "120/80", temperature: 36.6, createdBy: staff.fullName, createdAt: when });
-      E.push({ visitId: vid, doctorId: staff.id, doctorName: staff.fullName, status: "FINAL", chiefComplaint: cc, diseaseText: dis, finalAt: when, followUpDate: R() > 0.6 ? new Date(Date.now() + Math.floor(1 + R() * 14) * DAY) : null, createdAt: when });
+      V.push({ id: vid, patientId: pt.id, branchId: branch.id, queueNo: nextQ(when), status: "DONE", reason: cc, pulse: 70 + Math.floor(R() * 14), bloodPressure: "120/80", temperature: 36.6, createdBy: staff.fullName, doctorName: staff.fullName, createdAt: when });
+      E.push({ visitId: vid, doctorId: staff.id, doctorName: staff.fullName, status: "FINAL", chiefComplaint: cc, diseaseText: dis, icd10Code: ICD[dis] ?? null, finalAt: when, followUpDate: R() > 0.6 ? new Date(Date.now() + Math.floor(1 + R() * 14) * DAY) : null, createdAt: when });
       const thang = [3, 5, 7, 10, 14][Math.floor(R() * 5)];
       const hasHerb = R() > 0.25;
       const lines = [feeLine(150000 + (R() > 0.7 ? 50000 : 0)), ...(hasHerb ? herbLines(thang, [...herbNames].sort(() => R() - 0.5).slice(0, 4 + Math.floor(R() * 3))) : [])];
@@ -161,10 +172,10 @@ export async function seedDemoData() {
     const pt = pats[pi % pats.length];
     const [cc, dis] = COMPLAINTS[pi % COMPLAINTS.length];
     const vid = randomUUID();
-    V.push({ id: vid, patientId: pt.id, branchId: branch.id, queueNo: nextQ(when), status, reason: cc, pulse: 72, bloodPressure: "125/80", temperature: 36.8, createdBy: staff.fullName, createdAt: when });
+    V.push({ id: vid, patientId: pt.id, branchId: branch.id, queueNo: nextQ(when), status, reason: cc, pulse: 72, bloodPressure: "125/80", temperature: 36.8, priority: pi === 7 || pi === 9, doctorName: stage === "none" ? null : staff.fullName, createdBy: staff.fullName, createdAt: when });
     if (stage === "none") continue;
     const final = stage !== "draft";
-    E.push({ visitId: vid, doctorId: staff.id, doctorName: staff.fullName, status: final ? "FINAL" : "DRAFT", chiefComplaint: cc, diseaseText: final ? dis : null, finalAt: final ? when : null, followUpDate: final ? new Date(Date.now() + 7 * DAY) : null, createdAt: when });
+    E.push({ visitId: vid, doctorId: staff.id, doctorName: staff.fullName, status: final ? "FINAL" : "DRAFT", chiefComplaint: cc, diseaseText: final ? dis : null, icd10Code: final ? (ICD[dis] ?? null) : null, finalAt: final ? when : null, followUpDate: final ? new Date(Date.now() + 7 * DAY) : null, createdAt: when });
     if (stage === "noinv" || stage === "draft") continue;
     const paid = stage !== "unpaid";
     addInvoice(vid, pt.id, { status: paid ? "PAID" : "UNPAID", method: paid ? "CASH" : null, paidAt: paid ? new Date(when.getTime() + 35 * 60000) : null, dispensedAt: stage === "done" ? new Date(when.getTime() + 60 * 60000) : null, created: new Date(when.getTime() + 25 * 60000), lines: [feeLine(150000), ...herbLines(7, ["Đương quy", "Hoàng kỳ", "Cam thảo", "Bạch thược"])] });
@@ -174,6 +185,14 @@ export async function seedDemoData() {
   await prisma.invoice.createMany({ data: I as never });
   await prisma.invoiceLine.createMany({ data: L as never });
 
+  await prisma.quickNote.createMany({
+    data: [
+      "Nhắc bệnh nhân tái khám đúng hẹn, mang theo toa cũ.",
+      "Kiểm tra lại các vị thuốc sắp hết hạn trong tuần này.",
+      "Bệnh nhân dị ứng cần ghi chú rõ trước khi kê đơn.",
+    ].map((t, i) => ({ branchId: branch.id, text: `${TAG} ${t}`, staffName: staff.fullName, createdAt: new Date(Date.now() - i * 3600000) })),
+  });
+  await prisma.backupLog.create({ data: { status: "OK", staffName: staff.fullName, bytes: 184320, note: `${TAG} Bản sao mẫu` } });
   await logAudit({ staffId: staff.id, staffName: staff.fullName, branchId: branch.id, action: "CREATE", entity: "DemoData", detail: "Tạo dữ liệu demo" });
   for (const p of ["/", "/kham", "/tiep-don", "/benh-nhan", "/thu-ngan", "/duoc", "/kho", "/bao-cao", "/quan-tri"]) revalidatePath(p);
   redirect("/quan-tri?ok=" + encodeURIComponent("Đã tạo dữ liệu demo."));
@@ -195,6 +214,9 @@ export async function clearDemoData() {
   for (const it of items) {
     try { await prisma.item.delete({ where: { id: it.id } }); } catch { /* còn dữ liệu thật tham chiếu: giữ lại */ }
   }
+  await prisma.quickNote.deleteMany({ where: { text: { startsWith: TAG } } });
+  await prisma.backupLog.deleteMany({ where: { note: { startsWith: TAG } } });
+  await prisma.supplier.deleteMany({ where: { note: TAG, lots: { none: {} } } });
   await logAudit({ staffId: staff.id, staffName: staff.fullName, action: "DELETE", entity: "DemoData", detail: "Xóa dữ liệu demo" });
   for (const p of ["/", "/kham", "/tiep-don", "/benh-nhan", "/thu-ngan", "/duoc", "/kho", "/bao-cao", "/quan-tri"]) revalidatePath(p);
   redirect("/quan-tri?ok=" + encodeURIComponent("Đã xóa dữ liệu demo."));
