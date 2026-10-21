@@ -2,8 +2,10 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { DISPENSE_ROLES } from "@/lib/permissions";
-import { branchesFor, input } from "@/lib/stock";
-import { timeVN, vnDayStart } from "@/lib/format";
+import { branchesFor } from "@/lib/stock";
+import { timeVN, vnDayStart, vnd } from "@/lib/format";
+import { PageHead, Stat, Panel } from "@/components/ui";
+import { Pill, Hourglass, CheckCircle2, AlertTriangle, Package } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -26,41 +28,58 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
     }),
   ]);
   const name = (i: { patient: { fullName: string } | null; customerName: string | null }) => i.patient?.fullName ?? i.customerName ?? "Khách lẻ";
+  const dayName = new Date().toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold font-display">Phát thuốc</h1>
-      <form method="get" className="flex items-end gap-2">
-        <label className="text-sm flex-1">Chi nhánh
-          <select name="cn" defaultValue={branch.id} className={input}>
-            {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
-        </label>
-        <button className="rounded-lg border border-brand-gold/50 px-4 py-2.5">Xem</button>
-      </form>
-      <section className="space-y-2">
-        <h2 className="font-semibold text-brand-deep">Đã thu tiền, chờ phát ({waiting.length})</h2>
-        {waiting.length === 0 && <p className="text-sm text-gray-600">Không có.</p>}
-        {waiting.map((i) => (
-          <Link key={i.id} href={`/duoc/${i.id}`} className="card !py-3 flex flex-wrap items-center gap-3">
-            <span className="font-mono text-sm">HD-{String(i.seq).padStart(6, "0")}</span>
-            <span className="flex-1 min-w-0">
-              {name(i)} · {i.kind === "RETAIL" ? "Bán lẻ" : "Theo đơn"} · thu lúc {i.paidAt ? timeVN(i.paidAt) : ""}
-              {i.patient?.allergies && <span className="text-red-700 font-semibold"> · Dị ứng: {i.patient.allergies}</span>}
-            </span>
-            <span className="text-sm font-semibold text-brand-deep">Phát thuốc →</span>
-          </Link>
-        ))}
-      </section>
-      <section className="space-y-2">
-        <h2 className="font-semibold text-brand-deep">Đã phát hôm nay ({done.length})</h2>
-        {done.map((i) => (
-          <Link key={i.id} href={`/duoc/${i.id}`} className="card !py-3 flex flex-wrap items-center gap-3 opacity-80">
-            <span className="font-mono text-sm">HD-{String(i.seq).padStart(6, "0")}</span>
-            <span className="flex-1">{name(i)}</span>
-            <span className="text-sm">{i.dispensedAt ? timeVN(i.dispensedAt) : ""} · {i.dispensedBy}</span>
-          </Link>
-        ))}
-      </section>
+      <PageHead icon={Pill} title="Phát thuốc" sub={`Hôm nay, ${dayName}`} img="/images/art/herbs-wide.jpg" />
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <Stat icon={Package} label="Đơn đã thanh toán, chờ phát" value={waiting.length} unit="đơn" tone="amber" />
+        <Stat icon={CheckCircle2} label="Đã phát hôm nay" value={done.length} unit="đơn" tone="green" />
+        <Stat icon={AlertTriangle} label="Đơn có bệnh nhân dị ứng" value={waiting.filter((i) => i.patient?.allergies).length} unit="đơn chờ phát" tone="red" />
+      </div>
+
+      <Panel icon={Hourglass} title={`Danh sách đơn chờ phát thuốc (${waiting.length})`} pad={false} tone="text-amber-600">
+        {waiting.length === 0 ? <p className="p-4 text-sm text-brand-ink/60">Không có đơn nào chờ phát.</p> : (
+          <div className="overflow-x-auto">
+            <table>
+              <thead><tr><th className="w-12">STT</th><th>Bệnh nhân</th><th>Mã đơn</th><th>Loại</th><th>Thu lúc</th><th className="text-right">Số dòng</th><th>Lưu ý</th><th></th></tr></thead>
+              <tbody>
+                {waiting.map((i, k) => (
+                  <tr key={i.id}>
+                    <td className="text-brand-ink/60">{k + 1}</td>
+                    <td className="font-semibold">{name(i)}</td>
+                    <td className="font-mono text-sm">HD-{String(i.seq).padStart(6, "0")}</td>
+                    <td>{i.kind === "RETAIL" ? "Bán lẻ" : "Theo đơn"}</td>
+                    <td>{i.paidAt ? timeVN(i.paidAt) : ""}</td>
+                    <td className="text-right">{i._count.lines}</td>
+                    <td>{i.patient?.allergies ? <span className="chip chip-red">Dị ứng: {i.patient.allergies}</span> : <span className="chip chip-green">Đã thanh toán</span>}</td>
+                    <td><Link href={`/duoc/${i.id}`} className="rounded-lg bg-brand-deep px-4 py-1.5 text-sm font-semibold text-white hover:bg-brand-deeper">Soạn thuốc</Link></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
+
+      <Panel icon={CheckCircle2} title={`Đã phát hôm nay (${done.length})`} pad={false}>
+        {done.length === 0 ? <p className="p-4 text-sm text-brand-ink/60">Chưa phát đơn nào.</p> : (
+          <table>
+            <thead><tr><th>Mã đơn</th><th>Bệnh nhân</th><th>Phát lúc</th><th>Người phát</th><th></th></tr></thead>
+            <tbody>
+              {done.map((i) => (
+                <tr key={i.id}>
+                  <td className="font-mono text-sm">HD-{String(i.seq).padStart(6, "0")}</td>
+                  <td className="font-semibold">{name(i)}</td>
+                  <td>{i.dispensedAt ? timeVN(i.dispensedAt) : ""}</td>
+                  <td>{i.dispensedBy}</td>
+                  <td><Link href={`/duoc/${i.id}`} className="rounded-lg border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50">Xem</Link></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Panel>
     </div>
   );
 }
