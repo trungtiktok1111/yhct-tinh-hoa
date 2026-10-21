@@ -28,7 +28,7 @@ export function ExamTabs({ tabs }: { tabs: ExamTab[] }) {
         {tabs.map((t, i) => (
           <button
             key={t.key} type="button" onClick={() => move(i)}
-            className={`flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-[15px] font-semibold transition-colors ${i === idx ? "bg-brand-deep text-white" : "text-brand-ink/75 hover:bg-slate-100"}`}
+            className={`flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2.5 text-[15px] font-semibold transition-colors ${i === idx ? "bg-brand-deep text-white" : "text-brand-ink/75 hover:bg-slate-100"}`}
           >
             <span className={`grid h-6 w-6 place-items-center rounded-full text-xs ${i === idx ? "bg-brand-goldLight text-brand-deeper" : "bg-slate-200"}`}>{i + 1}</span>
             {t.label}
@@ -36,7 +36,7 @@ export function ExamTabs({ tabs }: { tabs: ExamTab[] }) {
         ))}
       </div>
       {tabs.map((t, i) => (
-        <div key={t.key} hidden={t.key !== cur} className="space-y-4">
+        <div key={t.key} hidden={t.key !== cur} data-exam-panel className="space-y-4">
           {t.content}
           <div className="flex justify-between pt-1">
             {i > 0 ? <button type="button" onClick={() => move(i - 1)} className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold hover:bg-slate-50">◂ {tabs[i - 1].label}</button> : <span />}

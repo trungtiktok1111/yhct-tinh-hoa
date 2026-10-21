@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { EXAM_ROLES } from "@/lib/permissions";
 import {
-  startExam, saveFindings, saveDiagnosis, addFormulaToPrescription, savePrescriptionMeta,
+  startExam, saveFindings, saveDiagnosis, savePrinciple, saveClinical, saveAllergies, cancelExam, addFormulaToPrescription, savePrescriptionMeta,
   addPrescriptionLine, updatePrescriptionLine, removePrescriptionLine, addExamPoint, removeExamPoint,
   addExamTherapy, removeExamTherapy, finishExam, reopenExam,
 } from "@/actions/exam";
@@ -12,10 +12,11 @@ import { BAT_CUONG, BAT_PHAP, parseDoseRange } from "@/lib/exam";
 import { input } from "@/lib/stock";
 import Image from "next/image";
 import { PrintButton } from "@/components/PrintButton";
-import { AlertTriangle, FolderOpen } from "lucide-react";
+import { AlertTriangle, FolderOpen, Pencil, Save, XCircle } from "lucide-react";
+import { SaveDraftButton } from "@/components/SaveDraftButton";
 import { ExamTabs } from "@/components/ExamTabs";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
-import { SEX_LABEL, VISIT_STATUS, patientCode, qty as fmtQty, bmiText, vnDayStart, timeVN } from "@/lib/format";
+import { SEX_LABEL, VISIT_STATUS, patientCode, qty as fmtQty, bmiText, vnDayStart, timeVN, dateVN } from "@/lib/format";
 import { ageOf, toDateInput } from "@/lib/person";
 import { GROUPS, TAG_LABEL, readTuChan, summarize, type Tag } from "@/lib/tuchan";
 import { applyProposal } from "@/actions/proposal";
@@ -87,20 +88,13 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
           </div>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${p.allergies ? "border-red-300 bg-red-600/90 font-semibold" : "border-white/25 bg-white/10 text-white/85"}`}>
-              <AlertTriangle className="h-4 w-4" /> Dị ứng: {p.allergies || "chưa ghi nhận"}
+              <AlertTriangle className="h-4 w-4" /> Dị ứng: {p.allergies || "chưa ghi nhận"} <a href="#hanh-chinh" title="Sửa dị ứng" className="ml-1 opacity-80 hover:opacity-100"><Pencil className="h-3.5 w-3.5" /></a>
             </div>
             <Link href={`/benh-nhan/${p.id}`} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-brand-deep hover:bg-emerald-50"><FolderOpen className="h-4 w-4" />Hồ sơ bệnh nhân</Link>
             <Link href="/kham" className="rounded-xl border border-white/30 px-3 py-2 text-sm hover:bg-white/10">◂ Danh sách khám</Link>
           </div>
         </div>
       </div>
-      {(p.pastHistory || p.chronicConditions || p.familyHistory) && (
-        <div className="card text-sm space-y-1">
-          {p.chronicConditions && <div><b>Bệnh mạn tính:</b> {p.chronicConditions}</div>}
-          {p.pastHistory && <div><b>Tiền sử:</b> {p.pastHistory}</div>}
-          {p.familyHistory && <div><b>Gia đình:</b> {p.familyHistory}</div>}
-        </div>
-      )}
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
     </>
   );
@@ -210,10 +204,45 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
       )}
 
       <ExamTabs tabs={[
-        { key: "tu-chan", label: "Tứ chẩn", ids: ["tu-chan", "tong-hop", "de-xuat"], content: (<>
+        { key: "hanh-chinh", label: "Hành chính", ids: ["hanh-chinh"], content: (<>
+      <section className="card space-y-4" id="hanh-chinh">
+        <h2 className="font-semibold text-brand-deep">Thông tin hành chính</h2>
+        <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+          {([
+            ["Họ tên", p.fullName], ["Mã BN", patientCode(p.seq)], ["Giới tính", SEX_LABEL[p.sex] ?? p.sex],
+            ["Ngày sinh", p.birthDate ? `${dateVN(p.birthDate)} (${ageOf(p.birthDate, p.birthYear)} tuổi)` : `${p.birthYear}`],
+            ["Số điện thoại", p.phone], ["CCCD / CMND", p.nationalId], ["Số thẻ BHYT", p.insuranceNo],
+            ["Nghề nghiệp", p.occupation], ["Nhóm máu", p.bloodType], ["Dân tộc", p.ethnicity],
+            ["Địa chỉ", [p.address, p.ward, p.district, p.province].filter(Boolean).join(", ")],
+            ["Liên hệ khẩn cấp", [p.emergencyName, p.emergencyRelation, p.emergencyPhone].filter(Boolean).join(" · ")],
+            ["Lượt khám", `Số ${visit.queueNo} · ${timeVN(visit.createdAt)} · ${visit.branch.name}`],
+            ["Lý do đến khám", visit.reason],
+          ] as [string, string | null | undefined][]).map(([k, v]) => (
+            <div key={k}><dt className="text-xs uppercase tracking-wide text-brand-ink/50">{k}</dt><dd className="font-medium">{v || "—"}</dd></div>
+          ))}
+        </dl>
+        <form action={saveAllergies} className="flex flex-wrap items-end gap-2 rounded-xl border border-red-200 bg-red-50/60 p-3">
+          {hidden}
+          <label className="min-w-[14rem] flex-1 text-sm font-semibold text-red-700">Dị ứng thuốc / thức ăn
+            <input name="allergies" defaultValue={p.allergies ?? ""} placeholder="Để trống nếu chưa ghi nhận dị ứng" className={input} />
+          </label>
+          <button className={btnSub}>Lưu dị ứng</button>
+        </form>
+        <Link href={`/benh-nhan/${p.id}/sua`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-deep underline"><Pencil className="h-4 w-4" />Sửa hồ sơ bệnh nhân</Link>
+      </section>
+</>) },
+        { key: "hoi-benh", label: "Hỏi bệnh", ids: ["hoi-benh", "tu-chan", "tong-hop", "de-xuat"], content: (<>
+            {(p.pastHistory || p.chronicConditions || p.familyHistory) && (
+        <div className="card text-sm space-y-1" id="hoi-benh">
+          {p.chronicConditions && <div><b>Bệnh mạn tính:</b> {p.chronicConditions}</div>}
+          {p.pastHistory && <div><b>Tiền sử bệnh:</b> {p.pastHistory}</div>}
+          {p.familyHistory && <div><b>Gia đình:</b> {p.familyHistory}</div>}
+        </div>
+      )}
+      
       {/* 1. Hỏi bệnh và tứ chẩn */}
       <section className="card space-y-3" id="tu-chan">
-        <h2 className="font-semibold text-brand-deep">Hỏi bệnh và tứ chẩn</h2>
+        <h2 className="font-semibold text-brand-deep">Lý do khám, bệnh sử và tứ chẩn</h2>
         <form action={saveFindings} className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
@@ -241,9 +270,6 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
               data={tuChan}
               groupNotes={{ vong: exam.inspection, van: exam.listening, vanhoi: exam.inquiry, thiet: exam.palpation }}
             />
-            <label className="block text-sm">Chẩn đoán theo y học hiện đại (nếu có)
-              <input name="modernDiagnosis" defaultValue={exam.modernDiagnosis ?? ""} className={input} />
-            </label>
           </fieldset>
           {!locked && <button className={btnMain}>Lưu tứ chẩn và xem tổng hợp</button>}
         </form>
@@ -342,25 +368,95 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
       )}
 
 </>) },
+        { key: "kham-lam-sang", label: "Khám lâm sàng", ids: ["kham-lam-sang"], content: (<>
+      <section className="card space-y-3" id="kham-lam-sang">
+        <h2 className="font-semibold text-brand-deep">Sinh hiệu và khám thực thể</h2>
+        <form action={saveClinical} className="space-y-3">
+          {hidden}
+          <fieldset disabled={locked} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              <label className="text-sm">Mạch (lần/phút)<input name="pulse" inputMode="numeric" defaultValue={visit.pulse ?? ""} className={input} /></label>
+              <label className="text-sm">Huyết áp<input name="bloodPressure" placeholder="120/80" defaultValue={visit.bloodPressure ?? ""} className={input} /></label>
+              <label className="text-sm">Nhiệt độ (°C)<input name="temperature" inputMode="decimal" defaultValue={visit.temperature ?? ""} className={input} /></label>
+              <label className="text-sm">Cân nặng (kg)<input name="weightKg" inputMode="decimal" defaultValue={visit.weightKg ?? ""} className={input} /></label>
+              <label className="text-sm">Chiều cao (cm)<input name="heightCm" inputMode="decimal" defaultValue={visit.heightCm ?? ""} className={input} /></label>
+            </div>
+            <label className="block text-sm">Khám lâm sàng (khám thực thể, các cơ quan)
+              <textarea name="clinicalExam" defaultValue={exam.clinicalExam ?? ""} placeholder="vd: Cơ cổ vai gáy co cứng, ấn đau điểm Phong trì; tầm vận động cổ giảm khi xoay phải; tim phổi bình thường." className={`${ta} min-h-[8rem]`} />
+            </label>
+          </fieldset>
+          {!locked && <button className={btnMain}>Lưu khám lâm sàng</button>}
+        </form>
+      </section>
+</>) },
         { key: "chan-doan", label: "Chẩn đoán", ids: ["chan-doan"], content: (<>
-      {/* 3. Chẩn đoán */}
       <section className="card space-y-3" id="chan-doan">
-        <h2 className="font-semibold text-brand-deep">Chẩn đoán và pháp trị</h2>
+        <h2 className="font-semibold text-brand-deep">Chẩn đoán</h2>
         <form action={saveDiagnosis} className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {BAT_CUONG.map((g) => (
-                <label key={g.name} className="text-sm">{g.label}
-                  <select name={g.name} defaultValue={(exam as Record<string, unknown>)[g.name] as string ?? ""} className={input}>
-                    <option value="">— Chưa xác định —</option>
-                    {g.options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                  </select>
+            <div className="grid gap-3 lg:grid-cols-2">
+              <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/50 p-3">
+                <div className="font-semibold text-amber-800">Chẩn đoán YHCT</div>
+                {(["pattern", "disease"] as const).map((k) => {
+                  const label = k === "disease" ? "Bệnh danh" : "Chứng hậu";
+                  const list = k === "disease" ? diseases : patterns;
+                  const idv = exam[`${k}Id` as "diseaseId"];
+                  const tx = exam[`${k}Text` as "diseaseText"];
+                  return (
+                    <div key={k} className="space-y-2">
+                      <label className="block text-sm">{label} (chọn từ danh mục)
+                        {locked ? <div className={input}>{tx ?? "—"}</div> : sel(`${k}Id`, idv, list)}
+                      </label>
+                      <label className="block text-sm">{label} (ghi tay, nếu khác danh mục)
+                        <input name={`${k}Text`} defaultValue={tx ?? ""} className={input} />
+                      </label>
+                    </div>
+                  );
+                })}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {BAT_CUONG.map((g) => (
+                    <label key={g.name} className="text-sm">{g.label}
+                      <select name={g.name} defaultValue={(exam as Record<string, unknown>)[g.name] as string ?? ""} className={input}>
+                        <option value="">— Chưa xác định —</option>
+                        {g.options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                      </select>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/50 p-3">
+                <div className="font-semibold text-sky-800">Chẩn đoán hiện đại</div>
+                <label className="block text-sm">Bệnh / hội chứng
+                  <input name="modernDiagnosis" defaultValue={exam.modernDiagnosis ?? ""} placeholder="vd: Hội chứng đau vai gáy do thoái hóa cột sống cổ" className={input} />
                 </label>
-              ))}
+                <label className="block text-sm">Mã ICD-10
+                  <input name="icd10Code" defaultValue={exam.icd10Code ?? ""} placeholder="vd: M47.8" className={input} />
+                </label>
+                <p className="text-xs text-brand-ink/60">Mã ICD-10 do bác sĩ tự nhập (chưa có danh mục tra cứu tự động).</p>
+              </div>
+            </div>
+          </fieldset>
+          {!locked && <button className={btnMain}>Lưu chẩn đoán</button>}
+        </form>
+      </section>
+</>) },
+        { key: "phap-tri", label: "Pháp trị", ids: ["phap-tri"], content: (<>
+      <section className="card space-y-3" id="phap-tri">
+        <h2 className="font-semibold text-brand-deep">Pháp trị và bát pháp</h2>
+        <form action={savePrinciple} className="space-y-3">
+          {hidden}
+          <fieldset disabled={locked} className="space-y-3">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="text-sm">Pháp trị (chọn từ danh mục)
+                {locked ? <div className={input}>{exam.principleText ?? "—"}</div> : sel("principleId", exam.principleId, principles)}
+              </label>
+              <label className="text-sm">Pháp trị (ghi tay, nếu khác danh mục)
+                <input name="principleText" defaultValue={exam.principleText ?? ""} className={input} />
+              </label>
             </div>
             <div className="text-sm">Bát pháp
-              <div className="flex flex-wrap gap-3 mt-1">
+              <div className="mt-1 flex flex-wrap gap-3">
                 {BAT_PHAP.map((m) => (
                   <label key={m} className="flex items-center gap-1">
                     <input type="checkbox" name="eightMethods" value={m} defaultChecked={(exam.eightMethods ?? "").split(",").includes(m)} /> {m}
@@ -368,32 +464,15 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
                 ))}
               </div>
             </div>
-            {(["disease", "pattern", "principle"] as const).map((k) => {
-              const label = k === "disease" ? "Bệnh danh" : k === "pattern" ? "Chứng hậu" : "Pháp trị";
-              const list = k === "disease" ? diseases : k === "pattern" ? patterns : principles;
-              const idv = exam[`${k}Id` as "diseaseId"];
-              const tx = exam[`${k}Text` as "diseaseText"];
-              return (
-                <div key={k} className="grid gap-2 sm:grid-cols-2">
-                  <label className="text-sm">{label} (chọn từ danh mục)
-                    {locked ? <div className={input}>{tx ?? "—"}</div> : sel(`${k}Id`, idv, list)}
-                  </label>
-                  <label className="text-sm">{label} (ghi tay, nếu khác danh mục)
-                    <input name={`${k}Text`} defaultValue={tx ?? ""} className={input} />
-                  </label>
-                </div>
-              );
-            })}
           </fieldset>
-          {!locked && <button className={btnMain}>Lưu chẩn đoán</button>}
+          {!locked && <button className={btnMain}>Lưu pháp trị</button>}
         </form>
       </section>
-
 </>) },
-        { key: "don-thuoc", label: "Đơn thuốc", ids: ["don-thuoc"], content: (<>
+        { key: "phuong-thuoc", label: "Phương thuốc", ids: ["phuong-thuoc", "don-thuoc", "bai-thuoc"], content: (<>
       {/* 4. Đơn thuốc */}
       <section className="card space-y-3" id="don-thuoc">
-        <h2 className="font-semibold text-brand-deep">Đơn thuốc</h2>
+        <h2 className="font-semibold text-brand-deep" id="phuong-thuoc">Phương thuốc (thang thuốc)</h2>
         {!locked && formulas.length > 0 && (
           <div className="rounded-lg border border-brand-gold/30 p-3 space-y-2">
             <div className="text-sm font-semibold">Bài thuốc theo pháp trị “{exam.principleText}”</div>
@@ -548,7 +627,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
       </section>
 
 </>) },
-        { key: "hoan-tat", label: "Xong", ids: ["hoan-tat"], content: (<>
+        { key: "dan-do", label: "Dặn dò", ids: ["dan-do", "hoan-tat"], content: (<>
       {/* 6. Hoàn tất */}
       <section className="card space-y-3" id="hoan-tat">
         <h2 className="font-semibold text-brand-deep">Dặn dò và hoàn tất</h2>
@@ -578,8 +657,15 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
       </p>
       <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center justify-end gap-2 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
         <Link href="/kham" className="mr-auto rounded-xl border border-slate-300 px-4 py-2.5 font-semibold hover:bg-slate-50">◂ Danh sách khám</Link>
+        {!locked && (
+          <form action={cancelExam}>
+            {hidden}
+            <ConfirmSubmit message="Hủy khám lượt này? Chỉ hủy được khi chưa có hóa đơn." className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2.5 font-semibold hover:bg-slate-50"><XCircle className="h-4 w-4" />Hủy khám</ConfirmSubmit>
+          </form>
+        )}
+        {!locked && <SaveDraftButton />}
         <PrintButton label="In bệnh án" />
-        {!locked && <a href="#hoan-tat" className="rounded-xl bg-brand-deep px-5 py-2.5 font-semibold text-white hover:bg-brand-deeper">Hoàn tất khám ▸</a>}
+        {!locked && <a href="#dan-do" className="rounded-xl bg-brand-deep px-5 py-2.5 font-semibold text-white hover:bg-brand-deeper">Hoàn tất khám ▸</a>}
       </div>
       </div>
     </div>

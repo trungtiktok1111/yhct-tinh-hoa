@@ -76,7 +76,6 @@ export async function saveFindings(formData: FormData) {
       listening: str(formData, "listening") ?? null,
       inquiry: str(formData, "inquiry") ?? null,
       palpation: str(formData, "palpation") ?? null,
-      modernDiagnosis: str(formData, "modernDiagnosis") ?? null,
       tuChanData: parseTuChanForm(formData),
     },
   });
@@ -106,16 +105,79 @@ export async function saveDiagnosis(formData: FormData) {
       coldHeat: pick("coldHeat", ["HAN", "NHIET"]),
       deficiencyExcess: pick("deficiencyExcess", ["HU", "THUC"]),
       yinYang: pick("yinYang", ["AM", "DUONG"]),
-      eightMethods: methods.length ? methods.join(",") : null,
+      modernDiagnosis: str(formData, "modernDiagnosis") ?? null,
+      icd10Code: str(formData, "icd10Code") ?? null,
       diseaseId: d ? diseaseId : null,
       diseaseText: str(formData, "diseaseText") ?? d?.name ?? null,
       patternId: p ? patternId : null,
       patternText: str(formData, "patternText") ?? p?.name ?? null,
+    },
+  });
+  to(visit.id, "chan-doan");
+}
+
+// Pháp trị và bát pháp (tab riêng).
+export async function savePrinciple(formData: FormData) {
+  const staff = await requireRole(...EXAM_ROLES);
+  const { visit, exam } = await loadExam(staff, str(formData, "visitId"));
+  const principleId = str(formData, "principleId") ?? null;
+  const t = principleId ? await prisma.treatmentPrinciple.findUnique({ where: { id: principleId }, select: { name: true } }) : null;
+  const methods = formData.getAll("eightMethods").map(String).filter((m) => ["Hãn", "Thổ", "Hạ", "Hòa", "Thanh", "Ôn", "Bổ", "Tiêu"].includes(m));
+  await prisma.exam.update({
+    where: { id: exam.id },
+    data: {
+      eightMethods: methods.length ? methods.join(",") : null,
       principleId: t ? principleId : null,
       principleText: str(formData, "principleText") ?? t?.name ?? null,
     },
   });
-  to(visit.id, "bai-thuoc");
+  to(visit.id, "phap-tri");
+}
+
+// Khám lâm sàng: sinh hiệu + mô tả khám thực thể.
+export async function saveClinical(formData: FormData) {
+  const staff = await requireRole(...EXAM_ROLES);
+  const { visit, exam } = await loadExam(staff, str(formData, "visitId"));
+  const weightKg = num(formData, "weightKg");
+  const heightCm = num(formData, "heightCm");
+  const temperature = num(formData, "temperature");
+  const pulse = num(formData, "pulse");
+  for (const [v, label, max] of [[weightKg, "Cân nặng", 400], [heightCm, "Chiều cao", 260], [temperature, "Nhiệt độ", 45], [pulse, "Mạch", 300]] as const) {
+    if (v !== undefined && (Number.isNaN(v) || v <= 0 || v > max)) to(visit.id, "kham-lam-sang", `${label} không hợp lệ.`);
+  }
+  await prisma.$transaction([
+    prisma.visit.update({
+      where: { id: visit.id },
+      data: {
+        weightKg: weightKg ?? null, heightCm: heightCm ?? null, temperature: temperature ?? null,
+        pulse: pulse === undefined ? null : Math.round(pulse), bloodPressure: str(formData, "bloodPressure") ?? null,
+      },
+    }),
+    prisma.exam.update({ where: { id: exam.id }, data: { clinicalExam: str(formData, "clinicalExam") ?? null } }),
+  ]);
+  to(visit.id, "kham-lam-sang");
+}
+
+// Cập nhật dị ứng thuốc ngay trên màn khám.
+export async function saveAllergies(formData: FormData) {
+  const staff = await requireRole(...EXAM_ROLES);
+  const { visit } = await loadExam(staff, str(formData, "visitId"), { allowFinal: true });
+  await prisma.patient.update({ where: { id: visit.patientId }, data: { allergies: str(formData, "allergies") ?? null } });
+  await logAudit({ staffId: staff.id, staffName: staff.fullName, branchId: visit.branchId, action: "UPDATE", entity: "Patient", entityId: visit.patientId, detail: "Cập nhật dị ứng" });
+  to(visit.id, "hanh-chinh");
+}
+
+// Hủy khám: chỉ khi chưa có hóa đơn.
+export async function cancelExam(formData: FormData) {
+  const staff = await requireRole(...EXAM_ROLES);
+  const { visit } = await loadExam(staff, str(formData, "visitId"));
+  const inv = await prisma.invoice.findUnique({ where: { visitId: visit.id }, select: { id: true } });
+  if (inv) to(visit.id, undefined, "Lượt khám đã có hóa đơn, không hủy được.");
+  await prisma.visit.update({ where: { id: visit.id }, data: { status: "CANCELLED", cancelReason: str(formData, "reason") ?? "Hủy khám" } });
+  await logAudit({ staffId: staff.id, staffName: staff.fullName, branchId: visit.branchId, action: "CANCEL", entity: "Visit", entityId: visit.id, detail: "Hủy khám" });
+  revalidatePath("/kham");
+  revalidatePath("/tiep-don");
+  redirect("/kham");
 }
 
 // Chọn nhanh từ phần gợi ý.

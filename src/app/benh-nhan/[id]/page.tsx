@@ -87,7 +87,7 @@ export default async function PatientDetailPage({ params, searchParams }: { para
         </div>
       </div>
 
-      <form action={createVisit} className="card grid gap-3 sm:grid-cols-2">
+      <form id="tiep-don" action={createVisit} className="card grid gap-3 sm:grid-cols-2">
         <h2 className="font-semibold sm:col-span-2">Tiếp đón lượt khám mới</h2>
         <input type="hidden" name="patientId" value={patient.id} />
         <label className="text-sm">Chi nhánh
