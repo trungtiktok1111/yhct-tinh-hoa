@@ -26,6 +26,7 @@ export const NAV_ITEMS = [
   { href: "/kham", label: "Khám bệnh", mobile: true, icon: "HeartPulse" },
   { href: "/thu-ngan", label: "Thu ngân", mobile: true, icon: "Wallet" },
   { href: "/duoc", label: "Phát thuốc", mobile: true, icon: "Pill" },
+  { href: "/bao-cao", label: "Báo cáo", mobile: true, icon: "BarChart3" },
   { href: "/benh-nhan", label: "Bệnh nhân", mobile: true, icon: "Users" },
   { href: "/kho", label: "Kho và giá", mobile: true, icon: "Package" },
   { href: "/quan-tri", label: "Quản trị / Thẩm định", mobile: true, icon: "ShieldCheck" },

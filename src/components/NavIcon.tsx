@@ -16,6 +16,7 @@ import {
   HeartPulse,
   Wallet,
   Pill,
+  BarChart3,
   Users,
   ClipboardCheck,
   type LucideIcon,
@@ -39,6 +40,7 @@ const ICONS: Record<string, LucideIcon> = {
   HeartPulse,
   Wallet,
   Pill,
+  BarChart3,
   Users,
   ClipboardCheck,
 };

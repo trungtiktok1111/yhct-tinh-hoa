@@ -53,6 +53,9 @@ export const EXAM_ROLES: Role[] = ["OWNER", "DOCTOR"];
 // Thu ngân và bán thuốc lẻ.
 export const CASHIER_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "CASHIER"];
 
+// Báo cáo.
+export const REPORT_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER"];
+
 // Phát thuốc.
 export const DISPENSE_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "PHARMACIST"];
 
@@ -66,6 +69,7 @@ export function canAccessPath(role: string, pathname: string): boolean {
   const roles = parseRoles(role); // role có thể là nhiều vai trò, vd "DOCTOR,CASHIER"
   const under = (p: string) => pathname === p || pathname.startsWith(p + "/");
   if (under("/thu-ngan")) return hasAny(roles, CASHIER_ROLES);
+  if (under("/bao-cao")) return hasAny(roles, REPORT_ROLES);
   if (under("/duoc")) return hasAny(roles, DISPENSE_ROLES);
   if (under("/kham")) return hasAny(roles, EXAM_ROLES);
   if (under("/benh-nhan") || under("/tiep-don")) return hasAny(roles, PATIENT_ROLES);
