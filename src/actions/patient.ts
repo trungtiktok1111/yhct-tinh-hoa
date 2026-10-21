@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { logAudit, requireRole, type CurrentStaff } from "@/lib/auth";
 import { PATIENT_DELETE_ROLES, PATIENT_ROLES } from "@/lib/permissions";
-import { vnDayStart, vnYear } from "@/lib/format";
+import { patientCode, vnDayStart } from "@/lib/format";
+import { parseCommon, type Common, type FormState } from "@/lib/person";
 
 function str(fd: FormData, key: string): string | undefined {
   const v = fd.get(key);
@@ -23,43 +24,53 @@ function go(path: string, error?: string): never {
   redirect(error ? `${path}?loi=${encodeURIComponent(error)}` : path);
 }
 
-type Parsed = {
-  fullName: string; birthYear: number; sex: string; phone: string;
-  address?: string; occupation?: string; weightKg?: number; heightCm?: number;
-  pastHistory?: string; familyHistory?: string; allergies?: string; chronicConditions?: string; note?: string;
-};
+type PatientData = ReturnType<typeof buildData>;
 
-function parsePatient(fd: FormData, path: string): Parsed {
-  const fullName = str(fd, "fullName");
-  const birthYear = num(fd, "birthYear");
-  const sex = str(fd, "sex");
-  const phoneRaw = str(fd, "phone");
-  if (!fullName) go(path, "Nhập họ tên.");
-  if (birthYear === undefined || !Number.isInteger(birthYear) || birthYear < 1900 || birthYear > vnYear())
-    go(path, `Năm sinh phải từ 1900 đến ${vnYear()}.`);
-  if (sex !== "M" && sex !== "F" && sex !== "O") go(path, "Chọn giới tính.");
-  const phone = phoneRaw?.replace(/[\s.\-]/g, "");
-  if (!phone || !/^\+?\d{8,15}$/.test(phone)) go(path, "Số điện thoại không hợp lệ (8–15 chữ số).");
-  const weightKg = num(fd, "weightKg");
-  const heightCm = num(fd, "heightCm");
-  if (weightKg !== undefined && (Number.isNaN(weightKg) || weightKg <= 0 || weightKg > 400)) go(path, "Cân nặng không hợp lệ (kg).");
-  if (heightCm !== undefined && (Number.isNaN(heightCm) || heightCm <= 0 || heightCm > 260)) go(path, "Chiều cao không hợp lệ (cm).");
+function buildData(c: Common, fd: FormData, weightKg?: number, heightCm?: number) {
   return {
-    fullName, birthYear, sex, phone, weightKg, heightCm,
-    address: str(fd, "address"), occupation: str(fd, "occupation"),
-    pastHistory: str(fd, "pastHistory"), familyHistory: str(fd, "familyHistory"),
-    allergies: str(fd, "allergies"), chronicConditions: str(fd, "chronicConditions"), note: str(fd, "note"),
+    fullName: c.fullName, birthDate: c.birthDate, birthYear: c.birthDate.getUTCFullYear(), sex: c.sex,
+    phone: c.phone ?? "", nationalId: c.nationalId ?? null, email: c.email ?? null,
+    address: c.address ?? null, ward: c.ward ?? null, district: c.district ?? null, province: c.province ?? null,
+    ethnicity: str(fd, "ethnicity") ?? null, nationality: str(fd, "nationality") ?? null,
+    occupation: str(fd, "occupation") ?? null, bloodType: str(fd, "bloodType") ?? null,
+    insuranceNo: str(fd, "insuranceNo") ?? null,
+    emergencyName: str(fd, "emergencyName") ?? null, emergencyRelation: str(fd, "emergencyRelation") ?? null,
+    emergencyPhone: str(fd, "emergencyPhone")?.replace(/[\s.\-]/g, "") ?? null,
+    weightKg: weightKg ?? null, heightCm: heightCm ?? null,
+    pastHistory: str(fd, "pastHistory") ?? null, familyHistory: str(fd, "familyHistory") ?? null,
+    allergies: str(fd, "allergies") ?? null, chronicConditions: str(fd, "chronicConditions") ?? null,
+    note: str(fd, "note") ?? null,
   };
 }
 
-export async function createPatient(formData: FormData) {
+function parsePatient(fd: FormData): { error: string } | { data: PatientData } {
+  const c = parseCommon(fd, { phoneRequired: true });
+  if ("error" in c) return c;
+  const weightKg = num(fd, "weightKg");
+  const heightCm = num(fd, "heightCm");
+  if (weightKg !== undefined && (Number.isNaN(weightKg) || weightKg <= 0 || weightKg > 400)) return { error: "Cân nặng không hợp lệ (kg)." };
+  if (heightCm !== undefined && (Number.isNaN(heightCm) || heightCm <= 0 || heightCm > 260)) return { error: "Chiều cao không hợp lệ (cm)." };
+  const ep = str(fd, "emergencyPhone")?.replace(/[\s.\-]/g, "");
+  if (ep && !/^\+?\d{8,15}$/.test(ep)) return { error: "Số điện thoại người liên hệ khẩn cấp không hợp lệ." };
+  return { data: buildData(c.data, fd, weightKg, heightCm) };
+}
+
+async function nationalIdTaken(nationalId: string | null, exceptId?: string) {
+  if (!nationalId) return null;
+  return prisma.patient.findFirst({ where: { nationalId, ...(exceptId ? { id: { not: exceptId } } : {}) } });
+}
+
+export async function createPatient(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireRole(...PATIENT_ROLES);
-  const P = "/benh-nhan/moi";
-  const d = parsePatient(formData, P);
+  const r = parsePatient(formData);
+  if ("error" in r) return r;
+  const d = r.data;
+  const idDup = await nationalIdTaken(d.nationalId);
+  if (idDup) return { error: `Số CCCD này đã có hồ sơ: ${idDup.fullName} (${patientCode(idDup.seq)}). Tìm bệnh nhân đó thay vì tạo mới.` };
   const dup = await prisma.patient.findFirst({
     where: { fullName: { equals: d.fullName, mode: "insensitive" }, birthYear: d.birthYear, phone: d.phone },
   });
-  if (dup) go(`/benh-nhan/${dup.id}`, "Bệnh nhân này đã có hồ sơ (trùng họ tên, năm sinh, điện thoại).");
+  if (dup) return { error: `Bệnh nhân này đã có hồ sơ (${patientCode(dup.seq)}). Tìm bệnh nhân đó thay vì tạo mới.` };
   const p = await prisma.patient.create({ data: { ...d, createdBy: staff.fullName } });
   await logAudit({
     staffId: staff.id, staffName: staff.fullName, action: "CREATE", entity: "Patient", entityId: p.id, detail: d.fullName,
@@ -68,25 +79,19 @@ export async function createPatient(formData: FormData) {
   redirect(`/benh-nhan/${p.id}`);
 }
 
-export async function updatePatient(formData: FormData) {
+export async function updatePatient(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireRole(...PATIENT_ROLES);
   const id = str(formData, "id");
-  if (!id) go("/benh-nhan");
-  const P = `/benh-nhan/${id}/sua`;
-  const d = parsePatient(formData, P);
+  if (!id) redirect("/benh-nhan");
+  const r = parsePatient(formData);
+  if ("error" in r) return r;
   const before = await prisma.patient.findUnique({ where: { id } });
-  if (!before) go("/benh-nhan", "Không tìm thấy hồ sơ.");
-  await prisma.patient.update({
-    where: { id },
-    data: {
-      ...d,
-      address: d.address ?? null, occupation: d.occupation ?? null, weightKg: d.weightKg ?? null,
-      heightCm: d.heightCm ?? null, pastHistory: d.pastHistory ?? null, familyHistory: d.familyHistory ?? null,
-      allergies: d.allergies ?? null, chronicConditions: d.chronicConditions ?? null, note: d.note ?? null,
-    },
-  });
+  if (!before) redirect("/benh-nhan");
+  const idDup = await nationalIdTaken(r.data.nationalId, id);
+  if (idDup) return { error: `Số CCCD này đã thuộc hồ sơ khác: ${idDup.fullName} (${patientCode(idDup.seq)}).` };
+  await prisma.patient.update({ where: { id }, data: r.data });
   await logAudit({
-    staffId: staff.id, staffName: staff.fullName, action: "UPDATE", entity: "Patient", entityId: id, detail: d.fullName,
+    staffId: staff.id, staffName: staff.fullName, action: "UPDATE", entity: "Patient", entityId: id, detail: r.data.fullName,
   });
   revalidatePath("/benh-nhan");
   revalidatePath(`/benh-nhan/${id}`);

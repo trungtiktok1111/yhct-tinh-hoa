@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { logAudit, requireRole } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
+import { parseCommon, parseDate, type FormState } from "@/lib/person";
 import { isRole, joinRoles, parseRoles, type Role } from "@/lib/permissions";
 
 function pickRoles(fd: FormData): Role[] {
@@ -57,31 +58,48 @@ export async function setBranchActive(formData: FormData) {
 
 const PW_MIN = 8;
 
-export async function createStaff(formData: FormData) {
+function staffExtras(fd: FormData): { error: string } | { data: { jobTitle: string | null; licenseNo: string | null; hireDate: Date | null; note: string | null } } {
+  const hd = parseDate(str(fd, "hireDate"));
+  if (hd === null) return { error: "Ngày vào làm không hợp lệ." };
+  return {
+    data: {
+      jobTitle: str(fd, "jobTitle") ?? null, licenseNo: str(fd, "licenseNo") ?? null,
+      hireDate: hd ?? null, note: str(fd, "note") ?? null,
+    },
+  };
+}
+
+export async function createStaff(_prev: FormState, formData: FormData): Promise<FormState> {
   const owner = await requireRole("OWNER");
   const username = str(formData, "username")?.toLowerCase();
-  const fullName = str(formData, "fullName");
   const password = String(formData.get("password") ?? "");
   const roles = pickRoles(formData);
   const branchIds = formData.getAll("branchIds").map(String);
 
+  const c = parseCommon(formData, { phoneRequired: false });
+  if ("error" in c) return c;
+  const x = staffExtras(formData);
+  if ("error" in x) return x;
   if (!username || !/^[a-z0-9._-]{3,32}$/.test(username))
-    back("/quan-tri/nhan-vien", "Tên đăng nhập 3–32 ký tự: chữ thường không dấu, số, . _ -");
-  if (!fullName) back("/quan-tri/nhan-vien", "Nhập họ tên.");
-  if (password.length < PW_MIN) back("/quan-tri/nhan-vien", `Mật khẩu tối thiểu ${PW_MIN} ký tự.`);
-  if (roles.length === 0) back("/quan-tri/nhan-vien", "Chọn ít nhất một vai trò.");
+    return { error: "Tên đăng nhập 3–32 ký tự: chữ thường không dấu, số, . _ -" };
+  if (password.length < PW_MIN) return { error: `Mật khẩu tối thiểu ${PW_MIN} ký tự.` };
+  if (roles.length === 0) return { error: "Chọn ít nhất một vai trò." };
   const isOwnerRole = roles.includes("OWNER");
-  if (!isOwnerRole && branchIds.length === 0)
-    back("/quan-tri/nhan-vien", "Chọn ít nhất một chi nhánh cho nhân viên này.");
-  if (await prisma.staff.findUnique({ where: { username } }))
-    back("/quan-tri/nhan-vien", "Tên đăng nhập đã có người dùng.");
+  if (!isOwnerRole && branchIds.length === 0) return { error: "Chọn ít nhất một chi nhánh cho nhân viên này." };
+  if (await prisma.staff.findUnique({ where: { username } })) return { error: "Tên đăng nhập đã có người dùng." };
+  if (c.data.nationalId && (await prisma.staff.findUnique({ where: { nationalId: c.data.nationalId } })))
+    return { error: "Số CCCD này đã có nhân viên khác." };
 
+  const d = c.data;
   const s = await prisma.staff.create({
     data: {
       username,
-      fullName,
+      fullName: d.fullName,
       role: joinRoles(roles),
       passwordHash: await hashPassword(password),
+      birthDate: d.birthDate, sex: d.sex, nationalId: d.nationalId ?? null, phone: d.phone ?? null,
+      email: d.email ?? null, address: d.address ?? null, ward: d.ward ?? null, district: d.district ?? null,
+      province: d.province ?? null, ...x.data,
       branches: isOwnerRole ? undefined : { create: branchIds.map((branchId) => ({ branchId })) },
     },
   });
@@ -90,37 +108,48 @@ export async function createStaff(formData: FormData) {
     action: "CREATE", entity: "Staff", entityId: s.id, detail: `${username} · ${joinRoles(roles)}`,
   });
   revalidatePath("/quan-tri/nhan-vien");
-  back("/quan-tri/nhan-vien");
+  redirect("/quan-tri/nhan-vien?ok=1");
 }
 
 async function otherActiveOwners(excludeId: string) {
   return prisma.staff.count({ where: { role: { contains: "OWNER" }, active: true, id: { not: excludeId } } });
 }
 
-export async function updateStaff(formData: FormData) {
+export async function updateStaff(_prev: FormState, formData: FormData): Promise<FormState> {
   const owner = await requireRole("OWNER");
   const id = str(formData, "id");
-  const fullName = str(formData, "fullName");
   const roles = pickRoles(formData);
   const role = joinRoles(roles);
   const isOwnerRole = roles.includes("OWNER");
   const branchIds = formData.getAll("branchIds").map(String);
-  if (!id || !fullName || roles.length === 0) back("/quan-tri/nhan-vien", "Thiếu thông tin: cần họ tên và ít nhất một vai trò.");
-  if (!isOwnerRole && branchIds.length === 0)
-    back("/quan-tri/nhan-vien", "Chọn ít nhất một chi nhánh.");
+  if (!id) redirect("/quan-tri/nhan-vien");
+  const c = parseCommon(formData, { phoneRequired: false });
+  if ("error" in c) return c;
+  const x = staffExtras(formData);
+  if ("error" in x) return x;
+  if (roles.length === 0) return { error: "Chọn ít nhất một vai trò." };
+  if (!isOwnerRole && branchIds.length === 0) return { error: "Chọn ít nhất một chi nhánh." };
 
   const current = await prisma.staff.findUnique({ where: { id } });
-  if (!current) back("/quan-tri/nhan-vien", "Không tìm thấy nhân viên.");
+  if (!current) return { error: "Không tìm thấy nhân viên." };
   if (parseRoles(current.role).includes("OWNER") && !isOwnerRole && (await otherActiveOwners(id)) === 0)
-    back("/quan-tri/nhan-vien", "Phải còn ít nhất một tài khoản Chủ đang hoạt động.");
+    return { error: "Phải còn ít nhất một tài khoản Chủ đang hoạt động." };
+  if (c.data.nationalId) {
+    const dup = await prisma.staff.findFirst({ where: { nationalId: c.data.nationalId, id: { not: id } } });
+    if (dup) return { error: "Số CCCD này đã có nhân viên khác." };
+  }
 
+  const d = c.data;
   await prisma.$transaction([
     prisma.staffBranch.deleteMany({ where: { staffId: id } }),
     prisma.staff.update({
       where: { id },
       data: {
-        fullName,
+        fullName: d.fullName,
         role,
+        birthDate: d.birthDate, sex: d.sex, nationalId: d.nationalId ?? null, phone: d.phone ?? null,
+        email: d.email ?? null, address: d.address ?? null, ward: d.ward ?? null, district: d.district ?? null,
+        province: d.province ?? null, ...x.data,
         branches: isOwnerRole ? undefined : { create: branchIds.map((branchId) => ({ branchId })) },
       },
     }),
@@ -130,7 +159,7 @@ export async function updateStaff(formData: FormData) {
     action: "UPDATE", entity: "Staff", entityId: id, detail: `${current.role} → ${role}`,
   });
   revalidatePath("/quan-tri/nhan-vien");
-  back("/quan-tri/nhan-vien");
+  redirect("/quan-tri/nhan-vien?ok=1");
 }
 
 export async function setStaffActive(formData: FormData) {

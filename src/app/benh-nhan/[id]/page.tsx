@@ -7,7 +7,8 @@ import { createVisit, deletePatient } from "@/actions/patient";
 import { branchesFor, input } from "@/lib/stock";
 import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
-import { SEX_LABEL, VISIT_STATUS, dateVN, patientCode, vnYear } from "@/lib/format";
+import { SEX_LABEL, VISIT_STATUS, dateVN, patientCode } from "@/lib/format";
+import { ageOf, dobText } from "@/lib/person";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export default async function PatientDetailPage({ params, searchParams }: { para
         <div>
           <h1 className="text-2xl font-bold font-display">{patient.fullName}</h1>
           <p className="text-sm text-gray-600">
-            {patientCode(patient.seq)} · {SEX_LABEL[patient.sex] ?? patient.sex} · {vnYear() - patient.birthYear} tuổi (sinh {patient.birthYear}) · {patient.phone}
+            {patientCode(patient.seq)} · {SEX_LABEL[patient.sex] ?? patient.sex} · {ageOf(patient.birthDate, patient.birthYear)} tuổi (sinh {patient.birthDate ? dobText(patient.birthDate) : patient.birthYear}) · {patient.phone}
           </p>
         </div>
         <div className="flex gap-2">
@@ -62,8 +63,16 @@ export default async function PatientDetailPage({ params, searchParams }: { para
       )}
 
       <div className="card grid gap-3 sm:grid-cols-2">
-        <Field label="Địa chỉ" value={patient.address} />
+        <Field label="Số CCCD / CMND" value={patient.nationalId} />
+        <Field label="Email" value={patient.email} />
+        <div className="sm:col-span-2">
+          <Field label="Địa chỉ" value={[patient.address, patient.ward, patient.district, patient.province].filter(Boolean).join(", ")} />
+        </div>
+        <Field label="Dân tộc / quốc tịch" value={[patient.ethnicity, patient.nationality].filter(Boolean).join(" · ")} />
         <Field label="Nghề nghiệp" value={patient.occupation} />
+        <Field label="Số thẻ BHYT" value={patient.insuranceNo} />
+        <Field label="Nhóm máu" value={patient.bloodType} />
+        <Field label="Người liên hệ" value={[patient.emergencyName, patient.emergencyRelation && `(${patient.emergencyRelation})`, patient.emergencyPhone].filter(Boolean).join(" ")} />
         <Field label="Cân nặng" value={patient.weightKg ? `${patient.weightKg} kg` : null} />
         <Field label="Chiều cao" value={patient.heightCm ? `${patient.heightCm} cm` : null} />
         <Field label="BMI" value={bmi ? bmi.toFixed(1) : null} />

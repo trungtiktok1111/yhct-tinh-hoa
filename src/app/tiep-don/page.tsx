@@ -5,7 +5,8 @@ import { PATIENT_ROLES } from "@/lib/permissions";
 import { cancelVisit } from "@/actions/patient";
 import { branchesFor, input } from "@/lib/stock";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
-import { SEX_LABEL, VISIT_STATUS, patientCode, timeVN, vnDayStart, vnYear } from "@/lib/format";
+import { SEX_LABEL, VISIT_STATUS, patientCode, timeVN, vnDayStart } from "@/lib/format";
+import { ageOf } from "@/lib/person";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,6 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
     orderBy: { queueNo: "asc" },
     include: { patient: true },
   });
-  const year = vnYear();
   const waiting = visits.filter((v) => v.status === "WAITING").length;
 
   return (
@@ -59,7 +59,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
             <div className="min-w-0 flex-1">
               <Link href={`/benh-nhan/${v.patient.id}`} className="font-semibold text-brand-deep underline">{v.patient.fullName}</Link>
               <div className="text-xs text-gray-600">
-                {patientCode(v.patient.seq)} · {SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {year - v.patient.birthYear} tuổi · {timeVN(v.createdAt)}
+                {patientCode(v.patient.seq)} · {SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi · {timeVN(v.createdAt)}
                 {v.reason ? ` · ${v.reason}` : ""}
               </div>
               {v.patient.allergies && <div className="text-xs text-red-700 font-semibold">Dị ứng: {v.patient.allergies}</div>}

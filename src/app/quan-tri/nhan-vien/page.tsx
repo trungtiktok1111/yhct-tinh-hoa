@@ -1,70 +1,39 @@
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
-import { ROLES, ROLE_KEYS, parseRoles, rolesLabel } from "@/lib/permissions";
-import { createStaff, resetStaffPassword, setStaffActive, updateStaff, deleteStaff } from "@/actions/admin";
+import { parseRoles, rolesLabel } from "@/lib/permissions";
+import { resetStaffPassword, setStaffActive, deleteStaff } from "@/actions/admin";
 import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
+import { StaffForm } from "@/components/StaffForm";
+import { toDateInput } from "@/lib/person";
 
 export const dynamic = "force-dynamic";
 
 const input = "w-full rounded-lg border border-brand-gold/40 bg-white px-3 py-2.5 text-base";
 
-export default async function StaffPage({ searchParams }: { searchParams: { loi?: string } }) {
+export default async function StaffPage({ searchParams }: { searchParams: { loi?: string; ok?: string } }) {
   const me = await requireRole("OWNER");
   const [staff, branches] = await Promise.all([
     prisma.staff.findMany({
       orderBy: { createdAt: "asc" },
       include: { branches: { select: { branchId: true } } },
     }),
-    prisma.branch.findMany({ where: { active: true }, orderBy: { createdAt: "asc" } }),
+    prisma.branch.findMany({ where: { active: true }, orderBy: { createdAt: "asc" }, select: { id: true, name: true } }),
   ]);
-
-  const BranchChecks = ({ selected }: { selected: string[] }) => (
-    <fieldset className="flex flex-wrap gap-x-4 gap-y-2">
-      <legend className="text-sm font-medium mb-1">Chi nhánh (Chủ tự động thấy tất cả)</legend>
-      {branches.length === 0 && <span className="text-sm text-gray-600">Chưa có chi nhánh. Tạo chi nhánh trước.</span>}
-      {branches.map((b) => (
-        <label key={b.id} className="flex items-center gap-2 text-sm py-1">
-          <input type="checkbox" name="branchIds" value={b.id} defaultChecked={selected.includes(b.id)} className="h-5 w-5" />
-          {b.name}
-        </label>
-      ))}
-    </fieldset>
-  );
-
-  const RoleChecks = ({ selected }: { selected: string[] }) => (
-    <fieldset className="flex flex-wrap gap-x-4 gap-y-2">
-      <legend className="text-sm font-medium mb-1">Vai trò (chọn một hoặc nhiều)</legend>
-      {ROLE_KEYS.map((r) => (
-        <label key={r} className="flex items-center gap-2 text-sm py-1">
-          <input type="checkbox" name="roles" value={r} defaultChecked={selected.includes(r)} className="h-5 w-5" />
-          {ROLES[r]}
-        </label>
-      ))}
-    </fieldset>
-  );
 
   return (
     <div className="space-y-6">
       <BackLink href="/quan-tri" label="Quay lại Quản trị" />
       <h1 className="text-2xl font-bold font-display">Nhân viên</h1>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
+      {searchParams.ok && <div className="card !bg-green-50 text-sm text-green-800">Đã lưu.</div>}
 
-      <div className="card space-y-3">
-        <h2 className="font-semibold">Thêm nhân viên</h2>
-        <form action={createStaff} className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input name="fullName" placeholder="Họ tên" required className={input} />
-            <input name="username" placeholder="Tên đăng nhập (chữ thường, không dấu)" autoCapitalize="none" required className={input} />
-            <input name="password" type="password" placeholder="Mật khẩu (tối thiểu 8 ký tự)" minLength={8} required autoComplete="new-password" className={input} />
-          </div>
-          <RoleChecks selected={[]} />
-          <BranchChecks selected={[]} />
-          <button type="submit" className="w-full bg-brand-deep hover:bg-brand-deeper text-brand-cream rounded-lg px-4 py-2.5 font-semibold">
-            Thêm nhân viên
-          </button>
-        </form>
-      </div>
+      <details className="card">
+        <summary className="cursor-pointer font-semibold">+ Thêm nhân viên</summary>
+        <div className="mt-4">
+          <StaffForm branches={branches} />
+        </div>
+      </details>
 
       <div className="space-y-3">
         {staff.map((s) => (
@@ -72,23 +41,22 @@ export default async function StaffPage({ searchParams }: { searchParams: { loi?
             <summary className="cursor-pointer flex flex-wrap items-center justify-between gap-2">
               <span className="min-w-0">
                 <span className="font-semibold">{s.fullName}</span>{" "}
-                <span className="text-sm text-gray-600">@{s.username} · {rolesLabel(s.role)}</span>
+                <span className="text-sm text-gray-600">@{s.username} · {rolesLabel(s.role)}{s.jobTitle ? ` · ${s.jobTitle}` : ""}</span>
               </span>
               {!s.active && <span className="status-pill status-RETIRED">Đã khóa</span>}
             </summary>
 
             <div className="mt-4 space-y-4">
-              <form action={updateStaff} className="space-y-3">
-                <input type="hidden" name="id" value={s.id} />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <input name="fullName" defaultValue={s.fullName} required className={input} />
-                </div>
-                <RoleChecks selected={parseRoles(s.role)} />
-                <BranchChecks selected={s.branches.map((b) => b.branchId)} />
-                <button type="submit" className="rounded-lg border border-brand-gold/50 px-4 py-2 text-sm font-semibold">
-                  Lưu thay đổi
-                </button>
-              </form>
+              <StaffForm
+                branches={branches}
+                staff={{
+                  id: s.id, username: s.username, fullName: s.fullName, roles: parseRoles(s.role),
+                  branchIds: s.branches.map((b) => b.branchId),
+                  birthDate: toDateInput(s.birthDate) || null, sex: s.sex, nationalId: s.nationalId, phone: s.phone,
+                  email: s.email, address: s.address, ward: s.ward, district: s.district, province: s.province,
+                  jobTitle: s.jobTitle, licenseNo: s.licenseNo, hireDate: toDateInput(s.hireDate) || null, note: s.note,
+                }}
+              />
 
               <form action={resetStaffPassword} className="flex flex-wrap gap-2">
                 <input type="hidden" name="id" value={s.id} />

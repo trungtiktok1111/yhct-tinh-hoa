@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { PATIENT_ROLES } from "@/lib/permissions";
 import { PatientForm } from "@/components/PatientForm";
 import { BackLink } from "@/components/BackLink";
+import { toDateInput } from "@/lib/person";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export default async function EditPatientPage({ params, searchParams }: { params
       <BackLink href={`/benh-nhan/${patient.id}`} label="Quay lại, không lưu" />
       <h1 className="text-2xl font-bold font-display">Sửa hồ sơ: {patient.fullName}</h1>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
-      <PatientForm patient={patient} />
+      <PatientForm patient={{ ...patient, birthDate: toDateInput(patient.birthDate) }} />
     </div>
   );
 }

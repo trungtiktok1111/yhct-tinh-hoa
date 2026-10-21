@@ -356,6 +356,19 @@ model Staff {
   passwordHash String
   role         String
   active       Boolean   @default(true)
+  birthDate   DateTime?
+  sex         String? // M | F | O
+  nationalId  String?  @unique // CCCD / CMND
+  phone       String?
+  email       String?
+  address     String?
+  ward        String?
+  district    String?
+  province    String?
+  jobTitle    String? // chức danh
+  licenseNo   String? // số chứng chỉ hành nghề
+  hireDate    DateTime?
+  note        String?
   createdAt    DateTime  @default(now())
   lastLoginAt  DateTime?
 
@@ -470,11 +483,24 @@ model Patient {
   id               String   @id @default(cuid())
   seq              Int      @unique @default(autoincrement()) // mã BN-000123
   fullName         String
-  birthYear        Int
+  birthYear        Int // suy ra từ birthDate (giữ để tương thích dữ liệu cũ)
+  birthDate        DateTime? // ngày sinh đầy đủ (lưu 00:00 UTC của ngày đó)
   sex              String // M | F | O
   phone            String
-  address          String?
+  nationalId       String?  @unique // CCCD / CMND / hộ chiếu
+  ethnicity        String? // dân tộc
+  nationality      String? // quốc tịch
+  email            String?
+  address          String? // số nhà, đường
+  ward             String? // phường / xã
+  district         String? // quận / huyện
+  province         String? // tỉnh / thành phố
   occupation       String?
+  bloodType        String?
+  insuranceNo      String? // số thẻ BHYT
+  emergencyName    String? // người liên hệ khẩn cấp
+  emergencyRelation String?
+  emergencyPhone   String?
   weightKg         Float? // lần đo gần nhất
   heightCm         Float?
   pastHistory      String? // tiền căn bản thân
