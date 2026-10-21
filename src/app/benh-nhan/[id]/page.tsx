@@ -7,7 +7,7 @@ import { createVisit, deletePatient } from "@/actions/patient";
 import { branchesFor, input } from "@/lib/stock";
 import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
-import { SEX_LABEL, VISIT_STATUS, dateVN, patientCode } from "@/lib/format";
+import { SEX_LABEL, VISIT_STATUS, dateVN, patientCode, bmiClass } from "@/lib/format";
 import { ageOf, dobText } from "@/lib/person";
 
 export const dynamic = "force-dynamic";
@@ -75,7 +75,7 @@ export default async function PatientDetailPage({ params, searchParams }: { para
         <Field label="Người liên hệ" value={[patient.emergencyName, patient.emergencyRelation && `(${patient.emergencyRelation})`, patient.emergencyPhone].filter(Boolean).join(" ")} />
         <Field label="Cân nặng" value={patient.weightKg ? `${patient.weightKg} kg` : null} />
         <Field label="Chiều cao" value={patient.heightCm ? `${patient.heightCm} cm` : null} />
-        <Field label="BMI" value={bmi ? bmi.toFixed(1) : null} />
+        <Field label="BMI (chuẩn WHO châu Á)" value={bmi ? `${bmi.toFixed(1)} · ${bmiClass(bmi)}` : null} />
         <div className="sm:col-span-2 grid gap-3">
           <Field label="Tiền căn bản thân" value={patient.pastHistory} />
           <Field label="Tiền căn gia đình" value={patient.familyHistory} />

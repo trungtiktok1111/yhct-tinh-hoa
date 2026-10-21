@@ -18,3 +18,20 @@ export const vnDayStart = () => {
   return new Date(t - (t % 86400000) - VN_OFFSET_MS);
 };
 export const timeVN = (d: Date) => d.toLocaleTimeString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit" });
+
+// BMI và phân loại theo chuẩn WHO khu vực châu Á - Thái Bình Dương (áp dụng cho người Việt Nam).
+export function bmiOf(weightKg?: number | null, heightCm?: number | null): number | null {
+  if (!weightKg || !heightCm || weightKg <= 0 || heightCm <= 0) return null;
+  return weightKg / Math.pow(heightCm / 100, 2);
+}
+export function bmiClass(bmi: number): string {
+  if (bmi < 18.5) return "Thiếu cân";
+  if (bmi < 23) return "Bình thường";
+  if (bmi < 25) return "Thừa cân";
+  if (bmi < 30) return "Béo phì độ I";
+  return "Béo phì độ II";
+}
+export const bmiText = (w?: number | null, h?: number | null): string | null => {
+  const b = bmiOf(w, h);
+  return b === null ? null : `${b.toFixed(1)} · ${bmiClass(b)}`;
+};

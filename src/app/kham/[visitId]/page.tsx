@@ -13,7 +13,7 @@ import { BAT_CUONG, BAT_PHAP, parseDoseRange } from "@/lib/exam";
 import { input } from "@/lib/stock";
 import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
-import { SEX_LABEL, VISIT_STATUS, patientCode, qty as fmtQty } from "@/lib/format";
+import { SEX_LABEL, VISIT_STATUS, patientCode, qty as fmtQty, bmiText } from "@/lib/format";
 import { ageOf, toDateInput } from "@/lib/person";
 import { GROUPS, TAG_LABEL, readTuChan, summarize, type Tag } from "@/lib/tuchan";
 import { TuChanFields } from "@/components/TuChanFields";
@@ -70,6 +70,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
           visit.bloodPressure && `HA ${visit.bloodPressure}`,
           visit.temperature != null && `${visit.temperature}°C`,
           visit.weightKg != null && `${visit.weightKg} kg`,
+          bmiText(visit.weightKg, visit.heightCm) && `BMI ${bmiText(visit.weightKg, visit.heightCm)}`,
           visit.heightCm != null && `${visit.heightCm} cm`,
         ].filter(Boolean).join(" · ") || "chưa ghi"}
       </div>
