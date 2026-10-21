@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Users, Stethoscope, FileText, Pill, Banknote, UserPlus, HeartPulse, Receipt, CalendarDays, ClipboardList, Eye, MoreVertical, Clock, BarChart3, Hourglass, FileCheck, FileX, ArrowRight, Leaf, type LucideIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { canAccessPath } from "@/lib/permissions";
@@ -74,8 +75,8 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
   const maxDay = Math.max(...dayTotals, 1);
   const dayLabel = (d: Date) => new Date(d.getTime() + 7 * 3600000).toISOString().slice(8, 10) + "/" + new Date(d.getTime() + 7 * 3600000).toISOString().slice(5, 7);
   const events = [
-    ...visits.map((v) => ({ at: v.createdAt, who: v.patient.fullName, text: "Đến phòng khám" })),
-    ...week.filter((w) => w.paidAt).map((w) => ({ at: w.paidAt as Date, who: w.patient?.fullName ?? w.customerName ?? "Khách lẻ", text: `Đã thu tiền ${vnd(w.total)}` })),
+    ...visits.map((v) => ({ at: v.createdAt, who: v.patient.fullName, text: "Đến phòng khám", pay: false })),
+    ...week.filter((w) => w.paidAt).map((w) => ({ at: w.paidAt as Date, who: w.patient?.fullName ?? w.customerName ?? "Khách lẻ", text: `Đã thu tiền ${vnd(w.total)}`, pay: true })),
   ].sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, 5);
   const withMeds = visits.filter((v) => v.invoice?.lines.some((l) => l.itemId)).length;
   const paidToday = visits.filter((v) => v.invoice?.status === "PAID").length;
@@ -107,16 +108,16 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
     amber: "bg-amber-50 border-amber-200", blue: "bg-sky-50 border-sky-200", red: "bg-rose-50 border-rose-200", purple: "bg-violet-50 border-violet-200",
   } as const;
   const cards = [
-    { label: "Chờ khám", n: waiting, cls: "text-amber-600", t: tint.amber, href: can("/kham") ? "/kham" + cn : can("/tiep-don") ? "/tiep-don" + cn : null },
-    { label: "Đang khám", n: inExam, cls: "text-sky-700", t: tint.blue, href: can("/kham") ? "/kham" + cn : null },
-    { label: "Chờ thu", n: toInvoice + unpaid, cls: "text-rose-600", t: tint.red, href: can("/thu-ngan") ? "/thu-ngan" + cn : null },
-    { label: "Chờ phát thuốc", n: toDispense, cls: "text-violet-700", t: tint.purple, href: can("/duoc") ? "/duoc" + cn : null },
+    { label: "Chờ khám", n: waiting, Icon: Users, ic: "bg-amber-100 text-amber-600", cls: "text-amber-600", t: tint.amber, href: can("/kham") ? "/kham" + cn : can("/tiep-don") ? "/tiep-don" + cn : null },
+    { label: "Đang khám", n: inExam, Icon: Stethoscope, ic: "bg-sky-100 text-sky-700", cls: "text-sky-700", t: tint.blue, href: can("/kham") ? "/kham" + cn : null },
+    { label: "Chờ thu", n: toInvoice + unpaid, Icon: FileText, ic: "bg-rose-100 text-rose-600", cls: "text-rose-600", t: tint.red, href: can("/thu-ngan") ? "/thu-ngan" + cn : null },
+    { label: "Chờ phát thuốc", n: toDispense, Icon: Pill, ic: "bg-violet-100 text-violet-700", cls: "text-violet-700", t: tint.purple, href: can("/duoc") ? "/duoc" + cn : null },
   ];
   const actions = [
-    { href: "/tiep-don" + cn, label: "Tiếp đón bệnh nhân", ok: can("/tiep-don") },
-    { href: "/kham" + cn, label: "Vào khám bệnh", ok: can("/kham") },
-    { href: "/thu-ngan" + cn, label: "Thu tiền", ok: can("/thu-ngan") },
-    { href: "/duoc" + cn, label: "Phát thuốc", ok: can("/duoc") },
+    { href: "/tiep-don" + cn, label: "Tiếp đón bệnh nhân", Icon: UserPlus, ok: can("/tiep-don") },
+    { href: "/kham" + cn, label: "Vào khám bệnh", Icon: HeartPulse, ok: can("/kham") },
+    { href: "/thu-ngan" + cn, label: "Thu tiền", Icon: Receipt, ok: can("/thu-ngan") },
+    { href: "/duoc" + cn, label: "Phát thuốc", Icon: Pill, ok: can("/duoc") },
   ].filter((a) => a.ok);
 
   return (
@@ -127,19 +128,23 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
           <div className={`grid grid-cols-2 ${revenue ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-3`}>
             {cards.map((c) => {
               const body = (
-                <>
-                  <div className="font-bold">{c.label}</div>
-                  <div className={`text-3xl font-bold ${c.cls}`}>{c.n}</div>
-                  <div className="text-sm text-brand-ink/60">bệnh nhân</div>
-                </>
+                <div className="relative flex items-center gap-3 overflow-hidden">
+                  <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${c.ic}`}><c.Icon className="h-5 w-5" /></span>
+                  <div>
+                    <div className="font-bold leading-tight">{c.label}</div>
+                    <div className={`text-3xl font-bold leading-tight ${c.cls}`}>{c.n}</div>
+                    <div className="text-xs text-brand-ink/60">bệnh nhân</div>
+                  </div>
+                  <c.Icon className={`absolute -bottom-3 -right-2 h-16 w-16 opacity-[0.12] ${c.cls}`} />
+                </div>
               );
               return c.href ? <Link key={c.label} href={c.href} className={`rounded-2xl border p-4 hover:shadow-md transition ${c.t}`}>{body}</Link> : <div key={c.label} className={`rounded-2xl border p-4 ${c.t}`}>{body}</div>;
             })}
             {revenue && (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 col-span-2 lg:col-span-1">
-                <div className="font-bold text-sm">Doanh thu hôm nay</div>
+                <div className="flex items-center gap-2 font-bold text-sm"><span className="grid h-8 w-8 place-items-center rounded-full bg-emerald-100 text-emerald-700"><Banknote className="h-4 w-4" /></span>Doanh thu hôm nay</div>
                 <div className="mt-1 text-2xl font-bold text-emerald-800">{vnd(revenue._sum.total ?? 0)}</div>
-                <div className="text-sm text-brand-ink/60">Tổng thu</div>
+                <div className="text-xs text-brand-ink/60">Tổng thu</div>
               </div>
             )}
           </div>
@@ -147,13 +152,13 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
           {actions.length > 0 && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {actions.map((a, i) => (
-                <Link key={a.href} href={a.href} className={`rounded-xl px-4 py-3 text-center font-semibold ${i === 0 ? "bg-brand-deep text-white hover:bg-brand-deeper" : "bg-white border border-slate-200 hover:border-brand-deep"}`}>{a.label}</Link>
+                <Link key={a.href} href={a.href} className={`flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-center font-semibold ${i === 0 ? "bg-brand-deep text-white hover:bg-brand-deeper" : "bg-white border border-slate-200 hover:border-brand-deep"}`}><a.Icon className={`h-5 w-5 ${i === 0 ? "" : "text-brand-deep"}`} />{a.label}</Link>
               ))}
             </div>
           )}
 
           <section className="card !p-0 overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-slate-200 font-bold text-lg">Hàng chờ hôm nay <span className="text-brand-ink/50 font-medium">({visits.length})</span></div>
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-200 font-bold text-lg"><span className="grid h-9 w-9 place-items-center rounded-lg bg-amber-100 text-amber-600"><Users className="h-5 w-5" /></span>Hàng chờ hôm nay <span className="text-brand-ink/50 font-medium">({visits.length})</span><Link href={can("/tiep-don") ? "/tiep-don" + cn : "/benh-nhan"} className="ml-auto flex items-center gap-1 text-sm font-medium text-sky-700 hover:underline">Xem tất cả <ArrowRight className="h-4 w-4" /></Link></div>
             {visits.length === 0 ? (
               <p className="p-6 text-brand-ink/60">Chưa có bệnh nhân nào hôm nay.</p>
             ) : (
@@ -166,6 +171,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
                       <th className="px-3 py-2.5 hidden md:table-cell">Lý do khám</th>
                       <th className="px-3 py-2.5 hidden sm:table-cell">Giờ đến</th>
                       <th className="px-3 py-2.5">Trạng thái</th>
+                      <th className="px-3 py-2.5 w-24 text-center">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -182,6 +188,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
                           <td className="px-3 py-3 hidden md:table-cell text-brand-ink/75 max-w-xs truncate">{v.reason ?? "—"}</td>
                           <td className="px-3 py-3 hidden sm:table-cell">{timeVN(v.createdAt)}</td>
                           <td className="px-3 py-3"><Link href={c.href}><span className={`chip ${c.cls}`}>{c.text}</span></Link></td>
+                          <td className="px-3 py-3"><div className="flex items-center justify-center gap-2 text-slate-500"><Link href={c.href} title="Xem" className="grid h-8 w-8 place-items-center rounded-full border border-slate-200 hover:bg-slate-100"><Eye className="h-4 w-4" /></Link><Link href={`/benh-nhan/${v.patient.id}`} title="Hồ sơ bệnh nhân" className="grid h-8 w-8 place-items-center rounded-full hover:bg-slate-100"><MoreVertical className="h-4 w-4" /></Link></div></td>
                         </tr>
                       );
                     })}
@@ -194,7 +201,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
           <div className="grid md:grid-cols-2 gap-5">
             {revenue && (
               <section className="card">
-                <div className="font-bold mb-3">Doanh thu 7 ngày gần nhất</div>
+                <div className="flex items-center gap-2 font-bold mb-3 text-emerald-700"><BarChart3 className="h-5 w-5" /><span className="text-brand-ink">Doanh thu 7 ngày gần nhất</span></div>
                 <div className="flex items-end gap-2 h-32">
                   {dayTotals.map((t, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
@@ -207,12 +214,13 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
               </section>
             )}
             <section className="card">
-              <div className="font-bold mb-3">Hoạt động gần đây</div>
+              <div className="flex items-center gap-2 font-bold mb-3 text-emerald-700"><Clock className="h-5 w-5" /><span className="text-brand-ink">Hoạt động gần đây</span></div>
               {events.length === 0 ? <p className="text-sm text-brand-ink/60">Chưa có hoạt động.</p> : (
                 <ul className="space-y-3">
                   {events.map((e, i) => (
-                    <li key={i} className="flex gap-3 text-sm">
-                      <span className="w-12 shrink-0 text-brand-ink/60">{timeVN(e.at)}</span>
+                    <li key={i} className="flex items-center gap-3 text-sm">
+                      <span className="w-11 shrink-0 text-brand-ink/60">{timeVN(e.at)}</span>
+                      <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${e.pay ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-600"}`}>{e.pay ? <Receipt className="h-3.5 w-3.5" /> : <Users className="h-3.5 w-3.5" />}</span>
                       <span><b>{e.who}</b><span className="text-brand-ink/70"> · {e.text}</span></span>
                     </li>
                   ))}
@@ -224,7 +232,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
 
         <aside className="space-y-4">
           <section className="card">
-            <div className="font-bold mb-3">Lịch khám hôm nay <span className="text-brand-ink/50 font-medium">({visits.length})</span></div>
+            <div className="flex items-center gap-2 font-bold mb-2"><CalendarDays className="h-5 w-5 text-emerald-700" />Lịch khám hôm nay <span className="text-brand-ink/50 font-medium">({visits.length})</span></div>
             {visits.length === 0 ? <p className="text-sm text-brand-ink/60">Chưa có.</p> : (
               <ul className="divide-y divide-slate-100">
                 {visits.slice(0, 6).map((v) => {
@@ -244,10 +252,10 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
             )}
           </section>
           <section className="card">
-            <div className="font-bold mb-3">Thống kê hôm nay</div>
+            <div className="flex items-center gap-2 font-bold mb-3"><ClipboardList className="h-5 w-5 text-emerald-700" />Thống kê hôm nay</div>
             <dl className="space-y-2.5 text-[15px]">
-              {[["Lượt khám", visits.length], ["Đơn thuốc", withMeds], ["Hóa đơn đã thu", paidToday], ["Hóa đơn đã hủy", voided]].map(([l, n]) => (
-                <div key={l as string} className="flex justify-between"><dt className="text-brand-ink/75">{l}</dt><dd className="font-bold">{n}</dd></div>
+              {([["Lượt khám", visits.length, FileText, "bg-emerald-100 text-emerald-700", ""], ["Đơn thuốc", withMeds, Pill, "bg-sky-100 text-sky-700", ""], ["Hóa đơn đã thu", paidToday, FileCheck, "bg-amber-100 text-amber-600", ""], ["Hóa đơn đã hủy", voided, FileX, "bg-rose-100 text-rose-600", "text-rose-600"]] as [string, number, LucideIcon, string, string][]).map(([l, n, I, ic, tc]) => (
+                <div key={l} className="flex items-center gap-3"><span className={`grid h-8 w-8 place-items-center rounded-lg ${ic}`}><I className="h-4 w-4" /></span><dt className="flex-1 text-brand-ink/75">{l}</dt><dd className={`font-bold text-lg ${tc}`}>{n}</dd></div>
               ))}
             </dl>
           </section>

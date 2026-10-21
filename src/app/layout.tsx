@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { Search, ChevronDown } from "lucide-react";
 import { Noto_Serif, Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
@@ -52,8 +53,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {/* Sidebar PC */}
             <aside className="hidden md:flex md:w-64 md:shrink-0 flex-col bg-gradient-to-b from-brand-deep to-brand-deeper text-white sticky top-0 h-screen">
               <Link href="/" className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
-                <span className="relative h-11 w-11 shrink-0 rounded-full ring-2 ring-brand-goldLight/70 overflow-hidden">
-                  <Image src="/images/logo-badge.png" alt="" width={120} height={120} className="h-full w-full object-cover" />
+                <span className="relative h-14 w-14 shrink-0 rounded-full ring-2 ring-brand-goldLight/70 overflow-hidden">
+                  <Image src="/images/logo-badge.png" alt="" width={160} height={160} className="h-full w-full object-cover" />
                 </span>
                 <span className="leading-tight">
                   <span className="block font-display text-lg font-bold tracking-wide text-brand-goldLight">YHCT TINH HOA</span>
@@ -80,7 +81,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <Link href="/" className="md:hidden font-display font-bold text-brand-deep">YHCT Tinh Hoa</Link>
                 <Suspense fallback={null}><BranchSwitch branches={branches} /></Suspense>
                 <form action="/benh-nhan" className="relative flex-1 max-w-xl hidden sm:block">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">⌕</span>
+                  <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     name="q"
                     placeholder="Tìm bệnh nhân: tên, số điện thoại, mã BN…"
@@ -94,6 +95,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       <span className="block text-sm font-bold uppercase">{staff.fullName}</span>
                       <span className="block text-[11px] text-brand-ink/60">{rolesLabel(staff.role)}</span>
                     </span>
+                    <ChevronDown className="hidden sm:block h-4 w-4 text-slate-500" />
                   </summary>
                   <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
                     <Link href="/tai-khoan" className="block rounded-lg px-3 py-2 text-sm hover:bg-slate-100">Tài khoản, đổi mật khẩu</Link>
