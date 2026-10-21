@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { logAudit, requireRole } from "@/lib/auth";
 import { fold } from "@/lib/fold";
 import { randomUUID } from "crypto";
+import type { Prisma } from "@prisma/client";
 import { vnDayStart } from "@/lib/format";
 
 const DAY = 86400000;
@@ -74,7 +75,7 @@ export async function seedDemoData() {
   // --- Mặt hàng, giá, lô, nhập xuất
   const existing = await prisma.item.findMany();
   const herbs = await prisma.herb.findMany({ select: { id: true, standardName: true } });
-  const moves: Parameters<typeof prisma.stockMove.createMany>[0]["data"] & unknown[] = [];
+  const moves: Prisma.StockMoveCreateManyInput[] = [];
   const itemOf = new Map<string, { id: string; name: string; unit: string; type: string; price: number }>();
   for (const [name, type, unit, price, cost, min, stock, expDays, supplier] of ITEMS) {
     let it = existing.find((x) => fold(x.name) === fold(name));
@@ -120,8 +121,7 @@ export async function seedDemoData() {
   });
   const methods = ["CASH", "CASH", "TRANSFER", "CASH", "CARD", "TRANSFER"];
 
-  type VisitRow = Parameters<typeof prisma.visit.createMany>[0]["data"] extends infer T ? (T extends unknown[] ? T[number] : T) : never;
-  const V: VisitRow[] = []; const E: Record<string, unknown>[] = []; const I: Record<string, unknown>[] = []; const L: Record<string, unknown>[] = [];
+  const V: Prisma.VisitCreateManyInput[] = []; const E: Record<string, unknown>[] = []; const I: Record<string, unknown>[] = []; const L: Record<string, unknown>[] = [];
   const perDay = new Map<string, number>();
   const nextQ = (d: Date) => { const k = new Date(d.getTime() + 7 * 3600000).toISOString().slice(0, 10); const n = (perDay.get(k) ?? 0) + 1; perDay.set(k, n); return n; };
   const addInvoice = (vid: string, pid: string, o: { status: string; method: string | null; paidAt: Date | null; dispensedAt: Date | null; created: Date; lines: ReturnType<typeof feeLine>[] }) => {
