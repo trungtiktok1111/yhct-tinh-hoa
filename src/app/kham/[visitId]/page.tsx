@@ -15,6 +15,8 @@ import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { SEX_LABEL, VISIT_STATUS, patientCode, qty as fmtQty } from "@/lib/format";
 import { ageOf, toDateInput } from "@/lib/person";
+import { GROUPS, TAG_LABEL, readTuChan, summarize, type Tag } from "@/lib/tuchan";
+import { TuChanFields } from "@/components/TuChanFields";
 
 export const dynamic = "force-dynamic";
 
@@ -92,11 +94,13 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
   }
 
   const locked = exam.status === "FINAL";
+  const tuChan = readTuChan(exam.tuChanData);
+  const tc = summarize(tuChan);
   const rx = exam.prescription;
   const lines = rx?.lines ?? [];
 
   // Gợi ý chứng hậu: chỉ so khớp từ khóa, không chấm điểm; bác sĩ phải tự chọn.
-  const obsText = [exam.chiefComplaint, exam.presentHistory, exam.inspection, exam.listening, exam.inquiry, exam.palpation]
+  const obsText = [exam.chiefComplaint, exam.presentHistory, exam.inspection, exam.listening, exam.inquiry, exam.palpation, tc.text]
     .filter(Boolean).join("; ");
   let suggestions: { id: string; name: string; support: string[]; against: string[]; principles: { id: string; name: string }[] }[] = [];
   if (!locked && obsText.length > 3) {
@@ -176,7 +180,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         </div>
       )}
 
-      {/* 1. Tứ chẩn */}
+      {/* 1. Hỏi bệnh và tứ chẩn */}
       <section className="card space-y-3" id="tu-chan">
         <h2 className="font-semibold text-brand-deep">1. Hỏi bệnh và tứ chẩn</h2>
         <form action={saveFindings} className="space-y-3">
@@ -188,27 +192,58 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
             <label className="block text-sm">Bệnh sử hiện tại
               <textarea name="presentHistory" defaultValue={exam.presentHistory ?? ""} className={ta} />
             </label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block text-sm">Vọng (sắc mặt, lưỡi, rêu lưỡi…)
-                <textarea name="inspection" defaultValue={exam.inspection ?? ""} className={ta} />
-              </label>
-              <label className="block text-sm">Văn (tiếng nói, hơi thở, mùi…)
-                <textarea name="listening" defaultValue={exam.listening ?? ""} className={ta} />
-              </label>
-              <label className="block text-sm">Vấn (hàn nhiệt, mồ hôi, ăn uống, đại tiểu tiện, ngủ…)
-                <textarea name="inquiry" defaultValue={exam.inquiry ?? ""} className={ta} />
-              </label>
-              <label className="block text-sm">Thiết (mạch, sờ nắn)
-                <textarea name="palpation" defaultValue={exam.palpation ?? ""} className={ta} />
-              </label>
-            </div>
+            <TuChanFields
+              data={tuChan}
+              groupNotes={{ vong: exam.inspection, van: exam.listening, vanhoi: exam.inquiry, thiet: exam.palpation }}
+            />
             <label className="block text-sm">Chẩn đoán theo y học hiện đại (nếu có)
               <input name="modernDiagnosis" defaultValue={exam.modernDiagnosis ?? ""} className={input} />
             </label>
           </fieldset>
-          {!locked && <button className={btnMain}>Lưu và xem gợi ý</button>}
+          {!locked && <button className={btnMain}>Lưu tứ chẩn và xem tổng hợp</button>}
         </form>
       </section>
+
+      {/* 1b. Tổng hợp tứ chẩn */}
+      {tc.count > 0 && (
+        <section className="card space-y-3" id="tong-hop">
+          <h2 className="font-semibold text-brand-deep">Tổng hợp tứ chẩn ({tc.count} dữ kiện)</h2>
+          <div className="space-y-2 text-sm">
+            {GROUPS.map((g) => {
+              const rows = tc.rows.filter((r) => r.group === g.title);
+              if (!rows.length) return null;
+              return (
+                <div key={g.key}>
+                  <div className="font-semibold">{g.title}</div>
+                  <ul className="ml-4 list-disc space-y-0.5">
+                    {rows.map((r, i) => <li key={i}><span className="text-gray-600">{r.section} · {r.field}:</span> {r.labels.join("; ")}</li>)}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+          <div>
+            <div className="text-sm font-semibold">Dữ kiện theo bát cương (chỉ liệt kê, không chấm điểm)</div>
+            <div className="mt-1 grid gap-2 sm:grid-cols-2 text-xs">
+              {(Object.keys(TAG_LABEL) as Tag[]).map((t) => (
+                <div key={t} className="rounded-lg border border-brand-gold/30 p-2">
+                  <b>{TAG_LABEL[t]}</b> ({tc.cuong[t].length})
+                  {tc.cuong[t].length > 0 && <div className="text-gray-700">{tc.cuong[t].join("; ")}</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+          {tc.hints.length > 0 && (
+            <details>
+              <summary className="cursor-pointer text-sm font-semibold">Ý nghĩa tham khảo theo giáo trình ({tc.hints.length})</summary>
+              <ul className="mt-1 ml-4 list-disc space-y-0.5 text-xs">
+                {tc.hints.map((h, i) => <li key={i}><b>{h.label}</b> <span className="text-gray-600">({h.field})</span>: {h.hint}</li>)}
+              </ul>
+            </details>
+          )}
+          <p className="text-xs text-gray-600">Nguồn nội dung: bài giảng Tứ chẩn (Võ Thanh Phong; Bộ môn YHCT), dẫn Maciocia, Trung Y chẩn đoán học (HV Trung Y Quảng Châu), Kirschbaum. Chỉ để tham khảo, bác sĩ tự kết luận.</p>
+        </section>
+      )}
 
       {/* 2. Gợi ý */}
       {!locked && (

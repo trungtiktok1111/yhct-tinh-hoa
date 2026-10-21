@@ -8,6 +8,7 @@ import { EXAM_ROLES } from "@/lib/permissions";
 import { parseDate } from "@/lib/person";
 import { parseAmount } from "@/lib/exam";
 import { fold } from "@/lib/fold";
+import { parseTuChanForm } from "@/lib/tuchan";
 
 function str(fd: FormData, key: string): string | undefined {
   const v = fd.get(key);
@@ -76,9 +77,10 @@ export async function saveFindings(formData: FormData) {
       inquiry: str(formData, "inquiry") ?? null,
       palpation: str(formData, "palpation") ?? null,
       modernDiagnosis: str(formData, "modernDiagnosis") ?? null,
+      tuChanData: parseTuChanForm(formData),
     },
   });
-  to(visit.id, "goi-y");
+  to(visit.id, "tong-hop");
 }
 
 export async function saveDiagnosis(formData: FormData) {

@@ -558,6 +558,7 @@ model Exam {
   doctorId      String?
   doctorName    String?
   status        String   @default("DRAFT") // DRAFT | FINAL
+  tuChanData       String? // JSON tứ chẩn có cấu trúc (xem src/lib/tuchan.ts)
   chiefComplaint String? // lý do khám chính
   presentHistory String? // bệnh sử
   inspection    String? // vọng

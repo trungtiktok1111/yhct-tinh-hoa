@@ -1,0 +1,1 @@
+ALTER TABLE "Exam" ADD COLUMN "tuChanData" TEXT;
