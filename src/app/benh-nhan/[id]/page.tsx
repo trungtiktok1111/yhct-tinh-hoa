@@ -98,6 +98,7 @@ export default async function PatientDetailPage({ params, searchParams }: { para
         <label className="text-sm">Lý do khám
           <input name="reason" placeholder="vd: đau lưng 2 tuần" className={input} />
         </label>
+        <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" name="priority" />Ưu tiên khám (người cao tuổi, cấp cứu…)</label>
         <label className="text-sm">Cân nặng (kg)
           <input name="weightKg" defaultValue={patient.weightKg ?? ""} inputMode="decimal" className={input} />
         </label>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { nextItemCode } from "@/lib/stock";
 import { logAudit, requireRole } from "@/lib/auth";
 import { fold } from "@/lib/fold";
 import { randomUUID } from "crypto";
@@ -81,7 +82,7 @@ export async function seedDemoData() {
     let it = existing.find((x) => fold(x.name) === fold(name));
     if (!it) {
       const h = herbs.find((x) => fold(x.standardName) === fold(name));
-      it = await prisma.item.create({ data: { name, type, unit, herbId: h?.id ?? null, minStock: min, note: TAG } });
+      it = await prisma.item.create({ data: { code: await nextItemCode(type), name, type, unit, herbId: h?.id ?? null, minStock: min, note: TAG } });
     }
     const hasPrice = await prisma.itemPrice.findFirst({ where: { itemId: it.id }, orderBy: { effectiveFrom: "desc" } });
     if (!hasPrice) await prisma.itemPrice.create({ data: { itemId: it.id, price, staffName: staff.fullName } });

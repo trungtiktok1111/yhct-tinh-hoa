@@ -36,7 +36,7 @@ export default async function ExamQueuePage({ searchParams }: { searchParams: { 
   });
   const sampleVisitId = sample?.visits[0]?.id;
   const order = (s: string) => (s === "IN_EXAM" ? 0 : s === "WAITING" ? 1 : 2);
-  visits.sort((a, b) => order(a.status) - order(b.status) || a.queueNo - b.queueNo);
+  visits.sort((a, b) => order(a.status) - order(b.status) || Number(b.priority) - Number(a.priority) || a.queueNo - b.queueNo);
 
   const count = (st: string) => visits.filter((v) => v.status === st).length;
   const chip: Record<string, [string, string]> = { WAITING: ["Chờ khám", "chip-amber"], IN_EXAM: ["Đang khám", "chip-blue"], DONE: ["Đã khám", "chip-green"] };
@@ -70,14 +70,14 @@ export default async function ExamQueuePage({ searchParams }: { searchParams: { 
                     <tr key={v.id}>
                       <td className="font-bold text-brand-deep">{v.queueNo}</td>
                       <td>
-                        <span className="font-semibold">{v.patient.fullName}</span>
+                        <span className="font-semibold">{v.patient.fullName}</span>{v.priority && <span className="chip chip-red ml-1.5">Ưu tiên</span>}
                         {v.patient.allergies && <AlertTriangle className="inline h-4 w-4 ml-1 text-red-600" aria-label={`Dị ứng: ${v.patient.allergies}`} />}
                         <div className="text-xs text-brand-ink/55">{SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi</div>
                       </td>
                       <td className="text-brand-ink/70">{patientCode(v.patient.seq)}</td>
                       <td>{timeVN(v.createdAt)}</td>
                       <td className="max-w-xs text-brand-ink/80">{v.reason ?? "—"}</td>
-                      <td className="text-brand-ink/70">{v.exam?.doctorName ?? "—"}</td>
+                      <td className="text-brand-ink/70">{v.exam?.doctorName ?? v.doctorName ?? "—"}</td>
                       <td><span className={`chip ${c}`}>{t}</span></td>
                       <td className="text-center">
                         {v.status === "DONE" ? (

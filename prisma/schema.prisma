@@ -416,6 +416,7 @@ model Item {
   herb      Herb?    @relation(fields: [herbId], references: [id], onDelete: SetNull)
   minStock  Float    @default(0) // dưới mức này thì cảnh báo sắp hết
   note      String?
+  code      String?  @unique // mã hàng VT001, TP001
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
 
@@ -447,6 +448,8 @@ model StockLot {
   branchId     String
   branch       Branch    @relation(fields: [branchId], references: [id])
   supplier     String?
+  supplierId   String?
+  supplierRef  Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   receivedAt   DateTime  @default(now())
   expiryDate   DateTime?
   unitCost     Int // giá nhập / đơn vị
@@ -537,6 +540,9 @@ model Visit {
   pulse       Int?
   bloodPressure String?
   temperature Float?
+  priority    Boolean  @default(false)
+  doctorName  String?
+  cancelReason String?
   createdBy   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -566,6 +572,8 @@ model Exam {
   inquiry       String? // vấn
   palpation     String? // thiết (mạch, sờ nắn)
   modernDiagnosis String? // chẩn đoán YHHĐ (nếu có)
+  icd10Code     String? // mã ICD-10
+  clinicalExam  String? // khám lâm sàng
   exteriorInterior String? // BIEU | LY
   coldHeat      String? // HAN | NHIET
   deficiencyExcess String? // HU | THUC
@@ -650,7 +658,11 @@ model Invoice {
   status       String   @default("UNPAID")
   subtotal     Int
   discount     Int      @default(0)
+  vatPct       Int      @default(0)
+  vat          Int      @default(0)
   total        Int
+  cashGiven    Int?
+  dispenseChecks String? // JSON các bước phát thuốc đã tick
   method       String? // CASH | TRANSFER | CARD
   paidAt       DateTime?
   voidReason   String?
@@ -677,6 +689,51 @@ model InvoiceLine {
   unit      String
   qty       Float
   unitPrice Int
+  discountPct Int   @default(0)
   amount    Int
   position  Int     @default(0)
+}
+
+// ---------- Bổ sung: nhà cung cấp, dịch vụ, ghi chú nhanh, sao lưu ----------
+
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  address   String?
+  note      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  lots StockLot[]
+}
+
+// Danh mục dịch vụ khám chữa bệnh dùng ở màn Thu ngân.
+model ServiceItem {
+  id        String   @id @default(cuid())
+  name      String
+  unit      String   @default("Lần")
+  price     Int
+  active    Boolean  @default(true)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model QuickNote {
+  id        String   @id @default(cuid())
+  branchId  String?
+  text      String
+  staffName String?
+  createdAt DateTime @default(now())
+
+  @@index([branchId, createdAt])
+}
+
+model BackupLog {
+  id        String   @id @default(cuid())
+  at        DateTime @default(now())
+  status    String   @default("OK") // OK | FAIL
+  staffName String?
+  bytes     Int?
+  note      String?
 }

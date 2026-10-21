@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { nextItemCode } from "@/lib/stock";
 import { logAudit, requireRole, type CurrentStaff } from "@/lib/auth";
 import { ITEM_MANAGER_ROLES, STOCK_WRITE_ROLES } from "@/lib/permissions";
 
@@ -58,7 +59,7 @@ export async function createItem(formData: FormData) {
     : null;
   const item = await prisma.item.create({
     data: {
-      name, type, unit, minStock, herbId: herb?.id, note: str(formData, "note"),
+      code: await nextItemCode(type), name, type, unit, minStock, herbId: herb?.id, note: str(formData, "note"),
       prices: { create: { price, staffName: staff.fullName } },
     },
   });

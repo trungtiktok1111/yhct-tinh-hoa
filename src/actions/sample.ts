@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { nextItemCode } from "@/lib/stock";
 import { logAudit, requireRole } from "@/lib/auth";
 import { EXAM_ROLES } from "@/lib/permissions";
 import { fold } from "@/lib/fold";
@@ -43,7 +44,7 @@ export async function createSampleCase() {
     if (!item) {
       const h = herbs.find((x) => keys.includes(fold(x.standardName)));
       item = await prisma.item.create({
-        data: { name: createName, type: "HERB", unit: "g", herbId: h?.id ?? null, minStock: 200, note: "Tạo cùng ca mẫu" },
+        data: { code: await nextItemCode("HERB"), name: createName, type: "HERB", unit: "g", herbId: h?.id ?? null, minStock: 200, note: "Tạo cùng ca mẫu" },
       });
     }
     const hasPrice = await prisma.itemPrice.findFirst({ where: { itemId: item.id } });

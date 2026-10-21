@@ -66,3 +66,19 @@ export function parseCommon(fd: FormData, opts: { phoneRequired: boolean }): { e
     },
   };
 }
+
+// Điều kiện tìm bệnh nhân: tên, SĐT, CCCD, số thẻ BHYT, mã BN-000123. Dùng cho ô tìm và ô quét mã.
+export function patientSearchWhere(q: string | undefined) {
+  const t = q?.trim();
+  if (!t) return undefined;
+  const digits = t.replace(/\D/g, "");
+  const seq = /^(bn-?)?0*\d+$/i.test(t) ? parseInt(digits, 10) : undefined;
+  return {
+    OR: [
+      { fullName: { contains: t, mode: "insensitive" as const } },
+      { insuranceNo: { equals: t, mode: "insensitive" as const } },
+      ...(digits.length >= 3 ? [{ phone: { contains: digits } }, { nationalId: { contains: digits } }] : []),
+      ...(seq !== undefined && Number.isSafeInteger(seq) && seq < 2147483647 ? [{ seq }] : []),
+    ],
+  };
+}

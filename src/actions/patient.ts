@@ -154,6 +154,7 @@ export async function createVisit(formData: FormData) {
       patientId, branchId, queueNo: count + 1, reason: str(formData, "reason"),
       weightKg, heightCm, temperature, pulse: pulse === undefined ? undefined : Math.round(pulse),
       bloodPressure: str(formData, "bloodPressure"), createdBy: staff.fullName,
+      priority: formData.get("priority") === "on", doctorName: str(formData, "doctorName"),
     },
   });
   if (weightKg !== undefined || heightCm !== undefined) {
