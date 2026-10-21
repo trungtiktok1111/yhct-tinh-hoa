@@ -31,3 +31,30 @@ export const NAV_ITEMS = [
   { href: "/kho", label: "Kho và giá", mobile: true, icon: "Package" },
   { href: "/quan-tri", label: "Quản trị / Thẩm định", mobile: true, icon: "ShieldCheck" },
 ] as const;
+
+// Menu mới: tách hẳn vận hành phòng khám và tra cứu y học.
+export type NavLink = { href: string; label: string; icon: string };
+export const CLINIC_NAV: NavLink[] = [
+  { href: "/", label: "Tổng quan", icon: "LayoutDashboard" },
+  { href: "/tiep-don", label: "Tiếp đón", icon: "ClipboardCheck" },
+  { href: "/benh-nhan", label: "Bệnh nhân", icon: "Users" },
+  { href: "/kham", label: "Khám bệnh", icon: "HeartPulse" },
+  { href: "/thu-ngan", label: "Thu ngân", icon: "Wallet" },
+  { href: "/duoc", label: "Phát thuốc", icon: "Pill" },
+  { href: "/kho", label: "Kho và giá", icon: "Package" },
+  { href: "/bao-cao", label: "Báo cáo", icon: "BarChart3" },
+];
+export const KNOWLEDGE_NAV: NavLink[] = [
+  { href: "/ly-luan", label: "Lý luận cơ bản", icon: "ScrollText" },
+  { href: "/benh-hoc", label: "Bệnh học", icon: "Stethoscope" },
+  { href: "/chung-hau", label: "Chứng hậu", icon: "Fingerprint" },
+  { href: "/phap-tri", label: "Pháp trị", icon: "Compass" },
+  { href: "/bai-thuoc", label: "Bài thuốc", icon: "FlaskConical" },
+  { href: "/vi-thuoc", label: "Vị thuốc", icon: "Leaf" },
+  { href: "/cham-cuu", label: "Châm cứu – Huyệt vị", icon: "Target" },
+  { href: "/xoa-bop", label: "Xoa bóp – Bấm huyệt", icon: "Hand" },
+  { href: "/ca-lam-sang", label: "Ca lâm sàng", icon: "ClipboardList" },
+  { href: "/thu-vien", label: "Thư viện tài liệu", icon: "BookOpen" },
+  { href: "/mang-tri-thuc", label: "Mạng lưới tri thức", icon: "Network" },
+];
+export const ADMIN_NAV: NavLink[] = [{ href: "/quan-tri", label: "Quản trị", icon: "ShieldCheck" }];

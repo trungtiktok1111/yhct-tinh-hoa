@@ -3,15 +3,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { Noto_Serif, Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
-import { NAV_ITEMS } from "@/lib/constants";
+import { Suspense } from "react";
+import { CLINIC_NAV, KNOWLEDGE_NAV, ADMIN_NAV } from "@/lib/constants";
 import { NavIcon } from "@/components/NavIcon";
+import { SideNav } from "@/components/SideNav";
+import { BranchSwitch } from "@/components/BranchSwitch";
+import { branchesFor } from "@/lib/stock";
 import { getCurrentStaff } from "@/lib/auth";
 import { rolesLabel, canAccessPath } from "@/lib/permissions";
 import { logout } from "@/actions/auth";
 
 const display = Noto_Serif({
   subsets: ["vietnamese", "latin"],
-  weight: ["600", "700"],
+  weight: ["600", "700", "900"],
   variable: "--font-display",
   display: "swap",
 });
@@ -31,100 +35,85 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const staff = await getCurrentStaff().catch(() => null);
+  const branches = staff ? await branchesFor(staff).catch(() => []) : [];
+  const ok = <T extends { href: string }>(l: T[]) => l.filter((i) => staff && canAccessPath(staff.role, i.href));
+  const clinic = ok(CLINIC_NAV);
+  const knowledge = ok(KNOWLEDGE_NAV);
+  const admin = ok(ADMIN_NAV);
+  const initials = staff?.fullName.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase();
+
   return (
     <html lang="vi" className={`${display.variable} ${body.variable}`}>
       <body>
-        {/* Banner minh họa — dãy núi mực tàu, thương hiệu */}
-        <header className="relative h-24 md:h-32 overflow-hidden border-b border-brand-gold/30">
-          <Image
-            src="/images/hero-banner.png"
-            alt=""
-            fill
-            priority
-            className="object-cover object-[62%_38%]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper via-brand-deeper/80 to-brand-deeper/15" />
-          <div className="relative h-full max-w-7xl mx-auto px-4 md:px-8 flex items-center gap-3 md:gap-4">
-            <span className="relative h-12 w-12 md:h-16 md:w-16 shrink-0 rounded-full ring-2 ring-brand-gold/70 shadow-md overflow-hidden">
-              <Image
-                src="/images/logo-badge.png"
-                alt="YHCT Tinh Hoa"
-                width={160}
-                height={160}
-                className="h-full w-full object-cover"
-              />
-            </span>
-            <div className="min-w-0">
-              <h1 className="font-display text-brand-goldLight text-lg md:text-3xl font-bold tracking-wide truncate">
-                YHCT TINH HOA
-              </h1>
-              <p className="hidden sm:block text-brand-cream/80 text-[11px] md:text-sm tracking-wide truncate">
-                Hệ thống tri thức và lập luận điều trị Y học cổ truyền
-              </p>
-            </div>
-            {staff && (
-              <form action={logout} className="ml-auto flex items-center gap-3 text-brand-cream">
-                <Link href="/tai-khoan" title="Tài khoản, đổi mật khẩu" className="text-right leading-tight min-w-0 hover:underline">
-                  <div className="text-xs md:text-sm font-semibold truncate max-w-[9rem] md:max-w-none">
-                    {staff.fullName}
+        {!staff ? (
+          <main className="min-h-screen flex items-center justify-center p-4">{children}</main>
+        ) : (
+          <div className="min-h-screen md:flex">
+            {/* Sidebar PC */}
+            <aside className="hidden md:flex md:w-64 md:shrink-0 flex-col bg-gradient-to-b from-brand-deep to-brand-deeper text-white sticky top-0 h-screen">
+              <Link href="/" className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
+                <span className="relative h-11 w-11 shrink-0 rounded-full ring-2 ring-brand-goldLight/70 overflow-hidden">
+                  <Image src="/images/logo-badge.png" alt="" width={120} height={120} className="h-full w-full object-cover" />
+                </span>
+                <span className="leading-tight">
+                  <span className="block font-display text-lg font-bold tracking-wide text-brand-goldLight">YHCT TINH HOA</span>
+                  <span className="block text-[11px] text-white/60">Phòng khám Đông y</span>
+                </span>
+              </Link>
+              <div className="flex-1 overflow-y-auto p-3 ink-scrollbar">
+                <SideNav clinic={clinic} knowledge={knowledge} admin={admin} />
+              </div>
+              <div className="px-4 py-3 border-t border-white/10 text-[11px] text-white/50">Bản demo · dữ liệu minh họa</div>
+            </aside>
+
+            <div className="flex-1 min-w-0 flex flex-col">
+              {/* Thanh trên */}
+              <header className="sticky top-0 z-20 flex items-center gap-3 bg-white/95 backdrop-blur border-b border-slate-200 px-4 md:px-8 h-16">
+                <Link href="/" className="md:hidden font-display font-bold text-brand-deep">YHCT Tinh Hoa</Link>
+                <Suspense fallback={null}><BranchSwitch branches={branches} /></Suspense>
+                <form action="/benh-nhan" className="flex-1 max-w-xl hidden sm:block">
+                  <input
+                    name="q"
+                    placeholder="Tìm bệnh nhân: tên, số điện thoại, mã BN…"
+                    className="w-full rounded-full border border-slate-300 bg-slate-50 px-5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-deep/30 focus:bg-white"
+                  />
+                </form>
+                <details className="relative ml-auto">
+                  <summary className="flex cursor-pointer list-none items-center gap-3 rounded-full py-1 pl-1 pr-3 hover:bg-slate-100">
+                    <span className="h-9 w-9 rounded-full bg-brand-deep text-brand-goldLight grid place-items-center text-sm font-bold">{initials}</span>
+                    <span className="hidden sm:block text-left leading-tight">
+                      <span className="block text-sm font-semibold">{staff.fullName}</span>
+                      <span className="block text-[11px] text-brand-ink/60">{rolesLabel(staff.role)}</span>
+                    </span>
+                  </summary>
+                  <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
+                    <Link href="/tai-khoan" className="block rounded-lg px-3 py-2 text-sm hover:bg-slate-100">Tài khoản, đổi mật khẩu</Link>
+                    <form action={logout}>
+                      <button className="w-full text-left rounded-lg px-3 py-2 text-sm text-red-700 hover:bg-red-50">Đăng xuất</button>
+                    </form>
                   </div>
-                  <div className="text-[10px] md:text-xs text-brand-cream/70">{rolesLabel(staff.role)}</div>
-                </Link>
-                <button
-                  type="submit"
-                  className="rounded-lg border border-brand-gold/50 px-3 py-1.5 text-xs md:text-sm hover:bg-white/10"
-                >
-                  Đăng xuất
-                </button>
-              </form>
-            )}
-          </div>
-        </header>
+                </details>
+              </header>
 
-        <div className="min-h-[calc(100vh-6rem)] md:min-h-[calc(100vh-8rem)] flex flex-col md:flex-row">
-          {/* Sidebar PC */}
-          {staff && (
-          <aside className="hidden md:flex md:flex-col md:w-64 md:shrink-0 bg-gradient-to-b from-brand-deep to-brand-deeper text-brand-cream p-4 gap-1 sticky top-32 h-[calc(100vh-8rem)] overflow-y-auto ink-scrollbar">
-            {NAV_ITEMS.filter((i) => staff && canAccessPath(staff.role, i.href)).map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 hover:text-brand-goldLight transition-colors"
-              >
-                <NavIcon name={item.icon} className="h-4 w-4 shrink-0 text-brand-gold" />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            ))}
-          </aside>
-          )}
-
-          <main className="flex-1 p-4 md:p-8 pb-24 md:pb-10 max-w-5xl w-full mx-auto">
-            <div className="warn-box mb-6 text-sm">
-              Bản demo kỹ thuật — dữ liệu minh họa (DEMO), không dùng để chẩn đoán hoặc điều trị thật.
-              Mọi quyết định chuyên môn cần người hành nghề có thẩm quyền xác nhận.
+              <main className="flex-1 p-4 md:p-8 pb-24 md:pb-10 max-w-6xl w-full mx-auto">
+                {children}
+                <footer className="mt-10 pt-4 border-t border-slate-200 text-center text-xs text-brand-ink/50">
+                  YHCT Tinh Hoa — bản demo kỹ thuật, dữ liệu minh họa, không dùng chẩn đoán hoặc điều trị thật.
+                </footer>
+              </main>
             </div>
-            {children}
-            <footer className="mt-10 pt-4 border-t border-brand-gold/20 text-center text-xs text-brand-ink/50">
-              © {new Date().getFullYear()} YHCT Tinh Hoa — bản demo kỹ thuật, dữ liệu minh họa, không dùng điều trị thật.
-            </footer>
-          </main>
 
-          {/* Bottom nav mobile */}
-          {staff && (
-          <nav className="md:hidden fixed bottom-0 inset-x-0 bg-gradient-to-t from-brand-deeper to-brand-deep border-t border-brand-gold/30 flex justify-around py-2 z-10">
-            {NAV_ITEMS.filter((i) => i.mobile && staff && canAccessPath(staff.role, i.href)).map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex flex-col items-center gap-0.5 text-brand-cream px-2 text-center"
-              >
-                <NavIcon name={item.icon} className="h-5 w-5 text-brand-gold" />
-                <span className="text-[10px] leading-tight">{item.label}</span>
-              </Link>
-            ))}
-          </nav>
-          )}
-        </div>
+            {/* Thanh dưới trên điện thoại: chỉ các mục vận hành chính */}
+            <nav className="md:hidden fixed bottom-0 inset-x-0 z-20 bg-brand-deep border-t border-brand-gold/30 flex justify-around py-2">
+              {[...clinic.slice(0, 5), ...(knowledge.length ? [{ href: "/tra-cuu", label: "Tra cứu", icon: "BookOpen" }] : [])].map((item) => (
+                <Link key={item.href} href={item.href} className="flex flex-col items-center gap-0.5 text-white px-1.5 text-center">
+                  <NavIcon name={item.icon} className="h-5 w-5 text-brand-goldLight" />
+                  <span className="text-[10px] leading-tight">{item.label}</span>
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
       </body>
     </html>
   );
