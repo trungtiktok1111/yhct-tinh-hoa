@@ -11,7 +11,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "seed": "tsx prisma/seed.ts",
-    "setup-auth": "node scripts/setup-auth.mjs"
+    "setup-auth": "node scripts/setup-auth.mjs",
+    "set-db-env": "node scripts/set-db-env.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
