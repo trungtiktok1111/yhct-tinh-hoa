@@ -6,7 +6,9 @@ import { prisma } from "@/lib/db";
 import { logAudit, requireRole } from "@/lib/auth";
 import { ITEM_MANAGER_ROLES } from "@/lib/permissions";
 
-const back = (err?: string): never => redirect(`/thu-ngan/dich-vu${err ? `?loi=${encodeURIComponent(err)}` : ""}`);
+function back(err?: string): never {
+  redirect(`/thu-ngan/dich-vu${err ? `?loi=${encodeURIComponent(err)}` : ""}`);
+}
 const price = (v: FormDataEntryValue | null) => {
   const n = Number(String(v ?? "").replace(/[.\s]/g, ""));
   return Number.isFinite(n) && n >= 0 && n < 1e9 ? Math.round(n) : null;
