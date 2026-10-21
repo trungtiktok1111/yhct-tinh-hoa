@@ -12,6 +12,7 @@ import {
   Network,
   ShieldCheck,
   ScrollText,
+  Package,
   type LucideIcon,
 } from "lucide-react";
 
@@ -29,6 +30,7 @@ const ICONS: Record<string, LucideIcon> = {
   Network,
   ShieldCheck,
   ScrollText,
+  Package,
 };
 
 export function NavIcon({ name, className }: { name: string; className?: string }) {

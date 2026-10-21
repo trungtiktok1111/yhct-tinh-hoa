@@ -6,7 +6,7 @@ import "./globals.css";
 import { NAV_ITEMS } from "@/lib/constants";
 import { NavIcon } from "@/components/NavIcon";
 import { getCurrentStaff } from "@/lib/auth";
-import { ROLES } from "@/lib/permissions";
+import { ROLES, canAccessPath } from "@/lib/permissions";
 import { logout } from "@/actions/auth";
 
 const display = Noto_Serif({
@@ -85,7 +85,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {/* Sidebar PC */}
           {staff && (
           <aside className="hidden md:flex md:flex-col md:w-64 md:shrink-0 bg-gradient-to-b from-brand-deep to-brand-deeper text-brand-cream p-4 gap-1 sticky top-32 h-[calc(100vh-8rem)] overflow-y-auto ink-scrollbar">
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.filter((i) => staff && canAccessPath(staff.role, i.href)).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -112,7 +112,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {/* Bottom nav mobile */}
           {staff && (
           <nav className="md:hidden fixed bottom-0 inset-x-0 bg-gradient-to-t from-brand-deeper to-brand-deep border-t border-brand-gold/30 flex justify-around py-2 z-10">
-            {NAV_ITEMS.filter((i) => i.mobile).map((item) => (
+            {NAV_ITEMS.filter((i) => i.mobile && staff && canAccessPath(staff.role, i.href)).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

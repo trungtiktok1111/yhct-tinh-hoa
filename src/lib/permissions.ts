@@ -28,7 +28,16 @@ export function canEditKnowledge(role: string): boolean {
   return KNOWLEDGE_EDITOR_ROLES.includes(role as Role);
 }
 
+// Kho và giá.
+export const STOCK_VIEW_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "PHARMACIST", "STOREKEEPER", "CASHIER", "DOCTOR"];
+export const STOCK_WRITE_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "PHARMACIST", "STOREKEEPER"]; // nhập kho, điều chỉnh
+export const ITEM_MANAGER_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER"]; // tạo mặt hàng, đặt giá, mức tối thiểu
+export const COST_VIEW_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER"]; // xem giá nhập
+
 export function canAccessPath(role: string, pathname: string): boolean {
+  const under = (p: string) => pathname === p || pathname.startsWith(p + "/");
+  if (under("/kho/nhap") || under("/kho/dieu-chinh")) return STOCK_WRITE_ROLES.includes(role as Role);
+  if (under("/kho")) return STOCK_VIEW_ROLES.includes(role as Role);
   if (OWNER_ONLY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return role === "OWNER";
   }

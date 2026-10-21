@@ -184,6 +184,7 @@ model Herb {
   source        Source?      @relation(fields: [sourceId], references: [id])
 
   formulaLinks  FormulaIngredient[]
+  items         Item[]
 }
 
 model Formula {
@@ -341,6 +342,8 @@ model Branch {
   createdAt DateTime @default(now())
 
   staff     StaffBranch[]
+  stockLots  StockLot[]
+  stockMoves StockMove[]
 }
 
 // Nhân viên. role: OWNER | BRANCH_MANAGER | RECEPTION | DOCTOR | CASHIER | PHARMACIST | STOREKEEPER
@@ -384,4 +387,77 @@ model AuditLog {
 
   @@index([at])
   @@index([entity, entityId])
+}
+
+// ---------- Kho và giá ----------
+
+// Mặt hàng bán/dùng: dược liệu (tính theo gam) hoặc thành phẩm (viên, hộp, chai...).
+model Item {
+  id        String   @id @default(cuid())
+  name      String
+  type      String // HERB | PRODUCT
+  unit      String // "g" cho dược liệu; viên/hộp/chai/... cho thành phẩm
+  herbId    String? // liên kết vị thuốc trong phần tri thức (nếu trùng tên)
+  herb      Herb?    @relation(fields: [herbId], references: [id], onDelete: SetNull)
+  minStock  Float    @default(0) // dưới mức này thì cảnh báo sắp hết
+  note      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  prices ItemPrice[]
+  lots   StockLot[]
+  moves  StockMove[]
+
+  @@index([name])
+}
+
+// Giá bán chung toàn hệ thống; giá hiện hành là dòng có effectiveFrom mới nhất. Giữ lịch sử.
+model ItemPrice {
+  id            String   @id @default(cuid())
+  itemId        String
+  item          Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  price         Int // đồng / đơn vị (dược liệu: đồng / gam)
+  effectiveFrom DateTime @default(now())
+  staffName     String?
+
+  @@index([itemId, effectiveFrom])
+}
+
+// Lô nhập: mỗi lần nhập là một lô, có giá nhập và hạn dùng.
+model StockLot {
+  id           String    @id @default(cuid())
+  itemId       String
+  item         Item      @relation(fields: [itemId], references: [id])
+  branchId     String
+  branch       Branch    @relation(fields: [branchId], references: [id])
+  supplier     String?
+  receivedAt   DateTime  @default(now())
+  expiryDate   DateTime?
+  unitCost     Int // giá nhập / đơn vị
+  qtyReceived  Float
+  qtyRemaining Float
+  note         String?
+  staffName    String?
+  moves        StockMove[]
+
+  @@index([itemId, branchId])
+}
+
+// Sổ kho: mọi biến động đều có dòng ở đây (chỉ thêm). qty dương = nhập, âm = xuất.
+model StockMove {
+  id        String   @id @default(cuid())
+  at        DateTime @default(now())
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id])
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  lotId     String?
+  lot       StockLot? @relation(fields: [lotId], references: [id], onDelete: SetNull)
+  type      String // RECEIPT | ADJUST
+  qty       Float
+  reason    String?
+  staffName String?
+
+  @@index([branchId, at])
+  @@index([itemId])
 }
