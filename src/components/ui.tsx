@@ -7,9 +7,11 @@ export function PageHead({
   icon: Icon, title, sub, img = "/images/art/herbs-wide.jpg", children,
 }: { icon: LucideIcon; title: string; sub?: string; img?: string; children?: React.ReactNode }) {
   return (
-    <header className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <Image src={img} alt="" width={900} height={300} className="absolute right-0 top-0 h-full w-1/2 object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-r from-white from-45% via-white/85 to-white/10" />
+    <header className="relative rounded-2xl border border-slate-200 bg-white">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+        <Image src={img} alt="" width={900} height={300} className="absolute right-0 top-0 h-full w-1/2 object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white from-45% via-white/85 to-white/10" />
+      </div>
       <div className="relative flex flex-wrap items-center gap-4 px-5 py-4">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-50 text-brand-deep"><Icon className="h-7 w-7" /></span>
         <div className="min-w-0">

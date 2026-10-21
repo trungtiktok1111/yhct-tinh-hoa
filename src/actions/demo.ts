@@ -45,6 +45,14 @@ const PATIENTS: [string, "M" | "F", number, string, string | null, string | null
   ["Lê Quốc Tuấn", "M", 1959, "0902113355", null, "Tăng huyết áp", "Hưu trí"],
   ["Vũ Văn Tài", "M", 1986, "0909778811", null, null, "Kinh doanh"],
   ["Phan Thị Ngọc", "F", 1998, "0933445566", null, null, "Y tá"],
+  ["Bùi Thị Thu", "F", 1955, "0918223344", "Dị ứng sulfa", "Tăng huyết áp, tiểu đường", "Hưu trí"],
+  ["Đỗ Văn Hải", "M", 1990, "0977889900", null, "Viêm dạ dày", "Lập trình viên"],
+  ["Lý Thị Kim", "F", 1983, "0905667788", null, "Đau đầu mạn", "Kế toán"],
+  ["Trương Văn Phúc", "M", 1948, "0913001122", "Dị ứng aspirin", "Suy tim nhẹ", "Hưu trí"],
+  ["Cao Thị Yến", "F", 2001, "0966778899", null, null, "Sinh viên"],
+  ["Mai Văn Khoa", "M", 1973, "0934556677", null, "Viêm khớp", "Thợ xây"],
+  ["Hồ Thị Nga", "F", 1979, "0988112233", null, "Rối loạn kinh nguyệt", "Nhân viên ngân hàng"],
+  ["Dương Văn Thành", "M", 1995, "0909334455", null, null, "Tài xế công nghệ"],
 ];
 
 const ICD: Record<string, string> = {
@@ -121,8 +129,9 @@ export async function seedDemoData() {
       id: pats[i].id, fullName: name, sex, birthYear: y, birthDate: new Date(Date.UTC(y, Math.floor(R() * 12), 1 + Math.floor(R() * 27))), phone,
       address: "Số " + (10 + Math.floor(R() * 200)) + " Đường Lê Lợi", ward: "P. Phước Trung", district: "TP. Bà Rịa", province: "Bà Rịa - Vũng Tàu",
       occupation: job, allergies: allergy, chronicConditions: chronic, pastHistory: chronic ? `Có ${chronic.toLowerCase()} nhiều năm` : null,
+      nationalId: i % 3 === 0 ? null : `0${79000000000 + i * 7919 + 100003}`, insuranceNo: i % 2 === 0 ? `DN479${String(1000000000 + i * 3571)}` : null,
       weightKg: 50 + Math.floor(R() * 30), heightCm: 150 + Math.floor(R() * 28), note: `${TAG} Bệnh nhân demo, sẽ xóa khi chạy thật`, createdBy: staff.fullName,
-      createdAt: new Date(Date.now() - Math.floor(R() * 25) * DAY),
+      createdAt: new Date(Date.now() - (i % 4 === 3 ? 60 + Math.floor(R() * 200) : Math.floor(R() * 25)) * DAY),
     })),
   });
 
@@ -163,6 +172,8 @@ export async function seedDemoData() {
   const todayPlan: [number, string, string, string][] = [
     [0, "7:45", "DONE", "done"], [1, "8:10", "DONE", "paid_wait"], [2, "8:25", "DONE", "unpaid"], [3, "9:15", "DONE", "noinv"],
     [4, "9:30", "IN_EXAM", "draft"], [5, "10:05", "IN_EXAM", "draft"], [6, "10:20", "WAITING", "none"], [7, "10:45", "WAITING", "none"], [8, "11:10", "WAITING", "none"], [9, "11:25", "WAITING", "none"],
+    [12, "11:40", "WAITING", "none"], [13, "11:55", "WAITING", "none"], [14, "8:40", "CANCELLED", "none"], [15, "9:50", "CANCELLED", "none"],
+    [16, "10:30", "DONE", "paid_wait"], [17, "10:50", "DONE", "unpaid"], [18, "11:05", "IN_EXAM", "draft"], [19, "7:55", "DONE", "done"],
   ];
   const existingToday = await prisma.visit.count({ where: { branchId: branch.id, createdAt: { gte: day0 } } });
   perDay.set(new Date(day0.getTime() + 7 * 3600000 + 1000).toISOString().slice(0, 10), existingToday);
@@ -172,10 +183,10 @@ export async function seedDemoData() {
     const pt = pats[pi % pats.length];
     const [cc, dis] = COMPLAINTS[pi % COMPLAINTS.length];
     const vid = randomUUID();
-    V.push({ id: vid, patientId: pt.id, branchId: branch.id, queueNo: nextQ(when), status, reason: cc, pulse: 72, bloodPressure: "125/80", temperature: 36.8, priority: pi === 7 || pi === 9, doctorName: stage === "none" ? null : staff.fullName, createdBy: staff.fullName, createdAt: when });
+    V.push({ id: vid, patientId: pt.id, branchId: branch.id, queueNo: nextQ(when), status, reason: cc, pulse: 72, bloodPressure: "125/80", temperature: 36.8, priority: pi === 7 || pi === 9 || pi === 15, cancelReason: status === "CANCELLED" ? (pi === 14 ? "Bệnh nhân bận, hẹn lại" : "Bệnh nhân tự về") : null, doctorName: stage === "none" ? null : staff.fullName, createdBy: staff.fullName, createdAt: when });
     if (stage === "none") continue;
     const final = stage !== "draft";
-    E.push({ visitId: vid, doctorId: staff.id, doctorName: staff.fullName, status: final ? "FINAL" : "DRAFT", chiefComplaint: cc, diseaseText: final ? dis : null, icd10Code: final ? (ICD[dis] ?? null) : null, finalAt: final ? when : null, followUpDate: final ? new Date(Date.now() + 7 * DAY) : null, createdAt: when });
+    E.push({ visitId: vid, doctorId: staff.id, doctorName: staff.fullName, status: final ? "FINAL" : "DRAFT", chiefComplaint: cc, diseaseText: final ? dis : null, icd10Code: final ? (ICD[dis] ?? null) : null, finalAt: final ? when : null, followUpDate: final ? new Date(Date.now() + (pi % 3 === 0 ? 0 : pi % 3 === 1 ? 2 : 7) * DAY) : null, createdAt: when });
     if (stage === "noinv" || stage === "draft") continue;
     const paid = stage !== "unpaid";
     addInvoice(vid, pt.id, { status: paid ? "PAID" : "UNPAID", method: paid ? "CASH" : null, paidAt: paid ? new Date(when.getTime() + 35 * 60000) : null, dispensedAt: stage === "done" ? new Date(when.getTime() + 60 * 60000) : null, created: new Date(when.getTime() + 25 * 60000), lines: [feeLine(150000), ...herbLines(7, ["Đương quy", "Hoàng kỳ", "Cam thảo", "Bạch thược"])] });
