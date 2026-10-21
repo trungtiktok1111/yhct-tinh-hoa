@@ -103,6 +103,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
     return { text: "Hoàn tất", cls: "chip-green", href: toThu };
   };
 
+  const tint = {
     amber: "bg-amber-50 border-amber-200", blue: "bg-sky-50 border-sky-200", red: "bg-rose-50 border-rose-200", purple: "bg-violet-50 border-violet-200",
   } as const;
   const cards = [
