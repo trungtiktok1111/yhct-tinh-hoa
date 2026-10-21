@@ -58,3 +58,12 @@ export const KNOWLEDGE_NAV: NavLink[] = [
   { href: "/mang-tri-thuc", label: "Mạng lưới tri thức", icon: "Network" },
 ];
 export const ADMIN_NAV: NavLink[] = [{ href: "/quan-tri", label: "Quản trị", icon: "ShieldCheck" }];
+
+export const ADMIN_SUB: NavLink[] = [
+  { href: "/quan-tri", label: "Thẩm định nội dung", icon: "ClipboardCheck" },
+  { href: "/quan-tri/chi-nhanh", label: "Quản lý chi nhánh", icon: "Building2" },
+  { href: "/quan-tri/nhan-vien", label: "Nhân viên & phân quyền", icon: "UserCog" },
+  { href: "/quan-tri/nhat-ky", label: "Nhật ký thao tác", icon: "ScrollText" },
+  { href: "/quan-tri/sao-luu", label: "Sao lưu dữ liệu", icon: "DatabaseBackup" },
+  { href: "/quan-tri/cau-hinh", label: "Cấu hình hệ thống", icon: "Settings" },
+];

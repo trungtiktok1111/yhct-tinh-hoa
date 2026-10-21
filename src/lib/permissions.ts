@@ -34,7 +34,7 @@ export function rolesLabel(v: string | null | undefined): string {
 }
 
 // Đường dẫn chỉ OWNER được vào.
-const OWNER_ONLY_PREFIXES = ["/quan-tri/nhan-vien", "/quan-tri/chi-nhanh", "/quan-tri/nhat-ky"];
+const OWNER_ONLY_PREFIXES = ["/quan-tri/nhan-vien", "/quan-tri/chi-nhanh", "/quan-tri/nhat-ky", "/quan-tri/sao-luu", "/quan-tri/cau-hinh"];
 
 // Vai trò được sửa dữ liệu tri thức YHCT (bệnh học, chứng hậu, bài thuốc...).
 export const KNOWLEDGE_EDITOR_ROLES: Role[] = ["OWNER", "DOCTOR"];

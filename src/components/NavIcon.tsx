@@ -19,6 +19,10 @@ import {
   BarChart3,
   Users,
   ClipboardCheck,
+  Building2,
+  UserCog,
+  DatabaseBackup,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -43,6 +47,10 @@ const ICONS: Record<string, LucideIcon> = {
   BarChart3,
   Users,
   ClipboardCheck,
+  Building2,
+  UserCog,
+  DatabaseBackup,
+  Settings,
 };
 
 export function NavIcon({ name, className }: { name: string; className?: string }) {

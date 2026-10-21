@@ -5,7 +5,7 @@ import { Search, ChevronDown } from "lucide-react";
 import { Noto_Serif, Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
-import { CLINIC_NAV, KNOWLEDGE_NAV, ADMIN_NAV } from "@/lib/constants";
+import { CLINIC_NAV, KNOWLEDGE_NAV, ADMIN_NAV, ADMIN_SUB } from "@/lib/constants";
 import { NavIcon } from "@/components/NavIcon";
 import { SideNav } from "@/components/SideNav";
 import { BranchSwitch } from "@/components/BranchSwitch";
@@ -42,6 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const clinic = ok(CLINIC_NAV);
   const knowledge = ok(KNOWLEDGE_NAV);
   const admin = ok(ADMIN_NAV);
+  const adminSub = ok(ADMIN_SUB);
   const initials = staff?.fullName.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase();
 
   return (
@@ -63,7 +64,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </span>
               </Link>
               <div className="flex-1 overflow-y-auto p-3 ink-scrollbar">
-                <SideNav clinic={clinic} knowledge={knowledge} admin={admin} />
+                <SideNav clinic={clinic} knowledge={knowledge} admin={admin} adminSub={adminSub} />
               </div>
               <div className="relative h-36 shrink-0 overflow-hidden border-t border-white/10">
                 <Image src="/images/art/tall.jpg" alt="" fill className="object-cover opacity-40" />

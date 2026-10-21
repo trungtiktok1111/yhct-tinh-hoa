@@ -21,7 +21,7 @@ function Item({ item, path }: { item: NavLink; path: string }) {
   );
 }
 
-export function SideNav({ clinic, knowledge, admin }: { clinic: NavLink[]; knowledge: NavLink[]; admin: NavLink[] }) {
+export function SideNav({ clinic, knowledge, admin, adminSub = [] }: { clinic: NavLink[]; knowledge: NavLink[]; admin: NavLink[]; adminSub?: NavLink[] }) {
   const path = usePathname() || "/";
   const kOpen = path.startsWith("/tra-cuu") || knowledge.some((k) => isActive(path, k.href));
   return (
@@ -51,6 +51,18 @@ export function SideNav({ clinic, knowledge, admin }: { clinic: NavLink[]; knowl
         <>
           <div className="my-3 border-t border-white/15" />
           {admin.map((i) => <Item key={i.href} item={i} path={path} />)}
+          {path.startsWith("/quan-tri") && adminSub.length > 0 && (
+            <div className="ml-3 mt-1 flex flex-col gap-0.5 border-l border-white/15 pl-2">
+              {adminSub.map((i) => {
+                const on = i.href === "/quan-tri" ? path === i.href : isActive(path, i.href);
+                return (
+                  <Link key={i.href} href={i.href} className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] ${on ? "bg-white/15 font-bold text-brand-goldLight" : "text-white/80 hover:bg-white/10"}`}>
+                    <NavIcon name={i.icon} className="h-4 w-4 shrink-0" /> <span className="truncate">{i.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
     </nav>
