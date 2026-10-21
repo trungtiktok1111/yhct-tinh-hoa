@@ -1,5 +1,5 @@
 import { requireStaff } from "@/lib/auth";
-import { ROLES } from "@/lib/permissions";
+import { rolesLabel } from "@/lib/permissions";
 import { changeOwnPassword } from "@/actions/account";
 import { BackLink } from "@/components/BackLink";
 
@@ -15,7 +15,7 @@ export default async function AccountPage({ searchParams }: { searchParams: { lo
       <h1 className="text-2xl font-bold font-display">Tài khoản của tôi</h1>
       <div className="card text-sm">
         <div className="font-semibold">{me.fullName}</div>
-        <div className="text-gray-600">@{me.username} · {ROLES[me.role]}</div>
+        <div className="text-gray-600">@{me.username} · {rolesLabel(me.role)}</div>
       </div>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
       {searchParams.ok && <div className="card !bg-green-50 text-sm text-green-800">Đã đổi mật khẩu.</div>}

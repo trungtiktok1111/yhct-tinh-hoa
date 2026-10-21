@@ -18,6 +18,21 @@ export function isRole(v: unknown): v is Role {
   return typeof v === "string" && v in ROLES;
 }
 
+// Một người có thể giữ nhiều vai trò: lưu dạng "DOCTOR,CASHIER".
+export function parseRoles(v: string | null | undefined): Role[] {
+  return (v ?? "").split(",").map((x) => x.trim()).filter(isRole);
+}
+export function joinRoles(roles: Role[]): string {
+  return roles.join(",");
+}
+export function hasAny(roles: Role[], allowed: Role[]): boolean {
+  return roles.some((r) => allowed.includes(r));
+}
+export function rolesLabel(v: string | null | undefined): string {
+  const r = parseRoles(v);
+  return r.length ? r.map((x) => ROLES[x]).join(" + ") : "—";
+}
+
 // Đường dẫn chỉ OWNER được vào.
 const OWNER_ONLY_PREFIXES = ["/quan-tri/nhan-vien", "/quan-tri/chi-nhanh", "/quan-tri/nhat-ky"];
 
@@ -25,7 +40,7 @@ const OWNER_ONLY_PREFIXES = ["/quan-tri/nhan-vien", "/quan-tri/chi-nhanh", "/qua
 export const KNOWLEDGE_EDITOR_ROLES: Role[] = ["OWNER", "DOCTOR"];
 
 export function canEditKnowledge(role: string): boolean {
-  return KNOWLEDGE_EDITOR_ROLES.includes(role as Role);
+  return hasAny(parseRoles(role), KNOWLEDGE_EDITOR_ROLES);
 }
 
 // Kho và giá.
@@ -35,11 +50,12 @@ export const ITEM_MANAGER_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER"]; // tạo 
 export const COST_VIEW_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER"]; // xem giá nhập
 
 export function canAccessPath(role: string, pathname: string): boolean {
+  const roles = parseRoles(role); // role có thể là nhiều vai trò, vd "DOCTOR,CASHIER"
   const under = (p: string) => pathname === p || pathname.startsWith(p + "/");
-  if (under("/kho/nhap") || under("/kho/dieu-chinh")) return STOCK_WRITE_ROLES.includes(role as Role);
-  if (under("/kho")) return STOCK_VIEW_ROLES.includes(role as Role);
+  if (under("/kho/nhap") || under("/kho/dieu-chinh")) return hasAny(roles, STOCK_WRITE_ROLES);
+  if (under("/kho")) return hasAny(roles, STOCK_VIEW_ROLES);
   if (OWNER_ONLY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
-    return role === "OWNER";
+    return roles.includes("OWNER");
   }
   return true;
 }

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
-import { ITEM_MANAGER_ROLES } from "@/lib/permissions";
+import { ITEM_MANAGER_ROLES, hasAny } from "@/lib/permissions";
 import { createItem, updateItem, setItemActive, deleteItem } from "@/actions/stock";
 import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ItemsPage({ searchParams }: { searchParams: { loi?: string; q?: string } }) {
   const staff = await requireStaff();
-  const canManage = ITEM_MANAGER_ROLES.includes(staff.role);
+  const canManage = hasAny(staff.roles, ITEM_MANAGER_ROLES);
   const q = searchParams.q?.trim();
   const items = await prisma.item.findMany({
     where: q ? { name: { contains: q, mode: "insensitive" } } : {},

@@ -4,13 +4,14 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { SESSION_COOKIE, verifySession } from "@/lib/session";
-import { canEditKnowledge, isRole, type Role } from "@/lib/permissions";
+import { canEditKnowledge, hasAny, parseRoles, type Role } from "@/lib/permissions";
 
 export type CurrentStaff = {
   id: string;
   username: string;
   fullName: string;
-  role: Role;
+  role: string; // chuỗi gốc, vd "DOCTOR,CASHIER"
+  roles: Role[];
   branchIds: string[]; // OWNER: rỗng nhưng xem được tất cả (xem isOwner)
   isOwner: boolean;
 };
@@ -23,14 +24,16 @@ export const getCurrentStaff = cache(async function getCurrentStaff(): Promise<C
     where: { id: session.sub },
     include: { branches: { select: { branchId: true } } },
   });
-  if (!staff || !staff.active || !isRole(staff.role)) return null;
+  const roles = parseRoles(staff?.role);
+  if (!staff || !staff.active || roles.length === 0) return null;
   return {
     id: staff.id,
     username: staff.username,
     fullName: staff.fullName,
     role: staff.role,
+    roles,
     branchIds: staff.branches.map((b) => b.branchId),
-    isOwner: staff.role === "OWNER",
+    isOwner: roles.includes("OWNER"),
   };
 });
 
@@ -42,7 +45,7 @@ export async function requireStaff(): Promise<CurrentStaff> {
 
 export async function requireRole(...roles: Role[]): Promise<CurrentStaff> {
   const staff = await requireStaff();
-  if (!roles.includes(staff.role)) redirect("/khong-co-quyen");
+  if (!hasAny(staff.roles, roles)) redirect("/khong-co-quyen");
   return staff;
 }
 

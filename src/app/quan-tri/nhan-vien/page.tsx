@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
-import { ROLES, ROLE_KEYS } from "@/lib/permissions";
+import { ROLES, ROLE_KEYS, parseRoles, rolesLabel } from "@/lib/permissions";
 import { createStaff, resetStaffPassword, setStaffActive, updateStaff, deleteStaff } from "@/actions/admin";
 import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
@@ -32,13 +32,16 @@ export default async function StaffPage({ searchParams }: { searchParams: { loi?
     </fieldset>
   );
 
-  const RoleSelect = ({ value }: { value?: string }) => (
-    <select name="role" defaultValue={value ?? ""} required className={input}>
-      <option value="" disabled>Chọn vai trò</option>
+  const RoleChecks = ({ selected }: { selected: string[] }) => (
+    <fieldset className="flex flex-wrap gap-x-4 gap-y-2">
+      <legend className="text-sm font-medium mb-1">Vai trò (chọn một hoặc nhiều)</legend>
       {ROLE_KEYS.map((r) => (
-        <option key={r} value={r}>{ROLES[r]}</option>
+        <label key={r} className="flex items-center gap-2 text-sm py-1">
+          <input type="checkbox" name="roles" value={r} defaultChecked={selected.includes(r)} className="h-5 w-5" />
+          {ROLES[r]}
+        </label>
       ))}
-    </select>
+    </fieldset>
   );
 
   return (
@@ -54,8 +57,8 @@ export default async function StaffPage({ searchParams }: { searchParams: { loi?
             <input name="fullName" placeholder="Họ tên" required className={input} />
             <input name="username" placeholder="Tên đăng nhập (chữ thường, không dấu)" autoCapitalize="none" required className={input} />
             <input name="password" type="password" placeholder="Mật khẩu (tối thiểu 8 ký tự)" minLength={8} required autoComplete="new-password" className={input} />
-            <RoleSelect />
           </div>
+          <RoleChecks selected={[]} />
           <BranchChecks selected={[]} />
           <button type="submit" className="w-full bg-brand-deep hover:bg-brand-deeper text-brand-cream rounded-lg px-4 py-2.5 font-semibold">
             Thêm nhân viên
@@ -69,7 +72,7 @@ export default async function StaffPage({ searchParams }: { searchParams: { loi?
             <summary className="cursor-pointer flex flex-wrap items-center justify-between gap-2">
               <span className="min-w-0">
                 <span className="font-semibold">{s.fullName}</span>{" "}
-                <span className="text-sm text-gray-600">@{s.username} · {ROLES[s.role as keyof typeof ROLES] ?? s.role}</span>
+                <span className="text-sm text-gray-600">@{s.username} · {rolesLabel(s.role)}</span>
               </span>
               {!s.active && <span className="status-pill status-RETIRED">Đã khóa</span>}
             </summary>
@@ -79,8 +82,8 @@ export default async function StaffPage({ searchParams }: { searchParams: { loi?
                 <input type="hidden" name="id" value={s.id} />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <input name="fullName" defaultValue={s.fullName} required className={input} />
-                  <RoleSelect value={s.role} />
                 </div>
+                <RoleChecks selected={parseRoles(s.role)} />
                 <BranchChecks selected={s.branches.map((b) => b.branchId)} />
                 <button type="submit" className="rounded-lg border border-brand-gold/50 px-4 py-2 text-sm font-semibold">
                   Lưu thay đổi

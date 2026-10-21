@@ -6,7 +6,7 @@ import "./globals.css";
 import { NAV_ITEMS } from "@/lib/constants";
 import { NavIcon } from "@/components/NavIcon";
 import { getCurrentStaff } from "@/lib/auth";
-import { ROLES, canAccessPath } from "@/lib/permissions";
+import { rolesLabel, canAccessPath } from "@/lib/permissions";
 import { logout } from "@/actions/auth";
 
 const display = Noto_Serif({
@@ -68,7 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <div className="text-xs md:text-sm font-semibold truncate max-w-[9rem] md:max-w-none">
                     {staff.fullName}
                   </div>
-                  <div className="text-[10px] md:text-xs text-brand-cream/70">{ROLES[staff.role]}</div>
+                  <div className="text-[10px] md:text-xs text-brand-cream/70">{rolesLabel(staff.role)}</div>
                 </Link>
                 <button
                   type="submit"

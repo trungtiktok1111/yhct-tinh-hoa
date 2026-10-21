@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { branchesFor, input } from "@/lib/stock";
-import { STOCK_WRITE_ROLES, ITEM_MANAGER_ROLES } from "@/lib/permissions";
+import { STOCK_WRITE_ROLES, ITEM_MANAGER_ROLES, hasAny } from "@/lib/permissions";
 import { dateVN, qty } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -16,8 +16,8 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
   const q = searchParams.q?.trim();
   const onlyLow = searchParams.chi === "thap";
 
-  const canWrite = STOCK_WRITE_ROLES.includes(staff.role);
-  const canManage = ITEM_MANAGER_ROLES.includes(staff.role);
+  const canWrite = hasAny(staff.roles, STOCK_WRITE_ROLES);
+  const canManage = hasAny(staff.roles, ITEM_MANAGER_ROLES);
 
   if (!branch) {
     return (

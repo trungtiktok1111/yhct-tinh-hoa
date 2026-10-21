@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
-import { STOCK_WRITE_ROLES, COST_VIEW_ROLES } from "@/lib/permissions";
+import { STOCK_WRITE_ROLES, COST_VIEW_ROLES, hasAny } from "@/lib/permissions";
 import { receiveStock, cancelLot } from "@/actions/stock";
 import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
@@ -22,7 +22,7 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
     take: 15,
     include: { item: { select: { name: true, unit: true } }, branch: { select: { name: true } } },
   });
-  const showCost = COST_VIEW_ROLES.includes(staff.role);
+  const showCost = hasAny(staff.roles, COST_VIEW_ROLES);
 
   return (
     <div className="space-y-6">
