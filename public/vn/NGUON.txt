@@ -1,0 +1,1 @@
+Nguồn dữ liệu: gói npm vietnam-address-data 1.0.0 (MIT), phản ánh việc sắp xếp đơn vị hành chính có hiệu lực 01/07/2025: 34 tỉnh/thành phố, 3.321 xã/phường/đặc khu (2.621 xã, 687 phường, 13 đặc khu). Đã đối chiếu tổng số và số đơn vị từng tỉnh với số liệu công bố. Cập nhật lại khi có thay đổi mới.

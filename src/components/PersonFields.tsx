@@ -1,3 +1,4 @@
+import { AddressFields } from "@/components/AddressFields";
 const cls = "w-full rounded-lg border border-brand-gold/40 bg-white px-3 py-2.5 text-base";
 
 type V = {
@@ -33,18 +34,9 @@ export function PersonFields({ v = {}, phoneRequired = false }: { v?: V; phoneRe
       <label className="text-sm sm:col-span-2">Email
         <input name="email" type="email" defaultValue={v.email ?? ""} className={cls} />
       </label>
-      <label className="text-sm sm:col-span-2">Địa chỉ (số nhà, đường, thôn/xóm)
-        <input name="address" defaultValue={v.address ?? ""} className={cls} />
-      </label>
-      <label className="text-sm">Phường / xã
-        <input name="ward" defaultValue={v.ward ?? ""} className={cls} />
-      </label>
-      <label className="text-sm">Quận / huyện
-        <input name="district" defaultValue={v.district ?? ""} className={cls} />
-      </label>
-      <label className="text-sm sm:col-span-2">Tỉnh / thành phố
-        <input name="province" defaultValue={v.province ?? ""} className={cls} />
-      </label>
+      <div className="sm:col-span-2">
+        <AddressFields address={v.address} ward={v.ward} province={v.province} />
+      </div>
     </div>
   );
 }
