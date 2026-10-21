@@ -469,9 +469,10 @@ model StockMove {
   branch    Branch   @relation(fields: [branchId], references: [id])
   lotId     String?
   lot       StockLot? @relation(fields: [lotId], references: [id], onDelete: SetNull)
-  type      String // RECEIPT | ADJUST
+  type      String // RECEIPT | ADJUST | DISPENSE
   qty       Float
   reason    String?
+  invoiceId String? // với DISPENSE: hóa đơn đã phát
   staffName String?
 
   @@index([branchId, at])
@@ -652,6 +653,8 @@ model Invoice {
   method       String? // CASH | TRANSFER | CARD
   paidAt       DateTime?
   voidReason   String?
+  dispensedAt  DateTime?
+  dispensedBy  String?
   note         String?
   staffId      String?
   staffName    String?

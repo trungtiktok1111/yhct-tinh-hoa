@@ -195,6 +195,7 @@ export async function voidInvoice(formData: FormData) {
   const staff = await requireRole(...CASHIER_ROLES);
   const inv = await loadInvoice(staff, str(formData, "invoiceId"));
   if (inv.status === "VOID") go(inv.id);
+  if (inv.dispensedAt) go(inv.id, "Thuốc đã phát, không hủy được hóa đơn. Cần hoàn kho thì nhờ dược sĩ điều chỉnh tăng kho.");
   const reason = str(formData, "reason");
   if (!reason) go(inv.id, "Nhập lý do hủy hóa đơn.");
   await prisma.invoice.update({ where: { id: inv.id }, data: { status: "VOID", voidReason: reason } });
