@@ -658,6 +658,7 @@ model Invoice {
   status       String   @default("UNPAID")
   subtotal     Int
   discount     Int      @default(0)
+  discountPct  Int      @default(0)
   vatPct       Int      @default(0)
   vat          Int      @default(0)
   total        Int

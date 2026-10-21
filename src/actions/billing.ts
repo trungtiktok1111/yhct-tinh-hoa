@@ -40,8 +40,9 @@ async function recalc(invoiceId: string) {
   const inv = await prisma.invoice.findUnique({ where: { id: invoiceId }, include: { lines: true } });
   if (!inv) return;
   const subtotal = inv.lines.reduce((s, l) => s + l.amount, 0);
-  const discount = Math.min(inv.discount, subtotal);
-  await prisma.invoice.update({ where: { id: invoiceId }, data: { subtotal, discount, total: subtotal - discount } });
+  const discount = inv.discountPct > 0 ? Math.round((subtotal * inv.discountPct) / 100) : Math.min(inv.discount, subtotal);
+  const vat = Math.round(((subtotal - discount) * inv.vatPct) / 100);
+  await prisma.invoice.update({ where: { id: invoiceId }, data: { subtotal, discount, vat, total: subtotal - discount + vat } });
 }
 
 async function currentPrices(itemIds: string[]) {
@@ -69,8 +70,13 @@ export async function createExamInvoice(formData: FormData) {
   if (!staff.isOwner && !staff.branchIds.includes(visit.branchId)) redirect("/khong-co-quyen");
   if (visit.invoice) go(visit.invoice.id);
   if (visit.exam?.status !== "FINAL") redirect(`/thu-ngan?loi=${encodeURIComponent("Bác sĩ chưa hoàn tất khám lượt này.")}`);
-  const fee = money(formData, "fee");
+  let fee = money(formData, "fee");
   if (fee === null) redirect(`/thu-ngan?loi=${encodeURIComponent("Tiền công khám phải là số.")}`);
+  let feeName = "Khám và tư vấn YHCT";
+  if (fee === undefined) {
+    const svc = await prisma.serviceItem.findFirst({ where: { active: true }, orderBy: { position: "asc" } });
+    if (svc) { fee = svc.price; feeName = svc.name; }
+  }
   const rx = visit.exam.prescription;
   const lines = rx?.lines ?? [];
   const prices = await currentPrices(lines.map((l) => l.itemId));
@@ -80,7 +86,7 @@ export async function createExamInvoice(formData: FormData) {
   const thang = Math.max(rx?.thangCount ?? 0, 1);
   const data = [];
   let pos = 0;
-  if (fee) data.push({ kind: "FEE", itemId: null, name: "Công khám", unit: "lần", qty: 1, unitPrice: fee, amount: fee, position: pos++ });
+  if (fee) data.push({ kind: "FEE", itemId: null, name: feeName, unit: "Lần", qty: 1, unitPrice: fee, amount: fee, position: pos++ });
   for (const l of lines) {
     const q = l.kind === "HERB" ? l.qty * thang : l.qty;
     const up = prices.get(l.itemId)!;
@@ -118,7 +124,7 @@ export async function createRetailInvoice(formData: FormData) {
 export async function addRetailLine(formData: FormData) {
   const staff = await requireRole(...CASHIER_ROLES);
   const inv = await loadInvoice(staff, str(formData, "invoiceId"));
-  if (inv.kind !== "RETAIL" || inv.status !== "UNPAID") go(inv.id, "Chỉ thêm hàng được vào hóa đơn bán lẻ chưa thanh toán.");
+  if (inv.status !== "UNPAID") go(inv.id, "Chỉ thêm hàng được vào hóa đơn chưa thanh toán.");
   const itemId = str(formData, "itemId");
   const q = num(formData, "qty");
   if (!itemId) go(inv.id, "Chọn mặt hàng.");
@@ -154,22 +160,60 @@ export async function removeInvoiceLine(formData: FormData) {
   go(inv.id);
 }
 
-// Giảm giá và sửa công khám trước khi thu tiền.
+// Thêm dịch vụ khám chữa bệnh từ danh mục.
+export async function addServiceLine(formData: FormData) {
+  const staff = await requireRole(...CASHIER_ROLES);
+  const inv = await loadInvoice(staff, str(formData, "invoiceId"));
+  if (inv.status !== "UNPAID") go(inv.id, "Hóa đơn đã chốt, không sửa được.");
+  const svc = await prisma.serviceItem.findUnique({ where: { id: str(formData, "serviceId") ?? "" } });
+  if (!svc || !svc.active) go(inv.id, "Chọn dịch vụ.");
+  const q = num(formData, "qty") ?? 1;
+  if (Number.isNaN(q) || q <= 0) go(inv.id, "Số lượng phải lớn hơn 0.");
+  await prisma.invoiceLine.create({
+    data: { invoiceId: inv.id, kind: "FEE", name: svc.name, unit: svc.unit, qty: q, unitPrice: svc.price, amount: Math.round(q * svc.price), position: inv.lines.length },
+  });
+  await recalc(inv.id);
+  go(inv.id);
+}
+
+// Sửa số lượng và giảm giá % của một dòng.
+export async function updateInvoiceLine(formData: FormData) {
+  const staff = await requireRole(...CASHIER_ROLES);
+  const inv = await loadInvoice(staff, str(formData, "invoiceId"));
+  if (inv.status !== "UNPAID") go(inv.id, "Hóa đơn đã chốt, không sửa được.");
+  const line = inv.lines.find((l) => l.id === str(formData, "lineId"));
+  if (!line) go(inv.id);
+  const q = num(formData, "qty");
+  const d = num(formData, "discountPct") ?? 0;
+  if (q === undefined || Number.isNaN(q) || q <= 0) go(inv.id, "Số lượng phải lớn hơn 0.");
+  if (Number.isNaN(d) || d < 0 || d > 100) go(inv.id, "Giảm giá phải từ 0 đến 100%.");
+  if (line.itemId) {
+    const stock = await prisma.stockLot.aggregate({
+      where: { itemId: line.itemId, branchId: inv.branchId, qtyRemaining: { gt: 0 }, OR: [{ expiryDate: null }, { expiryDate: { gt: new Date() } }] },
+      _sum: { qtyRemaining: true },
+    });
+    const have = stock._sum.qtyRemaining ?? 0;
+    if (q > have) go(inv.id, `Không đủ tồn: “${line.name}” còn ${have} ${line.unit}.`);
+  }
+  const pct = Math.round(d);
+  await prisma.invoiceLine.update({
+    where: { id: line.id },
+    data: { qty: q, discountPct: pct, amount: Math.round(q * line.unitPrice * (1 - pct / 100)) },
+  });
+  await recalc(inv.id);
+  go(inv.id);
+}
+
+// Giảm giá chung (%), VAT (%) và ghi chú trước khi thu tiền.
 export async function adjustInvoice(formData: FormData) {
   const staff = await requireRole(...CASHIER_ROLES);
   const inv = await loadInvoice(staff, str(formData, "invoiceId"));
   if (inv.status !== "UNPAID") go(inv.id, "Hóa đơn đã chốt, không sửa được.");
-  const discount = money(formData, "discount");
-  const fee = money(formData, "fee");
-  if (discount === null || fee === null) go(inv.id, "Tiền phải là số không âm.");
-  const feeLine = inv.lines.find((l) => l.kind === "FEE");
-  if (fee !== undefined) {
-    if (feeLine && fee === 0) await prisma.invoiceLine.delete({ where: { id: feeLine.id } });
-    else if (feeLine) await prisma.invoiceLine.update({ where: { id: feeLine.id }, data: { unitPrice: fee, amount: fee } });
-    else if (fee > 0 && inv.kind === "EXAM")
-      await prisma.invoiceLine.create({ data: { invoiceId: inv.id, kind: "FEE", name: "Công khám", unit: "lần", qty: 1, unitPrice: fee, amount: fee, position: -1 } });
-  }
-  await prisma.invoice.update({ where: { id: inv.id }, data: { discount: discount ?? 0, note: str(formData, "note") ?? null } });
+  const dp = num(formData, "discountPct") ?? 0;
+  const vp = num(formData, "vatPct") ?? 0;
+  if (Number.isNaN(dp) || dp < 0 || dp > 100) go(inv.id, "Giảm giá chung phải từ 0 đến 100%.");
+  if (Number.isNaN(vp) || ![0, 5, 8, 10].includes(vp)) go(inv.id, "VAT chỉ nhận 0, 5, 8 hoặc 10%.");
+  await prisma.invoice.update({ where: { id: inv.id }, data: { discountPct: Math.round(dp), vatPct: vp, note: str(formData, "note") ?? inv.note } });
   await recalc(inv.id);
   go(inv.id);
 }
@@ -181,9 +225,12 @@ export async function payInvoice(formData: FormData) {
   if (inv.lines.length === 0) go(inv.id, "Hóa đơn chưa có dòng nào.");
   const method = str(formData, "method");
   if (!method || !["CASH", "TRANSFER", "CARD"].includes(method)) go(inv.id, "Chọn hình thức thanh toán.");
+  const given = money(formData, "cashGiven");
+  if (given === null) go(inv.id, "Tiền khách đưa phải là số.");
+  if (method === "CASH" && given !== undefined && given < inv.total) go(inv.id, "Tiền khách đưa chưa đủ.");
   const res = await prisma.invoice.updateMany({
     where: { id: inv.id, status: "UNPAID" },
-    data: { status: "PAID", method, paidAt: new Date() },
+    data: { status: "PAID", method, paidAt: new Date(), cashGiven: method === "CASH" ? given ?? null : null },
   });
   if (res.count === 0) go(inv.id, "Hóa đơn vừa được xử lý ở nơi khác.");
   await logAudit({ staffId: staff.id, staffName: staff.fullName, branchId: inv.branchId, action: "PAY", entity: "Invoice", entityId: inv.id, detail: `${inv.total}đ · ${method}` });
