@@ -9,7 +9,7 @@ import { patientCode, timeVN, vnDayStart, vnd } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 const ST: Record<string, string> = { UNPAID: "Chờ thu", PAID: "Đã thu", VOID: "Đã hủy" };
-export const METHOD: Record<string, string> = { CASH: "Tiền mặt", TRANSFER: "Chuyển khoản", CARD: "Thẻ" };
+const METHOD: Record<string, string> = { CASH: "Tiền mặt", TRANSFER: "Chuyển khoản", CARD: "Thẻ" };
 const btnMain = "rounded-lg bg-brand-deep text-brand-cream px-4 py-2.5 font-semibold";
 
 export default async function CashierPage({ searchParams }: { searchParams: { cn?: string; loi?: string } }) {
