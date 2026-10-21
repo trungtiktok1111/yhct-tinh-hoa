@@ -132,15 +132,18 @@ export async function receiveStock(formData: FormData) {
   const item = await prisma.item.findUnique({ where: { id: itemId } });
   if (!item || !item.active) back(P, "Mặt hàng không tồn tại hoặc đã ngừng.");
 
+  const supplierId = str(formData, "supplierId");
+  const sup = supplierId ? await prisma.supplier.findUnique({ where: { id: supplierId } }) : null;
+  const supplierName = sup?.name ?? str(formData, "supplier");
   await prisma.$transaction(async (tx) => {
     const lot = await tx.stockLot.create({
       data: {
-        itemId, branchId, unitCost, expiryDate, supplier: str(formData, "supplier"),
+        itemId, branchId, unitCost, expiryDate, supplier: supplierName, supplierId: sup?.id,
         note: str(formData, "note"), qtyReceived: quantity, qtyRemaining: quantity, staffName: staff.fullName,
       },
     });
     await tx.stockMove.create({
-      data: { itemId, branchId, lotId: lot.id, type: "RECEIPT", qty: quantity, reason: str(formData, "supplier"), staffName: staff.fullName },
+      data: { itemId, branchId, lotId: lot.id, type: "RECEIPT", qty: quantity, reason: supplierName, staffName: staff.fullName },
     });
   });
   await logAudit({

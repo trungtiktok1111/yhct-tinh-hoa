@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { STOCK_WRITE_ROLES, COST_VIEW_ROLES, hasAny } from "@/lib/permissions";
 import { receiveStock, cancelLot } from "@/actions/stock";
+import { KhoTabs } from "@/components/KhoTabs";
 import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { branchesFor, input, btn } from "@/lib/stock";
@@ -11,9 +12,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ReceivePage({ searchParams }: { searchParams: { loi?: string; ok?: string } }) {
   const staff = await requireRole(...STOCK_WRITE_ROLES);
-  const [branches, items] = await Promise.all([
+  const [branches, items, suppliers] = await Promise.all([
     branchesFor(staff),
     prisma.item.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true, unit: true } }),
+    prisma.supplier.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   const branchIds = branches.map((b) => b.id);
   const recent = await prisma.stockLot.findMany({
@@ -27,6 +29,7 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
   return (
     <div className="space-y-6">
       <BackLink href="/kho" label="Quay lại Kho" />
+      <KhoTabs active="nhap" />
       <h1 className="text-2xl font-bold font-display">Nhập kho</h1>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
       {searchParams.ok && <div className="card !bg-green-50 text-sm text-green-800">Đã nhập kho.</div>}
@@ -55,6 +58,12 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
             <input name="expiryDate" type="date" className={input} />
           </label>
           <label className="text-sm">Nhà cung cấp
+            <select name="supplierId" defaultValue="" className={input}>
+              <option value="">— Chọn từ danh sách —</option>
+              {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </label>
+          <label className="text-sm">hoặc gõ tên nhà cung cấp mới
             <input name="supplier" className={input} />
           </label>
           <input name="note" placeholder="Ghi chú (số hóa đơn, lô...)" className={`${input} sm:col-span-2`} />

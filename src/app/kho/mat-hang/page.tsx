@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { ITEM_MANAGER_ROLES, hasAny } from "@/lib/permissions";
 import { createItem, updateItem, setItemActive, deleteItem } from "@/actions/stock";
+import { KhoTabs } from "@/components/KhoTabs";
 import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { UNITS, input, btn } from "@/lib/stock";
@@ -22,6 +23,7 @@ export default async function ItemsPage({ searchParams }: { searchParams: { loi?
   return (
     <div className="space-y-6">
       <BackLink href="/kho" label="Quay lại Kho" />
+      <KhoTabs active="mat-hang" />
       <h1 className="text-2xl font-bold font-display">{canManage ? "Mặt hàng và giá bán" : "Bảng giá"}</h1>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
 

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { STOCK_WRITE_ROLES } from "@/lib/permissions";
 import { adjustStock } from "@/actions/stock";
+import { KhoTabs } from "@/components/KhoTabs";
 import { BackLink } from "@/components/BackLink";
 import { branchesFor, input, btn } from "@/lib/stock";
 import { qty } from "@/lib/format";
@@ -24,6 +25,7 @@ export default async function AdjustPage({ searchParams }: { searchParams: { loi
   return (
     <div className="space-y-6">
       <BackLink href="/kho" label="Quay lại Kho" />
+      <KhoTabs active="dieu-chinh" />
       <h1 className="text-2xl font-bold font-display">Điều chỉnh / kiểm kê</h1>
       <p className="text-sm text-gray-600">
         Dùng khi kiểm kê lệch, hao hụt, hỏng, hết hạn. Số âm là giảm, số dương là tăng. Bắt buộc ghi lý do; mọi điều chỉnh đều lưu vết.
