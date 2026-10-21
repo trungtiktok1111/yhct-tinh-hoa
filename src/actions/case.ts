@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { requireKnowledgeEditor } from "@/lib/auth";
 import { analyzePatterns } from "@/lib/reasoning";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -13,6 +14,7 @@ function str(fd: FormData, key: string): string | undefined {
 }
 
 export async function createCase(formData: FormData) {
+  await requireKnowledgeEditor();
   const c = await prisma.clinicalCase.create({
     data: {
       caseCode: str(formData, "caseCode") ?? `CA-${Date.now()}`,
@@ -25,6 +27,7 @@ export async function createCase(formData: FormData) {
 }
 
 export async function saveObservations(formData: FormData) {
+  await requireKnowledgeEditor();
   const id = str(formData, "caseId");
   if (!id) return;
   const observations = {
@@ -42,6 +45,7 @@ export async function saveObservations(formData: FormData) {
 }
 
 export async function runPatternAnalysis(formData: FormData) {
+  await requireKnowledgeEditor();
   const id = str(formData, "caseId");
   if (!id) return;
   const kase = await prisma.clinicalCase.findUnique({ where: { id } });
@@ -64,6 +68,7 @@ export async function runPatternAnalysis(formData: FormData) {
 }
 
 export async function confirmConclusion(formData: FormData) {
+  await requireKnowledgeEditor();
   const id = str(formData, "caseId");
   if (!id) return;
   await prisma.clinicalCase.update({
@@ -77,6 +82,7 @@ export async function confirmConclusion(formData: FormData) {
 }
 
 export async function recordOutcome(formData: FormData) {
+  await requireKnowledgeEditor();
   const id = str(formData, "caseId");
   if (!id) return;
   await prisma.clinicalCase.update({

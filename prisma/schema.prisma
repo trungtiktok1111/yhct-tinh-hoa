@@ -328,3 +328,60 @@ model Claim {
   sourceId     String?
   source       Source?      @relation(fields: [sourceId], references: [id])
 }
+
+// ===== Hệ thống phòng khám: chi nhánh, nhân viên, phân quyền, nhật ký =====
+
+// Chi nhánh. Mọi bảng giao dịch về sau (kho, khám, hóa đơn) đều gắn branchId.
+model Branch {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  staff     StaffBranch[]
+}
+
+// Nhân viên. role: OWNER | BRANCH_MANAGER | RECEPTION | DOCTOR | CASHIER | PHARMACIST | STOREKEEPER
+// OWNER thấy mọi chi nhánh; các vai trò khác chỉ thấy chi nhánh được gán (StaffBranch).
+model Staff {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  fullName     String
+  passwordHash String
+  role         String
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+
+  branches     StaffBranch[]
+  auditLogs    AuditLog[]
+}
+
+model StaffBranch {
+  staffId  String
+  branchId String
+  staff    Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([staffId, branchId])
+}
+
+// Nhật ký thao tác. Chỉ thêm, không sửa/xóa.
+model AuditLog {
+  id        String   @id @default(cuid())
+  at        DateTime @default(now())
+  staffId   String?
+  staffName String?
+  branchId  String?
+  action    String // vd: LOGIN, LOGIN_FAILED, CREATE, UPDATE, DELETE
+  entity    String // vd: Staff, Branch, Disease
+  entityId  String?
+  detail    String?
+
+  staff     Staff?   @relation(fields: [staffId], references: [id], onDelete: SetNull)
+
+  @@index([at])
+  @@index([entity, entityId])
+}

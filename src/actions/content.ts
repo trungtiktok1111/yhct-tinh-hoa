@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { requireKnowledgeEditor } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -30,6 +31,7 @@ async function resolveSourceId(fd: FormData): Promise<string | undefined> {
 }
 
 export async function createDisease(formData: FormData) {
+  await requireKnowledgeEditor();
   const sourceId = await resolveSourceId(formData);
   const d = await prisma.disease.create({
     data: {
@@ -52,6 +54,7 @@ export async function createDisease(formData: FormData) {
 }
 
 export async function createPattern(formData: FormData) {
+  await requireKnowledgeEditor();
   const sourceId = await resolveSourceId(formData);
   const p = await prisma.pattern.create({
     data: {
@@ -70,6 +73,7 @@ export async function createPattern(formData: FormData) {
 }
 
 export async function linkDiseasePattern(formData: FormData) {
+  await requireKnowledgeEditor();
   const diseaseId = str(formData, "diseaseId");
   const patternId = str(formData, "patternId");
   const relation = str(formData, "relation") ?? "có thể gặp";
@@ -89,6 +93,7 @@ export async function linkDiseasePattern(formData: FormData) {
 }
 
 export async function createPrinciple(formData: FormData) {
+  await requireKnowledgeEditor();
   const sourceId = await resolveSourceId(formData);
   const t = await prisma.treatmentPrinciple.create({
     data: {
@@ -107,6 +112,7 @@ export async function createPrinciple(formData: FormData) {
 }
 
 export async function linkPatternPrinciple(formData: FormData) {
+  await requireKnowledgeEditor();
   const patternId = str(formData, "patternId");
   const principleId = str(formData, "principleId");
   if (!patternId || !principleId) return;
@@ -120,6 +126,7 @@ export async function linkPatternPrinciple(formData: FormData) {
 }
 
 export async function createHerb(formData: FormData) {
+  await requireKnowledgeEditor();
   const sourceId = await resolveSourceId(formData);
   const h = await prisma.herb.create({
     data: {
@@ -150,6 +157,7 @@ export async function createHerb(formData: FormData) {
 }
 
 export async function createFormula(formData: FormData) {
+  await requireKnowledgeEditor();
   const sourceId = await resolveSourceId(formData);
   const principleId = str(formData, "principleId");
   const f = await prisma.formula.create({
@@ -171,6 +179,7 @@ export async function createFormula(formData: FormData) {
 }
 
 export async function addFormulaIngredient(formData: FormData) {
+  await requireKnowledgeEditor();
   const formulaId = str(formData, "formulaId");
   const herbId = str(formData, "herbId");
   if (!formulaId || !herbId) return;
@@ -189,6 +198,7 @@ export async function addFormulaIngredient(formData: FormData) {
 }
 
 export async function createPoint(formData: FormData) {
+  await requireKnowledgeEditor();
   const sourceId = await resolveSourceId(formData);
   const p = await prisma.acupuncturePoint.create({
     data: {
@@ -211,6 +221,7 @@ export async function createPoint(formData: FormData) {
 }
 
 export async function createManualTherapy(formData: FormData) {
+  await requireKnowledgeEditor();
   const sourceId = await resolveSourceId(formData);
   await prisma.manualTherapy.create({
     data: {
@@ -230,6 +241,7 @@ export async function createManualTherapy(formData: FormData) {
 }
 
 export async function createTheoryTopic(formData: FormData) {
+  await requireKnowledgeEditor();
   const sourceId = await resolveSourceId(formData);
   const t = await prisma.theoryTopic.create({
     data: {
@@ -247,6 +259,7 @@ export async function createTheoryTopic(formData: FormData) {
 }
 
 export async function createSource(formData: FormData) {
+  await requireKnowledgeEditor();
   const s = await prisma.source.create({
     data: {
       title: str(formData, "title") ?? "Chưa đặt tên",

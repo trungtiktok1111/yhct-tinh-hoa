@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/db";
+import Link from "next/link";
 import { ModuleHeader } from "@/components/ModuleHeader";
+import { getCurrentStaff } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
+  const staff = await getCurrentStaff();
   const entities = [
     { label: "Bệnh học", model: prisma.disease },
     { label: "Chứng hậu", model: prisma.pattern },
@@ -31,12 +34,26 @@ export default async function AdminPage() {
         image="/images/admin-clinic.png"
       />
 
+      {staff?.isOwner && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            { href: "/quan-tri/chi-nhanh", label: "Chi nhánh", sub: "Thêm, ngừng hoạt động" },
+            { href: "/quan-tri/nhan-vien", label: "Nhân viên", sub: "Tài khoản, vai trò, chi nhánh" },
+            { href: "/quan-tri/nhat-ky", label: "Nhật ký thao tác", sub: "Ai làm gì, lúc nào" },
+          ].map((l) => (
+            <Link key={l.href} href={l.href} className="card block">
+              <div className="font-semibold">{l.label}</div>
+              <div className="text-sm text-gray-600">{l.sub}</div>
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="card">
-        <p className="font-semibold mb-2">Chưa triển khai ở bản demo này</p>
+        <p className="font-semibold mb-2">Chưa triển khai</p>
         <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-          <li>Đăng nhập, quản lý tài khoản và phân quyền theo vai trò.</li>
           <li>Quy trình duyệt nội dung (chuyển trạng thái Bản nháp → Chờ thẩm định → Đã duyệt) bằng thao tác thực tế — hiện chỉ đặt trạng thái lúc tạo.</li>
-          <li>Nhật ký truy cập/sửa/xóa và sao lưu–khôi phục.</li>
+          <li>Sao lưu–khôi phục.</li>
         </ul>
       </div>
 

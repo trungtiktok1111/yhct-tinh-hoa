@@ -35,7 +35,18 @@ Lấy 2 chuỗi này từ Supabase Dashboard → Project Settings → Database �
 
 Muốn tạo lại dữ liệu DEMO từ đầu (xoá sạch rồi seed lại): `npm run seed` — **cẩn thận, lệnh này xoá hết dữ liệu hiện có trên Supabase**, chỉ chạy khi chắc chắn.
 
-Không cần tài khoản đăng nhập ở bản demo này (đã chọn phương án "mở, không đăng nhập" cho giai đoạn đầu).
+## Đăng nhập và phân quyền (bước 1 hệ thống phòng khám)
+
+Toàn bộ app yêu cầu đăng nhập. Vai trò: Chủ, Quản lý chi nhánh, Lễ tân, Bác sĩ, Thu ngân, Dược, Thủ kho. Chủ thấy mọi chi nhánh; vai trò khác chỉ thấy chi nhánh được gán. Chỉ Chủ và Bác sĩ được sửa dữ liệu tri thức YHCT. Chỉ Chủ vào được `/quan-tri/chi-nhanh`, `/quan-tri/nhan-vien`, `/quan-tri/nhat-ky`.
+
+Thiết lập một lần:
+
+1. Thêm biến môi trường `AUTH_SECRET` (chuỗi ngẫu nhiên từ 32 ký tự) vào `.env` và vào Vercel (Production). Tạo nhanh: `openssl rand -base64 48`.
+2. Áp migration lên Supabase: `npx prisma migrate deploy` (dùng `DIRECT_URL`).
+3. Tạo tài khoản Chủ đầu tiên: `npx tsx scripts/create-owner.ts <tên-đăng-nhập> <mật-khẩu> "<Họ tên>"`.
+4. Deploy: `npx vercel --prod`.
+
+Đăng nhập sai 5 lần trong 15 phút thì khóa tạm tên đăng nhập đó. Mọi đăng nhập và thay đổi nhân viên/chi nhánh được ghi vào nhật ký.
 
 ## Trạng thái chức năng (theo mục 13.3 của tài liệu đặc tả)
 

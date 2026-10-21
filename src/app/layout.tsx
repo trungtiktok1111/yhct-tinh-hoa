@@ -5,6 +5,9 @@ import { Noto_Serif, Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import { NAV_ITEMS } from "@/lib/constants";
 import { NavIcon } from "@/components/NavIcon";
+import { getCurrentStaff } from "@/lib/auth";
+import { ROLES } from "@/lib/permissions";
+import { logout } from "@/actions/auth";
 
 const display = Noto_Serif({
   subsets: ["vietnamese", "latin"],
@@ -26,7 +29,8 @@ export const metadata: Metadata = {
     "Hệ thống tri thức và lập luận điều trị Y học cổ truyền — bản demo kỹ thuật, dữ liệu DEMO, không dùng để điều trị.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const staff = await getCurrentStaff().catch(() => null);
   return (
     <html lang="vi" className={`${display.variable} ${body.variable}`}>
       <body>
@@ -58,11 +62,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 Hệ thống tri thức và lập luận điều trị Y học cổ truyền
               </p>
             </div>
+            {staff && (
+              <form action={logout} className="ml-auto flex items-center gap-3 text-brand-cream">
+                <div className="text-right leading-tight min-w-0">
+                  <div className="text-xs md:text-sm font-semibold truncate max-w-[9rem] md:max-w-none">
+                    {staff.fullName}
+                  </div>
+                  <div className="text-[10px] md:text-xs text-brand-cream/70">{ROLES[staff.role]}</div>
+                </div>
+                <button
+                  type="submit"
+                  className="rounded-lg border border-brand-gold/50 px-3 py-1.5 text-xs md:text-sm hover:bg-white/10"
+                >
+                  Đăng xuất
+                </button>
+              </form>
+            )}
           </div>
         </header>
 
         <div className="min-h-[calc(100vh-6rem)] md:min-h-[calc(100vh-8rem)] flex flex-col md:flex-row">
           {/* Sidebar PC */}
+          {staff && (
           <aside className="hidden md:flex md:flex-col md:w-64 md:shrink-0 bg-gradient-to-b from-brand-deep to-brand-deeper text-brand-cream p-4 gap-1 sticky top-32 h-[calc(100vh-8rem)] overflow-y-auto ink-scrollbar">
             {NAV_ITEMS.map((item) => (
               <Link
@@ -75,6 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
             ))}
           </aside>
+          )}
 
           <main className="flex-1 p-4 md:p-8 pb-24 md:pb-10 max-w-5xl w-full mx-auto">
             <div className="warn-box mb-6 text-sm">
@@ -88,6 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
 
           {/* Bottom nav mobile */}
+          {staff && (
           <nav className="md:hidden fixed bottom-0 inset-x-0 bg-gradient-to-t from-brand-deeper to-brand-deep border-t border-brand-gold/30 flex justify-around py-2 z-10">
             {NAV_ITEMS.filter((i) => i.mobile).map((item) => (
               <Link
@@ -100,6 +123,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
             ))}
           </nav>
+          )}
         </div>
       </body>
     </html>
