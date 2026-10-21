@@ -16,6 +16,8 @@ import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { SEX_LABEL, VISIT_STATUS, patientCode, qty as fmtQty, bmiText } from "@/lib/format";
 import { ageOf, toDateInput } from "@/lib/person";
 import { GROUPS, TAG_LABEL, readTuChan, summarize, type Tag } from "@/lib/tuchan";
+import { applyProposal } from "@/actions/proposal";
+import { proposeFromTuChan } from "@/lib/proposal";
 import { SampleFill } from "@/components/SampleFill";
 import { TuChanFields } from "@/components/TuChanFields";
 
@@ -98,6 +100,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
   const locked = exam.status === "FINAL";
   const tuChan = readTuChan(exam.tuChanData);
   const tc = summarize(tuChan);
+  const proposals = proposeFromTuChan(tuChan);
   const rx = exam.prescription;
   const lines = rx?.lines ?? [];
 
@@ -204,7 +207,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
                   <li>Vọng chẩn › Thiệt chẩn: Sắc rêu chọn “Trắng”, tính chất rêu tích “Mỏng”.</li>
                   <li>Thiết chẩn › Mạch tượng chung: tích “Phù” và “Khẩn”.</li>
                 </ul>
-                <p><b>Hệ thống làm gì:</b> (1) liệt kê lại đúng những gì bạn đã tích; (2) xếp vào bát cương, ví dụ Phù thuộc Biểu, Khẩn và sợ lạnh thuộc Hàn, chỉ liệt kê, không chấm điểm; (3) gợi ý các chứng hậu có tiêu chí khớp từ khóa, ở ví dụ trên thường là nhóm ngoại cảm phong hàn; (4) bác sĩ tự chọn chứng hậu, pháp trị và kê đơn. Hệ thống không tự kết luận.</p>
+                <p><b>Hệ thống làm gì:</b> (1) liệt kê lại đúng những gì bạn đã tích và xếp vào bát cương (chỉ liệt kê, không chấm điểm); (2) đề xuất chứng hậu, bát cương, bát pháp, pháp trị, bài thuốc kèm liều, huyệt, xoa bóp, dặn dò và ngày tái khám, bấm “Dùng đề xuất này” để điền sẵn vào các mục bên dưới; (3) bác sĩ xem lại, sửa hoặc đổi theo ý mình rồi hoàn tất. Bác sĩ là người quyết định cuối cùng.</p>
                 {!locked && <SampleFill />}
               </div>
             </details>
@@ -258,6 +261,57 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
             </details>
           )}
           <p className="text-xs text-gray-600">Nguồn nội dung: bài giảng Tứ chẩn (Võ Thanh Phong; Bộ môn YHCT), dẫn Maciocia, Trung Y chẩn đoán học (HV Trung Y Quảng Châu), Kirschbaum. Chỉ để tham khảo, bác sĩ tự kết luận.</p>
+        </section>
+      )}
+
+      {/* 1c. Đề xuất của hệ thống */}
+      {!locked && proposals.length > 0 && (
+        <section className="card space-y-3" id="de-xuat">
+          <h2 className="font-semibold text-brand-deep">Đề xuất của hệ thống từ tứ chẩn (bác sĩ duyệt)</h2>
+          <p className="text-xs text-gray-600">
+            Hệ thống đối chiếu các dấu hiệu đã tích với bộ quy tắc biện chứng và đề xuất chứng hậu, bát cương, bát pháp, bài thuốc, huyệt, dặn dò, tái khám.
+            Bấm “Dùng đề xuất này” để điền sẵn vào các mục bên dưới, sau đó bác sĩ tự sửa, thêm hoặc bỏ. Bác sĩ là người quyết định cuối cùng. Nội dung là DEMO, chưa qua chuyên gia duyệt.
+          </p>
+          {proposals.map((pr, i) => {
+            const r = pr.rule;
+            return (
+              <div key={r.key} className={`rounded-xl border p-3 space-y-2 text-sm ${i === 0 ? "border-brand-deep bg-white" : "border-brand-gold/40 bg-white/60"}`}>
+                <div className="flex flex-wrap items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-brand-deep">{i === 0 ? "Đề xuất chính: " : "Khả năng khác: "}{r.pattern}</div>
+                    <div className="text-xs text-gray-600">
+                      Khớp {pr.coreHit.length}/{pr.coreTotal} dấu hiệu chính và {pr.supportHit.length}/{pr.supportTotal} dấu hiệu phụ
+                      {pr.againstHit.length > 0 && <span className="text-red-700"> · có {pr.againstHit.length} dấu hiệu không phù hợp</span>}
+                    </div>
+                  </div>
+                  <form action={applyProposal}>
+                    <input type="hidden" name="visitId" value={visit.id} />
+                    <input type="hidden" name="key" value={r.key} />
+                    <button className="rounded-lg bg-brand-deep text-brand-cream px-3 py-1.5 text-sm font-semibold">Dùng đề xuất này</button>
+                  </form>
+                </div>
+                <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+                  <div><b>Bát cương:</b> {[r.cuong.exteriorInterior && TAG_LABEL[r.cuong.exteriorInterior], r.cuong.coldHeat && TAG_LABEL[r.cuong.coldHeat], r.cuong.deficiencyExcess && TAG_LABEL[r.cuong.deficiencyExcess], r.cuong.yinYang && TAG_LABEL[r.cuong.yinYang]].filter(Boolean).join(", ")}</div>
+                  <div><b>Bát pháp:</b> {r.methods.join(", ")}</div>
+                  <div><b>Bệnh danh:</b> {r.disease}</div>
+                  <div><b>Pháp trị:</b> {r.principle}</div>
+                </div>
+                <div><b>Bài thuốc:</b> {r.formula}, {r.thang} thang. <span className="text-gray-700">{r.herbs.map((h) => `${h.n} ${h.g} g`).join("; ")}</span></div>
+                {r.modifications && <div className="text-xs text-gray-700"><b>Gia giảm tham khảo:</b> {r.modifications}</div>}
+                <div><b>Huyệt:</b> {r.points.map(([l]) => l).join("; ")}{r.therapy.length > 0 && <> · <b>Xoa bóp:</b> {r.therapy.map(([l]) => l).join("; ")}</>}</div>
+                <div><b>Dặn dò:</b> {r.advice}</div>
+                <div><b>Tái khám:</b> sau {r.followUpDays} ngày</div>
+                <details className="text-xs">
+                  <summary className="cursor-pointer text-brand-deep">Dấu hiệu đã khớp</summary>
+                  <div className="mt-1 space-y-0.5">
+                    <div><b>Chính:</b> {pr.coreHit.map((x) => x.label).join("; ") || "—"}</div>
+                    <div><b>Phụ:</b> {pr.supportHit.map((x) => x.label).join("; ") || "—"}</div>
+                    {pr.againstHit.length > 0 && <div className="text-red-700"><b>Không phù hợp:</b> {pr.againstHit.map((x) => x.label).join("; ")}</div>}
+                  </div>
+                </details>
+              </div>
+            );
+          })}
         </section>
       )}
 
