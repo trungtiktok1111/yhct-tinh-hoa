@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   ScrollText,
   Package,
+  HeartPulse,
   Users,
   ClipboardCheck,
   type LucideIcon,
@@ -33,6 +34,7 @@ const ICONS: Record<string, LucideIcon> = {
   ShieldCheck,
   ScrollText,
   Package,
+  HeartPulse,
   Users,
   ClipboardCheck,
 };

@@ -421,6 +421,7 @@ model Item {
   prices ItemPrice[]
   lots   StockLot[]
   moves  StockMove[]
+  prescriptionLines PrescriptionLine[]
 
   @@index([name])
 }
@@ -537,6 +538,93 @@ model Visit {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  exam        Exam?
+
   @@index([branchId, createdAt])
   @@index([patientId])
+}
+
+// ---------- Khám bệnh ----------
+
+// Bệnh án của một lượt khám. Chứng hậu, pháp trị... lưu cả mã gợi ý lẫn chữ (bác sĩ có thể gõ tay).
+model Exam {
+  id            String   @id @default(cuid())
+  visitId       String   @unique
+  visit         Visit    @relation(fields: [visitId], references: [id])
+  doctorId      String?
+  doctorName    String?
+  status        String   @default("DRAFT") // DRAFT | FINAL
+  chiefComplaint String? // lý do khám chính
+  presentHistory String? // bệnh sử
+  inspection    String? // vọng
+  listening     String? // văn
+  inquiry       String? // vấn
+  palpation     String? // thiết (mạch, sờ nắn)
+  modernDiagnosis String? // chẩn đoán YHHĐ (nếu có)
+  exteriorInterior String? // BIEU | LY
+  coldHeat      String? // HAN | NHIET
+  deficiencyExcess String? // HU | THUC
+  yinYang       String? // AM | DUONG
+  eightMethods  String? // bát pháp, phân tách bằng dấu phẩy
+  diseaseId     String?
+  diseaseText   String? // bệnh danh YHCT
+  patternId     String?
+  patternText   String? // chứng hậu
+  principleId   String?
+  principleText String? // pháp trị
+  advice        String? // dặn dò, kiêng kỵ
+  followUpDate  DateTime?
+  finalAt       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  points       ExamPoint[]
+  therapies    ExamTherapy[]
+  prescription Prescription?
+}
+
+model ExamPoint {
+  id      String @id @default(cuid())
+  examId  String
+  exam    Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  pointId String?
+  label   String // "LI4 — Hợp cốc"
+  note    String?
+}
+
+model ExamTherapy {
+  id        String @id @default(cuid())
+  examId    String
+  exam      Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  therapyId String?
+  label     String
+  note      String?
+}
+
+// Đơn thuốc của lượt khám: thuốc sắc (vị thuốc, gam mỗi thang) và thành phẩm.
+model Prescription {
+  id           String @id @default(cuid())
+  examId       String @unique
+  exam         Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  thangCount   Int    @default(0) // số thang
+  decoctionNote String? // cách sắc, cách uống
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  lines PrescriptionLine[]
+}
+
+model PrescriptionLine {
+  id             String @id @default(cuid())
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  kind           String // HERB | PRODUCT
+  itemId         String
+  item           Item   @relation(fields: [itemId], references: [id])
+  itemName       String // ghi lại tên lúc kê
+  unit           String
+  qty            Float // dược liệu: gam mỗi thang; thành phẩm: tổng số lượng
+  usage          String? // cách dùng (thành phẩm)
+  note           String? // sao, tẩm, sắc trước...
+  position       Int    @default(0)
 }

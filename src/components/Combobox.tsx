@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Bỏ dấu, hạ chữ thường để lọc "ha noi" ra "Hà Nội".
-export const fold = (s: string) =>
-  s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().trim();
+import { fold } from "@/lib/fold";
+export { fold };
 
 // Ô nhập vừa chọn từ danh sách vừa gõ tay. Giá trị là chữ trong ô.
 export function Combobox({
