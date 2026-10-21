@@ -344,6 +344,7 @@ model Branch {
   staff     StaffBranch[]
   stockLots  StockLot[]
   stockMoves StockMove[]
+  visits     Visit[]
 }
 
 // Nhân viên. role: OWNER | BRANCH_MANAGER | RECEPTION | DOCTOR | CASHIER | PHARMACIST | STOREKEEPER
@@ -460,4 +461,56 @@ model StockMove {
 
   @@index([branchId, at])
   @@index([itemId])
+}
+
+// ---------- Bệnh nhân và lượt khám ----------
+
+// Hồ sơ bệnh nhân dùng chung toàn hệ thống (mọi chi nhánh).
+model Patient {
+  id               String   @id @default(cuid())
+  seq              Int      @unique @default(autoincrement()) // mã BN-000123
+  fullName         String
+  birthYear        Int
+  sex              String // M | F | O
+  phone            String
+  address          String?
+  occupation       String?
+  weightKg         Float? // lần đo gần nhất
+  heightCm         Float?
+  pastHistory      String? // tiền căn bản thân
+  familyHistory    String? // tiền căn gia đình
+  allergies        String? // dị ứng
+  chronicConditions String? // bệnh mạn tính đang có
+  note             String?
+  createdBy        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  visits Visit[]
+
+  @@index([fullName])
+  @@index([phone])
+}
+
+// Một lượt đến khám tại một chi nhánh.
+model Visit {
+  id          String   @id @default(cuid())
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  branchId    String
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  queueNo     Int // số thứ tự trong ngày tại chi nhánh
+  status      String   @default("WAITING") // WAITING | IN_EXAM | DONE | CANCELLED
+  reason      String? // lý do khám
+  weightKg    Float?
+  heightCm    Float?
+  pulse       Int?
+  bloodPressure String?
+  temperature Float?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([branchId, createdAt])
+  @@index([patientId])
 }

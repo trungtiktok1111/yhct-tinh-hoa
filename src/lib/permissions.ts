@@ -43,6 +43,10 @@ export function canEditKnowledge(role: string): boolean {
   return hasAny(parseRoles(role), KNOWLEDGE_EDITOR_ROLES);
 }
 
+// Bệnh nhân và tiếp đón.
+export const PATIENT_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "RECEPTION", "DOCTOR", "CASHIER"];
+export const PATIENT_DELETE_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER"];
+
 // Kho và giá.
 export const STOCK_VIEW_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "PHARMACIST", "STOREKEEPER", "CASHIER", "DOCTOR"];
 export const STOCK_WRITE_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "PHARMACIST", "STOREKEEPER"]; // nhập kho, điều chỉnh
@@ -52,6 +56,7 @@ export const COST_VIEW_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER"]; // xem giá 
 export function canAccessPath(role: string, pathname: string): boolean {
   const roles = parseRoles(role); // role có thể là nhiều vai trò, vd "DOCTOR,CASHIER"
   const under = (p: string) => pathname === p || pathname.startsWith(p + "/");
+  if (under("/benh-nhan") || under("/tiep-don")) return hasAny(roles, PATIENT_ROLES);
   if (under("/kho/nhap") || under("/kho/dieu-chinh")) return hasAny(roles, STOCK_WRITE_ROLES);
   if (under("/kho")) return hasAny(roles, STOCK_VIEW_ROLES);
   if (OWNER_ONLY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
