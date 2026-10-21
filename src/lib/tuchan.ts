@@ -843,7 +843,7 @@ export function summarize(data: TuChanData): Summary {
     rows.push({ group: g.title, section: s.title, field: f.label, labels: chosen.map((c) => c.label), note: d.n });
     for (const c of chosen) {
       if (c.hint) hints.push({ field: `${s.title} · ${f.label}`, label: c.label, hint: c.hint });
-      for (const t of c.tags ?? []) cuong[t].push(`${c.label} (${f.label})`);
+      for (const t of c.tags ?? []) cuong[t].push(`${f.label === "Triệu chứng" ? s.title.replace(/^\d+\.\s*/, "") : f.label}: ${c.label}`);
       parts.push(c.label);
     }
     if (d.n) parts.push(d.n);
