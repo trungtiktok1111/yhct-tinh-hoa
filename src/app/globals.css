@@ -134,3 +134,11 @@ a.card:hover, .card.interactive:hover {
 .chip-purple { background:#ede9fe; color:#5b21b6; }
 .chip-green { background:#dcfce7; color:#166534; }
 .chip-gray { background:#e5e7eb; color:#4b5563; }
+
+/* Bảng dùng chung: tiêu đề nhỏ in hoa, dòng thoáng, hover nhẹ */
+main table { width: 100%; font-size: 0.95rem; }
+main thead th { text-align: left; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(31,42,36,.6); padding: .6rem .75rem; background: #f8faf9; border-bottom: 1px solid #e2e8e4; }
+main tbody td { padding: .6rem .75rem; }
+main tbody tr { border-bottom: 1px solid #eef2ef; }
+main tbody tr:hover { background: #f8faf9; }
+main input:not([type=checkbox]):not([type=radio]), main select, main textarea { border-radius: .6rem; }
