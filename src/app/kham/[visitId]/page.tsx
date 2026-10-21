@@ -4,11 +4,10 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { EXAM_ROLES } from "@/lib/permissions";
 import {
-  startExam, saveFindings, saveDiagnosis, chooseSuggestion, addFormulaToPrescription, savePrescriptionMeta,
+  startExam, saveFindings, saveDiagnosis, addFormulaToPrescription, savePrescriptionMeta,
   addPrescriptionLine, updatePrescriptionLine, removePrescriptionLine, addExamPoint, removeExamPoint,
   addExamTherapy, removeExamTherapy, finishExam, reopenExam,
 } from "@/actions/exam";
-import { analyzePatterns } from "@/lib/reasoning";
 import { BAT_CUONG, BAT_PHAP, parseDoseRange } from "@/lib/exam";
 import { input } from "@/lib/stock";
 import { BackLink } from "@/components/BackLink";
@@ -103,30 +102,6 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
   const proposals = proposeFromTuChan(tuChan);
   const rx = exam.prescription;
   const lines = rx?.lines ?? [];
-
-  // Gợi ý chứng hậu: chỉ so khớp từ khóa, không chấm điểm; bác sĩ phải tự chọn.
-  const obsText = [exam.chiefComplaint, exam.presentHistory, exam.inspection, exam.listening, exam.inquiry, exam.palpation, tc.text]
-    .filter(Boolean).join("; ");
-  let suggestions: { id: string; name: string; support: string[]; against: string[]; principles: { id: string; name: string }[] }[] = [];
-  if (!locked && obsText.length > 3) {
-    const patterns = await prisma.pattern.findMany({
-      select: {
-        id: true, name: true, supportCriteria: true, againstCriteria: true, keySigns: true, missingDataPrompts: true,
-        principleLinks: { select: { principle: { select: { id: true, name: true } } } },
-      },
-      take: 400,
-    });
-    const res = analyzePatterns(obsText, patterns);
-    const byId = new Map(patterns.map((x) => [x.id, x]));
-    suggestions = res
-      .filter((r) => r.supportMatches.length > 0)
-      .sort((a, b) => b.supportMatches.length - a.supportMatches.length)
-      .slice(0, 6)
-      .map((r) => ({
-        id: r.patternId, name: r.patternName, support: r.supportMatches, against: r.againstMatches,
-        principles: (byId.get(r.patternId)?.principleLinks ?? []).map((l) => l.principle),
-      }));
-  }
 
   // Bài thuốc theo pháp trị đã chọn.
   const formulas = !locked && exam.principleId
@@ -315,49 +290,9 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         </section>
       )}
 
-      {/* 2. Gợi ý */}
-      {!locked && (
-        <section className="card space-y-3" id="goi-y">
-          <h2 className="font-semibold text-brand-deep">2. Gợi ý tham khảo (bác sĩ tự chọn)</h2>
-          <p className="text-xs text-gray-600">
-            Hệ thống chỉ so khớp từ khóa trong phần tứ chẩn với tiêu chí đã ghi của từng chứng hậu. Đây không phải kết luận và không có điểm số.
-          </p>
-          {suggestions.length === 0 ? (
-            <p className="text-sm text-gray-600">Chưa có gợi ý. Hãy ghi thêm triệu chứng ở bước 1 rồi bấm “Lưu và xem gợi ý”.</p>
-          ) : (
-            <div className="space-y-2">
-              {suggestions.map((s) => (
-                <div key={s.id} className="rounded-lg border border-brand-gold/30 p-3 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <b className="text-brand-deep">{s.name}</b>
-                    <form action={chooseSuggestion}>
-                      {hidden}<input type="hidden" name="kind" value="pattern" /><input type="hidden" name="id" value={s.id} />
-                      <button className={btnSub}>Chọn chứng này</button>
-                    </form>
-                  </div>
-                  <div className="text-xs text-gray-700">Khớp: {s.support.join("; ")}</div>
-                  {s.against.length > 0 && <div className="text-xs text-red-700">Có dữ kiện mâu thuẫn: {s.against.join("; ")}</div>}
-                  {s.principles.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-2 text-xs">
-                      Pháp trị liên quan:
-                      {s.principles.map((t) => (
-                        <form key={t.id} action={chooseSuggestion}>
-                          {hidden}<input type="hidden" name="kind" value="principle" /><input type="hidden" name="id" value={t.id} />
-                          <button className="underline text-brand-deep">{t.name}</button>
-                        </form>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
       {/* 3. Chẩn đoán */}
       <section className="card space-y-3" id="chan-doan">
-        <h2 className="font-semibold text-brand-deep">3. Chẩn đoán và pháp trị</h2>
+        <h2 className="font-semibold text-brand-deep">2. Chẩn đoán và pháp trị</h2>
         <form action={saveDiagnosis} className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
@@ -403,7 +338,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
 
       {/* 4. Đơn thuốc */}
       <section className="card space-y-3" id="don-thuoc">
-        <h2 className="font-semibold text-brand-deep">4. Đơn thuốc</h2>
+        <h2 className="font-semibold text-brand-deep">3. Đơn thuốc</h2>
         {!locked && formulas.length > 0 && (
           <div className="rounded-lg border border-brand-gold/30 p-3 space-y-2">
             <div className="text-sm font-semibold">Bài thuốc theo pháp trị “{exam.principleText}”</div>
@@ -513,7 +448,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
 
       {/* 5. Châm cứu, xoa bóp */}
       <section className="card space-y-3" id="cham-cuu">
-        <h2 className="font-semibold text-brand-deep">5. Châm cứu và xoa bóp</h2>
+        <h2 className="font-semibold text-brand-deep">4. Châm cứu và xoa bóp</h2>
         {exam.points.length === 0 && exam.therapies.length === 0 && <p className="text-sm text-gray-600">Chưa chỉ định.</p>}
         {exam.points.map((x) => (
           <div key={x.id} className="flex items-center gap-2 text-sm">
@@ -557,7 +492,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
 
       {/* 6. Hoàn tất */}
       <section className="card space-y-3" id="hoan-tat">
-        <h2 className="font-semibold text-brand-deep">6. Dặn dò và hoàn tất</h2>
+        <h2 className="font-semibold text-brand-deep">5. Dặn dò và hoàn tất</h2>
         <form action={finishExam} className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
