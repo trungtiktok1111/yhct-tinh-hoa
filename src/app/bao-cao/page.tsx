@@ -89,7 +89,7 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
   const prv = prevDays.map((d) => prevByDay.get(d) ?? 0);
   const yMax = Math.max(1, ...cur, ...prv);
   const niceMax = (() => { const e = Math.pow(10, Math.floor(Math.log10(yMax))); return Math.ceil(yMax / e) * e; })();
-  const W = 800, H = 230, L = 62, R = 12, T = 12, B = 28;
+  const W = 800, H = 230, L = 62, R = 30, T = 12, B = 28;
   const X = (k: number) => L + (days.length <= 1 ? 0 : (k / (days.length - 1)) * (W - L - R));
   const Y = (v: number) => T + (1 - v / niceMax) * (H - T - B);
   const pts = (a: number[]) => a.map((v, k) => `${X(k).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
@@ -167,13 +167,13 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
         </Panel>
 
         <Panel icon={PieChart} title="Cơ cấu theo hình thức thanh toán">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center gap-4">
             <div className="relative h-32 w-32 shrink-0 rounded-full" style={{ background: total > 0 ? `conic-gradient(${stops})` : "#e5e7eb" }}>
               <div className="absolute inset-[22%] grid place-items-center rounded-full bg-white text-center text-xs font-bold leading-tight">{(total / 1e6).toFixed(2).replace(".", ",")}<br />triệu đồng</div>
             </div>
-            <ul className="space-y-1.5 text-sm">
+            <ul className="w-full space-y-1.5 text-sm">
               {Object.entries(METHOD).map(([k, v]) => (
-                <li key={k} className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm" style={{ background: COL[k] }} />{v}<b className="ml-auto pl-3 tabular-nums">{vnd(byMethod.get(k) ?? 0)}</b><span className="w-12 text-right text-xs text-brand-ink/60">{(((byMethod.get(k) ?? 0) / mTotal) * 100).toFixed(1).replace(".", ",")}%</span></li>
+                <li key={k} className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm" style={{ background: COL[k] }} />{v}<b className="ml-auto whitespace-nowrap pl-3 tabular-nums">{vnd(byMethod.get(k) ?? 0)}</b><span className="w-12 text-right text-xs text-brand-ink/60">{(((byMethod.get(k) ?? 0) / mTotal) * 100).toFixed(1).replace(".", ",")}%</span></li>
               ))}
               <li className="border-t pt-1.5 text-brand-ink/70">Khám: {byKind.get("EXAM")?.n ?? 0} HĐ · {vnd(byKind.get("EXAM")?.sum ?? 0)}</li>
               <li className="text-brand-ink/70">Bán lẻ: {byKind.get("RETAIL")?.n ?? 0} HĐ · {vnd(byKind.get("RETAIL")?.sum ?? 0)}</li>

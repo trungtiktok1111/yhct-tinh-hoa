@@ -112,19 +112,19 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
                     return (
                       <tr key={v.id} className={v.status === "CANCELLED" ? "opacity-50" : ""}>
                         <td className="font-bold text-brand-deep">{v.queueNo}</td>
-                        <td>
+                        <td className="whitespace-nowrap">
                           <Link href={`/benh-nhan/${v.patient.id}`} className="font-semibold hover:underline">{v.patient.fullName}</Link>
                           {v.priority && <span className="chip chip-red ml-1.5">Ưu tiên</span>}
                           {v.patient.allergies && <AlertTriangle className="inline h-4 w-4 ml-1 text-red-600" aria-label="Có dị ứng" />}
                           <div className="text-xs text-brand-ink/55">{SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi</div>
                         </td>
-                        <td className="text-brand-ink/70">{patientCode(v.patient.seq)}</td>
-                        <td>{timeVN(v.createdAt)}</td>
-                        <td className="max-w-xs text-brand-ink/80">{v.reason ?? "—"}</td>
-                        <td className="text-sm">{doctorOf(v) || "—"}</td>
-                        <td><span className={`chip ${c}`}>{t}</span></td>
-                        <td>
-                          <div className="flex items-center justify-center gap-2">
+                        <td className="whitespace-nowrap text-brand-ink/70">{patientCode(v.patient.seq)}</td>
+                        <td className="whitespace-nowrap">{timeVN(v.createdAt)}</td>
+                        <td className="min-w-[11rem] max-w-xs text-brand-ink/80">{v.reason ?? "—"}</td>
+                        <td className="max-w-[9rem] truncate whitespace-nowrap text-sm" title={doctorOf(v) || ""}>{doctorOf(v) || "—"}</td>
+                        <td className="whitespace-nowrap"><span className={`chip ${c}`}>{t}</span></td>
+                        <td className="whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-2 [&_a]:whitespace-nowrap [&_button]:whitespace-nowrap">
                             {canExam && (v.status === "WAITING" || v.status === "IN_EXAM") && <Link href={`/kham/${v.id}`} className="rounded-lg bg-brand-deep px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-deeper">{v.status === "WAITING" ? "Bắt đầu khám" : "Tiếp tục"}</Link>}
                             <Link href={`/benh-nhan/${v.patient.id}`} className="flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"><FolderOpen className="h-4 w-4" />Hồ sơ</Link>
                             {v.status === "WAITING" && (

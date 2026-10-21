@@ -44,10 +44,10 @@ export default async function ExamQueuePage({ searchParams }: { searchParams: { 
     <div className="space-y-4">
       <PageHead icon={HeartPulse} title="Khám bệnh hôm nay" sub="Danh sách bệnh nhân chờ khám và đang khám" img="/images/art/needles.jpg">
         {sampleVisitId ? (
-          <Link href={`/kham/${sampleVisitId}`} className="flex items-center gap-2 rounded-xl border border-brand-deep px-4 py-2.5 font-semibold text-brand-deep hover:bg-emerald-50"><BookOpenCheck className="h-5 w-5" />Xem ca mẫu</Link>
+          <Link href={`/kham/${sampleVisitId}`} className="flex items-center gap-2 rounded-xl border border-brand-deep bg-white px-4 py-2.5 font-semibold text-brand-deep shadow hover:bg-emerald-50"><BookOpenCheck className="h-5 w-5" />Xem ca mẫu</Link>
         ) : (
           <form action={createSampleCase}>
-            <button className="flex items-center gap-2 rounded-xl border border-brand-deep px-4 py-2.5 font-semibold text-brand-deep hover:bg-emerald-50"><BookOpenCheck className="h-5 w-5" />Tạo ca mẫu hướng dẫn</button>
+            <button className="flex items-center gap-2 rounded-xl border border-brand-deep bg-white px-4 py-2.5 font-semibold text-brand-deep shadow hover:bg-emerald-50"><BookOpenCheck className="h-5 w-5" />Tạo ca mẫu hướng dẫn</button>
           </form>
         )}
       </PageHead>

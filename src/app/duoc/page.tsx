@@ -128,11 +128,11 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
                           {i.patient && <div className="text-xs text-brand-ink/55">{patientCode(i.patient.seq)} · {ageOf(i.patient.birthDate, i.patient.birthYear)} tuổi · {i.patient.phone}</div>}
                           {i.patient?.allergies && <span className="chip chip-red mt-0.5">Dị ứng: {i.patient.allergies}</span>}
                         </td>
-                        <td className="font-mono text-xs">{code(i)}<div className="text-brand-ink/55">{i.paidAt ? timeVN(i.paidAt) : ""}</div></td>
-                        <td className="text-sm">{doctorOf(i) || (i.kind === "RETAIL" ? "Bán lẻ" : "—")}</td>
+                        <td className="whitespace-nowrap font-mono text-xs">{code(i)}<div className="text-brand-ink/55">{i.paidAt ? timeVN(i.paidAt) : ""}</div></td>
+                        <td className="max-w-[9rem] truncate whitespace-nowrap text-sm" title={doctorOf(i) || ""}>{doctorOf(i) || (i.kind === "RETAIL" ? "Bán lẻ" : "—")}</td>
                         <td className="text-right">{i.visit?.exam?.prescription?.thangCount || "—"}</td>
-                        <td><span className="chip chip-green">Đã thanh toán</span></td>
-                        <td>{i.visit?.priority ? <span className="chip chip-red">Ưu tiên</span> : <span className="chip chip-gray">Bình thường</span>}</td>
+                        <td className="whitespace-nowrap"><span className="chip chip-green">Đã thanh toán</span></td>
+                        <td className="whitespace-nowrap">{i.visit?.priority ? <span className="chip chip-red">Ưu tiên</span> : <span className="chip chip-gray">Bình thường</span>}</td>
                         <td><Link href={href({ sel: i.id })} className="whitespace-nowrap rounded-lg bg-brand-deep px-4 py-1.5 text-sm font-semibold text-white hover:bg-brand-deeper">{i.dispensedAt ? "Xem" : "Soạn thuốc"}</Link></td>
                       </tr>
                     ))}
