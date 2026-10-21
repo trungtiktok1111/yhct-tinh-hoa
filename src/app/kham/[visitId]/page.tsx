@@ -193,6 +193,19 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
             <label className="block text-sm">Bệnh sử hiện tại
               <textarea name="presentHistory" defaultValue={exam.presentHistory ?? ""} className={ta} />
             </label>
+            <details className="rounded-xl border border-brand-gold/40 bg-brand-cream/40 p-3 text-sm">
+              <summary className="cursor-pointer font-semibold text-brand-deep">Hướng dẫn nhanh và ví dụ mẫu</summary>
+              <div className="mt-2 space-y-2">
+                <p><b>Cách dùng:</b> mở từng nhóm Vọng, Văn, Vấn, Thiết, tích những gì quan sát được. Chỉ tích điều có thật, không tích thì để trống. Thiếu lựa chọn: gõ vào ô viền đứt “Bổ sung ghi tay” ngay dưới mục đó. Rê chuột lên một lựa chọn để xem ý nghĩa. Bấm “Lưu tứ chẩn và xem tổng hợp”.</p>
+                <p><b>Ví dụ:</b> bệnh nhân nam 46 tuổi, đau vai gáy 2 tuần, sợ lạnh, không ra mồ hôi, rêu lưỡi trắng mỏng, mạch Phù Khẩn. Cách ghi:</p>
+                <ul className="ml-4 list-disc text-xs">
+                  <li>Vấn chẩn › Hàn nhiệt: tích “Sợ lạnh (ố hàn)”, “Sợ gió”. Hãn: tích “Không ra mồ hôi”. Đau: tích “Đau cổ vai gáy” ở mục Đầu, mặt, thân mình.</li>
+                  <li>Vọng chẩn › Thiệt chẩn: Sắc rêu chọn “Trắng”, tính chất rêu tích “Mỏng”.</li>
+                  <li>Thiết chẩn › Mạch tượng chung: tích “Phù” và “Khẩn”.</li>
+                </ul>
+                <p><b>Hệ thống làm gì:</b> (1) liệt kê lại đúng những gì bạn đã tích; (2) xếp vào bát cương, ví dụ Phù thuộc Biểu, Khẩn và sợ lạnh thuộc Hàn, chỉ liệt kê, không chấm điểm; (3) gợi ý các chứng hậu có tiêu chí khớp từ khóa, ở ví dụ trên thường là nhóm ngoại cảm phong hàn; (4) bác sĩ tự chọn chứng hậu, pháp trị và kê đơn. Hệ thống không tự kết luận.</p>
+              </div>
+            </details>
             <TuChanFields
               data={tuChan}
               groupNotes={{ vong: exam.inspection, van: exam.listening, vanhoi: exam.inquiry, thiet: exam.palpation }}
@@ -217,7 +230,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
                 <div key={g.key}>
                   <div className="font-semibold">{g.title}</div>
                   <ul className="ml-4 list-disc space-y-0.5">
-                    {rows.map((r, i) => <li key={i}><span className="text-gray-600">{r.section} · {r.field}:</span> {r.labels.join("; ")}</li>)}
+                    {rows.map((r, i) => <li key={i}><span className="text-gray-600">{r.section} · {r.field}:</span> {r.labels.join("; ")}{r.note && <span className="text-brand-deep">{r.labels.length ? "; " : ""}ghi tay: {r.note}</span>}</li>)}
                   </ul>
                 </div>
               );

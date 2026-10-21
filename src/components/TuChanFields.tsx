@@ -1,8 +1,23 @@
-import { GROUPS, fieldName, type TuChanData } from "@/lib/tuchan";
+import { GROUPS, fieldName, noteName, type TuChanData, type Opt } from "@/lib/tuchan";
 
 const selCls = "w-full rounded-lg border border-brand-gold/40 bg-white px-3 py-2 text-sm";
 
 // Các ô tứ chẩn có cấu trúc: mỗi nhóm là một khối gập, tích chọn nhiều hoặc chọn một.
+const COMMON = ["phu", "tram", "tri", "sac", "hu", "thuc", "hoat", "sap", "te", "huyen", "hoan", "nhuoc"];
+
+function Grid({ opts, f, cur }: { opts: Opt[]; f: string; cur: Set<string> }) {
+  return (
+    <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+      {opts.map((o) => (
+        <label key={o.v} title={o.hint} className="flex items-start gap-2 text-sm leading-snug">
+          <input type="checkbox" name={fieldName(f)} value={o.v} defaultChecked={cur.has(o.v)} className="mt-1" />
+          <span>{o.label}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
 export function TuChanFields({ data, groupNotes }: { data: TuChanData; groupNotes: Record<string, string | null> }) {
   const noteField: Record<string, string> = { vong: "inspection", van: "listening", vanhoi: "inquiry", thiet: "palpation" };
   return (
@@ -40,15 +55,21 @@ export function TuChanFields({ data, groupNotes }: { data: TuChanData; groupNote
                               {f.opts.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
                             </select>
                           ) : (
-                            <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
-                              {f.opts.map((o) => (
-                                <label key={o.v} title={o.hint} className="flex items-start gap-2 text-sm leading-snug">
-                                  <input type="checkbox" name={fieldName(f.key)} value={o.v} defaultChecked={cur.has(o.v)} className="mt-1" />
-                                  <span>{o.label}</span>
-                                </label>
-                              ))}
-                            </div>
+                            f.key.startsWith("mach_") && f.key !== "mach_tong" ? (
+                              <>
+                                <Grid opts={COMMON.map((v) => f.opts.find((o) => o.v === v)).filter((x): x is Opt => !!x)} f={f.key} cur={cur} />
+                                <details className="text-sm">
+                                  <summary className="cursor-pointer text-xs text-brand-deep">Mạch khác{f.opts.some((o) => !COMMON.includes(o.v) && cur.has(o.v)) ? " (đã chọn)" : ""}</summary>
+                                  <div className="mt-1"><Grid opts={f.opts.filter((o) => !COMMON.includes(o.v))} f={f.key} cur={cur} /></div>
+                                </details>
+                              </>
+                            ) : (
+                              <Grid opts={f.opts} f={f.key} cur={cur} />
+                            )
                           )}
+                          <input name={noteName(f.key)} defaultValue={data[f.key]?.n ?? ""} maxLength={500}
+                            placeholder="Bổ sung ghi tay cho mục này (nếu thiếu lựa chọn)…"
+                            className="mt-1 w-full rounded-lg border border-dashed border-brand-gold/50 bg-white px-3 py-1.5 text-sm" />
                         </fieldset>
                       );
                     })}
