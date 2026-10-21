@@ -16,6 +16,7 @@ import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { SEX_LABEL, VISIT_STATUS, patientCode, qty as fmtQty, bmiText } from "@/lib/format";
 import { ageOf, toDateInput } from "@/lib/person";
 import { GROUPS, TAG_LABEL, readTuChan, summarize, type Tag } from "@/lib/tuchan";
+import { SampleFill } from "@/components/SampleFill";
 import { TuChanFields } from "@/components/TuChanFields";
 
 export const dynamic = "force-dynamic";
@@ -193,7 +194,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
             <label className="block text-sm">Bệnh sử hiện tại
               <textarea name="presentHistory" defaultValue={exam.presentHistory ?? ""} className={ta} />
             </label>
-            <details className="rounded-xl border border-brand-gold/40 bg-brand-cream/40 p-3 text-sm">
+            <details open className="rounded-xl border border-brand-gold/40 bg-brand-cream/40 p-3 text-sm">
               <summary className="cursor-pointer font-semibold text-brand-deep">Hướng dẫn nhanh và ví dụ mẫu</summary>
               <div className="mt-2 space-y-2">
                 <p><b>Cách dùng:</b> mở từng nhóm Vọng, Văn, Vấn, Thiết, tích những gì quan sát được. Chỉ tích điều có thật, không tích thì để trống. Thiếu lựa chọn: gõ vào ô viền đứt “Bổ sung ghi tay” ngay dưới mục đó. Rê chuột lên một lựa chọn để xem ý nghĩa. Bấm “Lưu tứ chẩn và xem tổng hợp”.</p>
@@ -204,6 +205,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
                   <li>Thiết chẩn › Mạch tượng chung: tích “Phù” và “Khẩn”.</li>
                 </ul>
                 <p><b>Hệ thống làm gì:</b> (1) liệt kê lại đúng những gì bạn đã tích; (2) xếp vào bát cương, ví dụ Phù thuộc Biểu, Khẩn và sợ lạnh thuộc Hàn, chỉ liệt kê, không chấm điểm; (3) gợi ý các chứng hậu có tiêu chí khớp từ khóa, ở ví dụ trên thường là nhóm ngoại cảm phong hàn; (4) bác sĩ tự chọn chứng hậu, pháp trị và kê đơn. Hệ thống không tự kết luận.</p>
+                {!locked && <SampleFill />}
               </div>
             </details>
             <TuChanFields
