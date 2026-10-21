@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { logAudit, requireRole } from "@/lib/auth";
 import { DISPENSE_ROLES } from "@/lib/permissions";
+import { readChecks } from "@/lib/dispense";
 
 function go(id: string, error?: string): never {
   redirect(`/duoc/${id}${error ? `?loi=${encodeURIComponent(error)}` : ""}`);
@@ -61,4 +62,46 @@ export async function dispenseInvoice(formData: FormData) {
   revalidatePath("/duoc");
   revalidatePath("/kho");
   go(id);
+}
+
+const KEYS = ["can", "dong", "dan", "kiem"] as const;
+
+function back(id: string, msg?: string): never {
+  redirect(`/duoc?sel=${id}${msg ? `&loi=${encodeURIComponent(msg)}` : ""}`);
+}
+
+// Lưu nháp: các ô xác nhận + quét/nhập mã để đánh dấu vị đã cân.
+export async function saveDispenseDraft(formData: FormData) {
+  const staff = await requireRole(...DISPENSE_ROLES);
+  const id = String(formData.get("invoiceId") ?? "");
+  const inv = await prisma.invoice.findUnique({ where: { id }, include: { lines: true } });
+  if (!inv) redirect("/duoc");
+  if (!staff.isOwner && !staff.branchIds.includes(inv.branchId)) redirect("/khong-co-quyen");
+  if (inv.dispensedAt) back(id, "Đơn đã phát, không sửa được.");
+  const cur = readChecks(inv.dispenseChecks);
+  const chk: Record<string, boolean> = {};
+  for (const k of KEYS) chk[k] = formData.get(`chk_${k}`) === "on";
+  let weighed = cur.weighed;
+  const scan = String(formData.get("scan") ?? "").trim();
+  let msg: string | undefined;
+  if (scan) {
+    const ids = inv.lines.map((l) => l.itemId).filter(Boolean) as string[];
+    const item = await prisma.item.findFirst({
+      where: { id: { in: ids }, OR: [{ code: { equals: scan, mode: "insensitive" } }, { name: { contains: scan, mode: "insensitive" } }] },
+      select: { id: true, name: true },
+    });
+    if (!item) msg = `Không thấy “${scan}” trong đơn này.`;
+    else if (!weighed.includes(item.id)) weighed = [...weighed, item.id];
+  }
+  await prisma.invoice.update({ where: { id }, data: { dispenseChecks: JSON.stringify({ chk, weighed }) } });
+  revalidatePath("/duoc");
+  back(id, msg);
+}
+
+// Xác nhận phát: bắt buộc tick đủ 4 bước kiểm tra, rồi trừ kho như dispenseInvoice.
+export async function confirmDispense(formData: FormData) {
+  for (const k of KEYS) {
+    if (formData.get(`chk_${k}`) !== "on") back(String(formData.get("invoiceId") ?? ""), "Cần tick đủ 4 bước: cân đủ số lượng, đóng gói, dán nhãn, kiểm tra lần cuối.");
+  }
+  await dispenseInvoice(formData);
 }
