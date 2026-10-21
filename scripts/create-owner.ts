@@ -1,10 +1,14 @@
 // Tạo tài khoản Chủ đầu tiên (chạy một lần, từ máy có DATABASE_URL trong .env).
 //   npx tsx scripts/create-owner.ts <tên-đăng-nhập> <mật-khẩu> "<Họ tên>"
+// Hoặc đặt mật khẩu qua biến môi trường OWNER_PASSWORD:
+//   npx tsx scripts/create-owner.ts <tên-đăng-nhập> "<Họ tên>"
 import { PrismaClient } from "@prisma/client";
 import { hashPassword } from "../src/lib/password";
 
 async function main() {
-  const [username, password, fullName] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const fromEnv = process.env.OWNER_PASSWORD;
+  const [username, password, fullName] = fromEnv ? [args[0], fromEnv, args[1]] : args;
   if (!username || !password || !fullName) {
     console.error('Cách dùng: npx tsx scripts/create-owner.ts <tên-đăng-nhập> <mật-khẩu> "<Họ tên>"');
     process.exit(1);

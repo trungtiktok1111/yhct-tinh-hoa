@@ -39,12 +39,13 @@ Muốn tạo lại dữ liệu DEMO từ đầu (xoá sạch rồi seed lại): 
 
 Toàn bộ app yêu cầu đăng nhập. Vai trò: Chủ, Quản lý chi nhánh, Lễ tân, Bác sĩ, Thu ngân, Dược, Thủ kho. Chủ thấy mọi chi nhánh; vai trò khác chỉ thấy chi nhánh được gán. Chỉ Chủ và Bác sĩ được sửa dữ liệu tri thức YHCT. Chỉ Chủ vào được `/quan-tri/chi-nhanh`, `/quan-tri/nhan-vien`, `/quan-tri/nhat-ky`.
 
-Thiết lập một lần:
+Thiết lập một lần, trên máy của bạn, một lệnh duy nhất:
 
-1. Thêm biến môi trường `AUTH_SECRET` (chuỗi ngẫu nhiên từ 32 ký tự) vào `.env` và vào Vercel (Production). Tạo nhanh: `openssl rand -base64 48`.
-2. Áp migration lên Supabase: `npx prisma migrate deploy` (dùng `DIRECT_URL`).
-3. Tạo tài khoản Chủ đầu tiên: `npx tsx scripts/create-owner.ts <tên-đăng-nhập> <mật-khẩu> "<Họ tên>"`.
-4. Deploy: `npx vercel --prod`.
+```
+npm run setup-auth
+```
+
+Lệnh này tạo `AUTH_SECRET` (ghi vào `.env` và đưa lên Vercel Production), tạo bảng mới trên Supabase (`prisma migrate deploy`), hỏi tên và mật khẩu để tạo tài khoản Chủ đầu tiên, rồi hỏi có deploy `npx vercel --prod` không. Cần `.env` có `DATABASE_URL`, `DIRECT_URL` và đã đăng nhập Vercel CLI.
 
 Đăng nhập sai 5 lần trong 15 phút thì khóa tạm tên đăng nhập đó. Mọi đăng nhập và thay đổi nhân viên/chi nhánh được ghi vào nhật ký.
 
