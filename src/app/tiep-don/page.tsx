@@ -8,12 +8,12 @@ import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { SEX_LABEL, VISIT_STATUS, patientCode, timeVN, vnDayStart } from "@/lib/format";
 import { ageOf } from "@/lib/person";
 import { PageHead, Stat, Panel } from "@/components/ui";
-import { ClipboardCheck, Users, Clock, Stethoscope, CheckCircle2, XCircle, UserPlus, Search, AlertTriangle, FolderOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardCheck, Users, Clock, Stethoscope, CheckCircle2, XCircle, UserPlus, Search, AlertTriangle, FolderOpen } from "lucide-react";
 import { canAccessPath } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
-export default async function ReceptionPage({ searchParams }: { searchParams: { cn?: string; loi?: string; ok?: string } }) {
+export default async function ReceptionPage({ searchParams }: { searchParams: { cn?: string; loi?: string; ok?: string; ngay?: string } }) {
   const staff = await requireRole(...PATIENT_ROLES);
   const branches = await branchesFor(staff);
   const branch = branches.find((b) => b.id === searchParams.cn) ?? branches[0];
@@ -25,8 +25,13 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
       </div>
     );
   }
+  const today = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
+  const day = searchParams.ngay && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.ngay) ? searchParams.ngay : today;
+  const dStart = new Date(`${day}T00:00:00+07:00`);
+  const dEnd = new Date(dStart.getTime() + 86400000);
+  const shift = (n: number) => new Date(dStart.getTime() + n * 86400000 + 7 * 3600000).toISOString().slice(0, 10);
   const visits = await prisma.visit.findMany({
-    where: { branchId: branch.id, createdAt: { gte: vnDayStart() } },
+    where: { branchId: branch.id, createdAt: { gte: dStart, lt: dEnd } },
     orderBy: { queueNo: "asc" },
     include: { patient: true },
   });
@@ -52,7 +57,14 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
       </div>
 
       <div className="grid xl:grid-cols-[1fr_20rem] gap-4 items-start">
-        <Panel pad={false} icon={Users} title={`Danh sách hôm nay (${visits.length})`}>
+        <Panel pad={false} icon={Users} title={`Danh sách ${day === today ? "hôm nay" : day.split("-").reverse().join("/")} (${visits.length})`} right={
+          <form className="flex items-center gap-1">
+            <input type="hidden" name="cn" value={branch.id} />
+            <Link href={`/tiep-don?cn=${branch.id}&ngay=${shift(-1)}`} className="rounded-lg border border-slate-300 px-2 py-1 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></Link>
+            <input type="date" name="ngay" defaultValue={day} className="rounded-lg border border-slate-300 px-2 py-1 text-sm" />
+            <button className="rounded-lg bg-brand-deep px-3 py-1 text-sm font-semibold text-white">Xem</button>
+            <Link href={`/tiep-don?cn=${branch.id}&ngay=${shift(1)}`} className="rounded-lg border border-slate-300 px-2 py-1 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></Link>
+          </form>}>
           {visits.length === 0 ? <p className="p-5 text-brand-ink/60">Hôm nay chưa có lượt khám nào.</p> : (
             <div className="overflow-x-auto">
               <table>
@@ -103,6 +115,23 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
               <button className="w-full rounded-xl bg-brand-deep py-2.5 font-semibold text-white hover:bg-brand-deeper">Tìm bệnh nhân để tiếp đón</button>
             </form>
             <Link href="/benh-nhan/moi" className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-slate-300 py-2.5 font-semibold hover:bg-slate-50"><UserPlus className="h-4 w-4" />Bệnh nhân mới</Link>
+          </Panel>
+          <Panel icon={Clock} title="Bệnh nhân đến trong ngày" tone="text-amber-600">
+            {visits.length === 0 ? <p className="text-sm text-brand-ink/60">Chưa có.</p> : (
+              <ul className="space-y-2.5">
+                {visits.slice(-8).map((v) => {
+                  const [t, c] = chip[v.status] ?? [v.status, "chip-gray"];
+                  return (
+                    <li key={v.id} className="flex items-center gap-3 text-sm">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500" />
+                      <span className="w-11 text-brand-ink/60">{timeVN(v.createdAt)}</span>
+                      <span className="min-w-0 flex-1 truncate font-semibold">{v.patient.fullName}</span>
+                      <span className={`chip ${c}`}>{t}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </Panel>
           <div className="relative h-40 overflow-hidden rounded-2xl">
             <img src="/images/art/needles.jpg" alt="" className="h-full w-full object-cover" />

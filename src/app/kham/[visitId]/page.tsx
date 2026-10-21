@@ -11,10 +11,11 @@ import {
 import { BAT_CUONG, BAT_PHAP, parseDoseRange } from "@/lib/exam";
 import { input } from "@/lib/stock";
 import Image from "next/image";
+import { PrintButton } from "@/components/PrintButton";
 import { AlertTriangle, FolderOpen } from "lucide-react";
 import { ExamTabs } from "@/components/ExamTabs";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
-import { SEX_LABEL, VISIT_STATUS, patientCode, qty as fmtQty, bmiText } from "@/lib/format";
+import { SEX_LABEL, VISIT_STATUS, patientCode, qty as fmtQty, bmiText, vnDayStart, timeVN } from "@/lib/format";
 import { ageOf, toDateInput } from "@/lib/person";
 import { GROUPS, TAG_LABEL, readTuChan, summarize, type Tag } from "@/lib/tuchan";
 import { applyProposal } from "@/actions/proposal";
@@ -121,6 +122,11 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
   }
 
   const locked = exam.status === "FINAL";
+  const queue = await prisma.visit.findMany({
+    where: { branchId: visit.branchId, createdAt: { gte: vnDayStart() }, status: { not: "CANCELLED" } },
+    orderBy: { queueNo: "asc" },
+    include: { patient: { select: { fullName: true, sex: true, birthDate: true, birthYear: true } } },
+  });
   const tuChan = readTuChan(exam.tuChanData);
   const tc = summarize(tuChan);
   const proposals = proposeFromTuChan(tuChan);
@@ -169,8 +175,31 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
   );
   const hidden = <input type="hidden" name="visitId" value={visit.id} />;
 
+  const qChip: Record<string, [string, string]> = { WAITING: ["Chờ khám", "chip-amber"], IN_EXAM: ["Đang khám", "chip-blue"], DONE: ["Đã khám", "chip-green"] };
   return (
-    <div className="space-y-4">
+    <div className="grid items-start gap-4 xl:grid-cols-[16rem_minmax(0,1fr)]">
+      <aside className="card hidden !p-0 xl:sticky xl:top-[4.5rem] xl:block">
+        <div className="border-b border-slate-100 px-4 py-3 font-bold">Danh sách khám ({queue.length})</div>
+        <ul className="max-h-[calc(100vh-9rem)] divide-y divide-slate-100 overflow-y-auto">
+          {queue.map((q) => {
+            const [t, c] = qChip[q.status] ?? [q.status, "chip-gray"];
+            return (
+              <li key={q.id}>
+                <Link href={`/kham/${q.id}`} className={`flex items-start gap-3 px-4 py-3 hover:bg-slate-50 ${q.id === visit.id ? "bg-amber-50" : ""}`}>
+                  <span className="w-5 pt-0.5 text-lg font-bold text-brand-deep">{q.queueNo}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold">{q.patient.fullName}</span>
+                    <span className="block truncate text-xs text-brand-ink/55">{q.reason ?? "—"}</span>
+                    <span className={`chip mt-1 ${c}`}>{t}</span>
+                  </span>
+                  <span className="text-xs text-brand-ink/55">{timeVN(q.createdAt)}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </aside>
+      <div className="min-w-0 space-y-4">
       {header}
 
       {locked && (
@@ -547,6 +576,12 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
       <p className="text-xs text-gray-500">
         <Link href={`/benh-nhan/${p.id}`} className="underline">Hồ sơ bệnh nhân</Link>
       </p>
+      <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center justify-end gap-2 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+        <Link href="/kham" className="mr-auto rounded-xl border border-slate-300 px-4 py-2.5 font-semibold hover:bg-slate-50">◂ Danh sách khám</Link>
+        <PrintButton label="In bệnh án" />
+        {!locked && <a href="#hoan-tat" className="rounded-xl bg-brand-deep px-5 py-2.5 font-semibold text-white hover:bg-brand-deeper">Hoàn tất khám ▸</a>}
+      </div>
+      </div>
     </div>
   );
 }
