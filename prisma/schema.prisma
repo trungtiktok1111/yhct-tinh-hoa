@@ -345,6 +345,7 @@ model Branch {
   stockLots  StockLot[]
   stockMoves StockMove[]
   visits     Visit[]
+  invoices   Invoice[]
 }
 
 // Nhân viên. role: OWNER | BRANCH_MANAGER | RECEPTION | DOCTOR | CASHIER | PHARMACIST | STOREKEEPER
@@ -514,6 +515,7 @@ model Patient {
   updatedAt        DateTime @updatedAt
 
   visits Visit[]
+  invoices Invoice[]
 
   @@index([fullName])
   @@index([phone])
@@ -539,6 +541,7 @@ model Visit {
   updatedAt   DateTime @updatedAt
 
   exam        Exam?
+  invoice     Invoice?
 
   @@index([branchId, createdAt])
   @@index([patientId])
@@ -627,4 +630,49 @@ model PrescriptionLine {
   usage          String? // cách dùng (thành phẩm)
   note           String? // sao, tẩm, sắc trước...
   position       Int    @default(0)
+}
+
+// Hóa đơn: kind EXAM (từ lượt khám) hoặc RETAIL (bán thuốc lẻ, không khám).
+// status UNPAID | PAID | VOID. Tiền là số nguyên đồng.
+model Invoice {
+  id           String   @id @default(cuid())
+  seq          Int      @unique @default(autoincrement())
+  branchId     String
+  branch       Branch   @relation(fields: [branchId], references: [id])
+  visitId      String?  @unique
+  visit        Visit?   @relation(fields: [visitId], references: [id])
+  patientId    String?
+  patient      Patient? @relation(fields: [patientId], references: [id])
+  customerName String?
+  kind         String
+  status       String   @default("UNPAID")
+  subtotal     Int
+  discount     Int      @default(0)
+  total        Int
+  method       String? // CASH | TRANSFER | CARD
+  paidAt       DateTime?
+  voidReason   String?
+  note         String?
+  staffId      String?
+  staffName    String?
+  createdAt    DateTime @default(now())
+
+  lines InvoiceLine[]
+
+  @@index([branchId, createdAt])
+  @@index([status])
+}
+
+model InvoiceLine {
+  id        String  @id @default(cuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  kind      String // FEE | HERB | PRODUCT
+  itemId    String?
+  name      String
+  unit      String
+  qty       Float
+  unitPrice Int
+  amount    Int
+  position  Int     @default(0)
 }

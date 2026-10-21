@@ -24,6 +24,7 @@ export const NAV_ITEMS = [
   { href: "/mang-tri-thuc", label: "Mạng lưới tri thức", mobile: false, icon: "Network" },
   { href: "/tiep-don", label: "Tiếp đón", mobile: true, icon: "ClipboardCheck" },
   { href: "/kham", label: "Khám bệnh", mobile: true, icon: "HeartPulse" },
+  { href: "/thu-ngan", label: "Thu ngân", mobile: true, icon: "Wallet" },
   { href: "/benh-nhan", label: "Bệnh nhân", mobile: true, icon: "Users" },
   { href: "/kho", label: "Kho và giá", mobile: true, icon: "Package" },
   { href: "/quan-tri", label: "Quản trị / Thẩm định", mobile: true, icon: "ShieldCheck" },

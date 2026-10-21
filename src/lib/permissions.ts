@@ -50,6 +50,9 @@ export const PATIENT_DELETE_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER"];
 // Khám bệnh: bác sĩ (và Chủ).
 export const EXAM_ROLES: Role[] = ["OWNER", "DOCTOR"];
 
+// Thu ngân và bán thuốc lẻ.
+export const CASHIER_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "CASHIER"];
+
 // Kho và giá.
 export const STOCK_VIEW_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "PHARMACIST", "STOREKEEPER", "CASHIER", "DOCTOR"];
 export const STOCK_WRITE_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "PHARMACIST", "STOREKEEPER"]; // nhập kho, điều chỉnh
@@ -59,6 +62,7 @@ export const COST_VIEW_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER"]; // xem giá 
 export function canAccessPath(role: string, pathname: string): boolean {
   const roles = parseRoles(role); // role có thể là nhiều vai trò, vd "DOCTOR,CASHIER"
   const under = (p: string) => pathname === p || pathname.startsWith(p + "/");
+  if (under("/thu-ngan")) return hasAny(roles, CASHIER_ROLES);
   if (under("/kham")) return hasAny(roles, EXAM_ROLES);
   if (under("/benh-nhan") || under("/tiep-don")) return hasAny(roles, PATIENT_ROLES);
   if (under("/kho/nhap") || under("/kho/dieu-chinh")) return hasAny(roles, STOCK_WRITE_ROLES);

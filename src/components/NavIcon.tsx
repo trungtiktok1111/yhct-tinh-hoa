@@ -14,6 +14,7 @@ import {
   ScrollText,
   Package,
   HeartPulse,
+  Wallet,
   Users,
   ClipboardCheck,
   type LucideIcon,
@@ -35,6 +36,7 @@ const ICONS: Record<string, LucideIcon> = {
   ScrollText,
   Package,
   HeartPulse,
+  Wallet,
   Users,
   ClipboardCheck,
 };
