@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Users, Stethoscope, FileText, Pill, Banknote, UserPlus, HeartPulse, Receipt, CalendarDays, ClipboardList, Eye, MoreVertical, Clock, BarChart3, Hourglass, FileCheck, FileX, ArrowRight, Leaf, type LucideIcon } from "lucide-react";
+import { Users, Stethoscope, FileText, Pill, Banknote, UserPlus, HeartPulse, Receipt, CalendarDays, ClipboardList, Eye, MoreVertical, Clock, BarChart3, Hourglass, FileCheck, FileX, ArrowRight, Leaf, Syringe, type LucideIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { canAccessPath } from "@/lib/permissions";
@@ -11,6 +11,8 @@ import { ageOf } from "@/lib/person";
 export const dynamic = "force-dynamic";
 
 type Chip = { text: string; cls: string; href: string };
+
+const COLS: Record<number, string> = { 1: "lg:grid-cols-1", 2: "lg:grid-cols-2", 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "lg:grid-cols-5", 6: "lg:grid-cols-6" };
 
 export default async function TodayPage({ searchParams }: { searchParams: { cn?: string } }) {
   const staff = await requireStaff();
@@ -45,7 +47,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
 
   const since = vnDayStart();
   const weekStart = new Date(since.getTime() - 6 * 86400000);
-  const [visits, toInvoice, unpaid, toDispense, revenue, week, voided] = await Promise.all([
+  const [visits, toInvoice, unpaid, toDispense, revenue, week, voided, openProcs] = await Promise.all([
     prisma.visit.findMany({
       where: { branchId: branch.id, createdAt: { gte: since } },
       orderBy: { queueNo: "asc" },
@@ -65,6 +67,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
       ? prisma.invoice.findMany({ where: { branchId: branch.id, status: "PAID", paidAt: { gte: weekStart } }, select: { total: true, paidAt: true, patient: { select: { fullName: true } }, customerName: true } })
       : Promise.resolve([]),
     prisma.invoice.count({ where: { branchId: branch.id, status: "VOID", createdAt: { gte: since } } }),
+    prisma.procedureOrder.findMany({ where: { branchId: branch.id, status: { in: ["PENDING", "IN_PROGRESS"] } }, select: { visitId: true, status: true } }),
   ]);
   const days = Array.from({ length: 7 }, (_, i) => new Date(weekStart.getTime() + i * 86400000));
   const dayTotals = days.map((d) => week.filter((w) => w.paidAt && w.paidAt >= d && w.paidAt < new Date(d.getTime() + 86400000)).reduce((a, w) => a + w.total, 0));
@@ -78,6 +81,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
   const withMeds = visits.filter((v) => v.invoice?.lines.some((l) => l.itemId)).length;
   const paidToday = visits.filter((v) => v.invoice?.status === "PAID").length;
 
+  const procVisits = new Set((openProcs as unknown as { visitId: string | null }[]).map((o) => o.visitId).filter(Boolean));
   const waiting = visits.filter((v) => v.status === "WAITING").length;
   const inExam = visits.filter((v) => v.status === "IN_EXAM").length;
   const cn = `?cn=${branch.id}`;
@@ -96,6 +100,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
     const toThu = can("/thu-ngan") ? `/thu-ngan/${inv.id}` : `/benh-nhan/${v.patient.id}`;
     if (inv.status === "UNPAID") return { text: "Chờ thu", cls: "chip-red", href: toThu };
     if (inv.status === "VOID") return { text: "Đã hủy HĐ", cls: "chip-gray", href: toThu };
+    if (procVisits.has(v.id)) return { text: "Chờ thủ thuật", cls: "chip-blue", href: can("/thu-thuat") ? "/thu-thuat" + cn : toThu };
     const hasMed = inv.lines.some((l) => l.itemId);
     if (hasMed && !inv.dispensedAt) return { text: "Chờ phát thuốc", cls: "chip-purple", href: can("/duoc") ? `/duoc/${inv.id}` : toThu };
     return { text: "Hoàn tất", cls: "chip-green", href: toThu };
@@ -108,12 +113,14 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
     { label: "Chờ khám", n: waiting, Icon: Users, dot: "bg-amber-500", cls: "text-amber-700", t: tint.amber, href: can("/kham") ? "/kham" + cn : can("/tiep-don") ? "/tiep-don" + cn : null },
     { label: "Đang khám", n: inExam, Icon: Stethoscope, dot: "bg-sky-500", cls: "text-sky-700", t: tint.blue, href: can("/kham") ? "/kham" + cn : null },
     { label: "Chờ thu", n: toInvoice + unpaid, Icon: FileText, dot: "bg-rose-500", cls: "text-rose-700", t: tint.red, href: can("/thu-ngan") ? "/thu-ngan" + cn : null },
+    ...(can("/thu-thuat") ? [{ label: "Chờ thủ thuật", n: (openProcs as unknown as unknown[]).length, Icon: Syringe, dot: "bg-teal-500", cls: "text-teal-700", t: tint.blue, href: "/thu-thuat" + cn }] : []),
     { label: "Chờ phát thuốc", n: toDispense, Icon: Pill, dot: "bg-violet-500", cls: "text-violet-700", t: tint.purple, href: can("/duoc") ? "/duoc" + cn : null },
   ];
   const actions = [
     { href: "/tiep-don" + cn, label: "Tiếp đón bệnh nhân", Icon: UserPlus, ok: can("/tiep-don") },
     { href: "/kham" + cn, label: "Vào khám bệnh", Icon: HeartPulse, ok: can("/kham") },
     { href: "/thu-ngan" + cn, label: "Thu tiền", Icon: Receipt, ok: can("/thu-ngan") },
+    { href: "/thu-thuat" + cn, label: "Thủ thuật", Icon: Syringe, ok: can("/thu-thuat") },
     { href: "/duoc" + cn, label: "Phát thuốc", Icon: Pill, ok: can("/duoc") },
   ].filter((a) => a.ok);
 
@@ -124,7 +131,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
         <div className="space-y-4 min-w-0">
           {/* Dải chỉ số + nút thao tác: dính dưới thanh trên cùng khi cuộn (màn lớn), chiều cao cố định 7.25rem. */}
           <div className="space-y-2 bg-[#f3f6f4] pb-2 pt-1 lg:sticky lg:top-14 lg:z-10">
-            <div className={`grid grid-cols-2 ${revenue ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-2`}>
+            <div className={`grid grid-cols-2 ${COLS[Math.min(6, cards.length + (revenue ? 1 : 0))] ?? "lg:grid-cols-5"} gap-2`}>
               {cards.map((c) => {
                 const body = (
                   <>
@@ -144,7 +151,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
             </div>
 
             {actions.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+              <div className={`grid grid-cols-2 gap-2 ${COLS[Math.min(6, actions.length)] ?? "lg:grid-cols-4"}`}>
                 {actions.map((a, i) => (
                   <Link key={a.href} href={a.href} className={`flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-center text-sm font-semibold ${i === 0 ? "bg-brand-deep text-white hover:bg-brand-deeper" : "bg-white border border-slate-200 hover:border-brand-deep"}`}><a.Icon className={`h-4 w-4 ${i === 0 ? "" : "text-brand-deep"}`} />{a.label}</Link>
                 ))}

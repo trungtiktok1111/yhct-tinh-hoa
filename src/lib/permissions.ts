@@ -8,6 +8,7 @@ export const ROLES = {
   CASHIER: "Thu ngân",
   PHARMACIST: "Dược",
   STOREKEEPER: "Thủ kho",
+  TECHNICIAN: "Y sĩ / Kỹ thuật viên",
 } as const;
 
 export type Role = keyof typeof ROLES;
@@ -56,6 +57,9 @@ export const CASHIER_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "CASHIER"];
 // Báo cáo.
 export const REPORT_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER"];
 
+// Thủ thuật (điện châm, xoa bóp bấm huyệt, cấy chỉ, thủy châm): y sĩ / kỹ thuật viên thực hiện; bác sĩ và quản lý xem và làm được.
+export const PROCEDURE_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "DOCTOR", "TECHNICIAN"];
+
 // Phát thuốc.
 export const DISPENSE_ROLES: Role[] = ["OWNER", "BRANCH_MANAGER", "PHARMACIST"];
 
@@ -70,6 +74,7 @@ export function canAccessPath(role: string, pathname: string): boolean {
   const under = (p: string) => pathname === p || pathname.startsWith(p + "/");
   if (under("/thu-ngan")) return hasAny(roles, CASHIER_ROLES);
   if (under("/bao-cao")) return hasAny(roles, REPORT_ROLES);
+  if (under("/thu-thuat")) return hasAny(roles, PROCEDURE_ROLES);
   if (under("/duoc")) return hasAny(roles, DISPENSE_ROLES);
   if (under("/kham")) return hasAny(roles, EXAM_ROLES);
   if (under("/benh-nhan") || under("/tiep-don")) return hasAny(roles, PATIENT_ROLES);

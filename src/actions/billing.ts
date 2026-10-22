@@ -45,6 +45,28 @@ async function recalc(invoiceId: string) {
   await prisma.invoice.update({ where: { id: invoiceId }, data: { subtotal, discount, vat, total: subtotal - discount + vat } });
 }
 
+// Hóa đơn đã thu: mỗi buổi của dòng dịch vụ là thủ thuật → một phiếu thủ thuật chờ y sĩ làm.
+// Số buổi = số lượng của dòng (liệu trình trả trước); buổi thứ mấy tính nối tiếp các buổi cũ của cùng bệnh nhân.
+async function createProcedureOrders(inv: { id: string; branchId: string; visitId: string | null; patientId: string | null; lines: { serviceId: string | null; name: string; qty: number }[] }) {
+  const ids = inv.lines.map((l) => l.serviceId).filter((x): x is string => !!x);
+  if (!ids.length) return;
+  const svcs = await prisma.serviceItem.findMany({ where: { id: { in: ids }, procedure: true }, select: { id: true } });
+  const procIds = new Set(svcs.map((s) => s.id));
+  for (const l of inv.lines) {
+    if (!l.serviceId || !procIds.has(l.serviceId)) continue;
+    const n = Math.min(30, Math.max(1, Math.round(l.qty)));
+    const before = inv.patientId
+      ? await prisma.procedureOrder.count({ where: { patientId: inv.patientId, serviceId: l.serviceId, status: { not: "CANCELLED" } } })
+      : 0;
+    await prisma.procedureOrder.createMany({
+      data: Array.from({ length: n }, (_, i) => ({
+        branchId: inv.branchId, visitId: inv.visitId, invoiceId: inv.id, patientId: inv.patientId, serviceId: l.serviceId,
+        name: l.name, sessionNo: before + i + 1, sessionTotal: n > 1 ? n : null,
+      })),
+    });
+  }
+}
+
 async function currentPrices(itemIds: string[]) {
   const rows = await prisma.itemPrice.findMany({
     where: { itemId: { in: itemIds }, effectiveFrom: { lte: new Date() } },
@@ -170,7 +192,7 @@ export async function addServiceLine(formData: FormData) {
   const q = num(formData, "qty") ?? 1;
   if (Number.isNaN(q) || q <= 0) go(inv.id, "Số lượng phải lớn hơn 0.");
   await prisma.invoiceLine.create({
-    data: { invoiceId: inv.id, kind: "FEE", name: svc.name, unit: svc.unit, qty: q, unitPrice: svc.price, amount: Math.round(q * svc.price), position: inv.lines.length },
+    data: { invoiceId: inv.id, kind: "FEE", serviceId: svc.id, name: svc.name, unit: svc.unit, qty: q, unitPrice: svc.price, amount: Math.round(q * svc.price), position: inv.lines.length },
   });
   await recalc(inv.id);
   go(inv.id);
@@ -234,6 +256,7 @@ export async function payInvoice(formData: FormData) {
   });
   if (res.count === 0) go(inv.id, "Hóa đơn vừa được xử lý ở nơi khác.");
   await logAudit({ staffId: staff.id, staffName: staff.fullName, branchId: inv.branchId, action: "PAY", entity: "Invoice", entityId: inv.id, detail: `${inv.total}đ · ${method}` });
+  await createProcedureOrders(inv);
   revalidatePath("/thu-ngan");
   go(inv.id);
 }
@@ -245,7 +268,10 @@ export async function voidInvoice(formData: FormData) {
   if (inv.dispensedAt) go(inv.id, "Thuốc đã phát, không hủy được hóa đơn. Cần hoàn kho thì nhờ dược sĩ điều chỉnh tăng kho.");
   const reason = str(formData, "reason");
   if (!reason) go(inv.id, "Nhập lý do hủy hóa đơn.");
+  const doneProc = await prisma.procedureOrder.count({ where: { invoiceId: inv.id, status: { in: ["IN_PROGRESS", "DONE"] } } });
+  if (doneProc > 0) go(inv.id, "Đã có thủ thuật được thực hiện theo hóa đơn này, không hủy được hóa đơn.");
   await prisma.invoice.update({ where: { id: inv.id }, data: { status: "VOID", voidReason: reason } });
+  await prisma.procedureOrder.updateMany({ where: { invoiceId: inv.id, status: "PENDING" }, data: { status: "CANCELLED", cancelReason: `Hủy hóa đơn: ${reason}` } });
   await logAudit({ staffId: staff.id, staffName: staff.fullName, branchId: inv.branchId, action: "VOID", entity: "Invoice", entityId: inv.id, detail: reason });
   revalidatePath("/thu-ngan");
   go(inv.id);

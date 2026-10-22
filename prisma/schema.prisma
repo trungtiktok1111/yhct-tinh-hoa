@@ -715,6 +715,7 @@ model InvoiceLine {
   discountPct Int   @default(0)
   amount    Int
   position  Int     @default(0)
+  serviceId String? // dòng dịch vụ lấy từ danh mục (để biết là thủ thuật)
 }
 
 // ---------- Bổ sung: nhà cung cấp, dịch vụ, ghi chú nhanh, sao lưu ----------
@@ -739,7 +740,46 @@ model ServiceItem {
   price     Int
   active    Boolean  @default(true)
   position  Int      @default(0)
+  procedure Boolean  @default(false) // thủ thuật do y sĩ / kỹ thuật viên thực hiện (điện châm, cấy chỉ...)
   createdAt DateTime @default(now())
+
+  supplies  ServiceSupply[]
+}
+
+// Vật tư tiêu hao cho MỖI LẦN làm một thủ thuật (kim, chỉ, thuốc thủy châm...). Ghi nhận xong thì tự trừ kho.
+model ServiceSupply {
+  id        String      @id @default(cuid())
+  serviceId String
+  service   ServiceItem @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  itemId    String
+  qty       Float
+
+  @@unique([serviceId, itemId])
+}
+
+// Một buổi thủ thuật. Tạo khi hóa đơn có dòng thủ thuật được thu tiền (qty = số buổi trong liệu trình).
+model ProcedureOrder {
+  id            String    @id @default(cuid())
+  branchId      String
+  visitId       String?
+  invoiceId     String?
+  patientId     String?
+  serviceId     String?
+  name          String
+  sessionNo     Int       @default(1)
+  sessionTotal  Int?
+  status        String    @default("PENDING") // PENDING | IN_PROGRESS | DONE | CANCELLED
+  performerId   String?
+  performerName String?
+  startedAt     DateTime?
+  endedAt       DateTime?
+  note          String?
+  cancelReason  String?
+  createdAt     DateTime  @default(now())
+
+  @@index([branchId, status])
+  @@index([visitId])
+  @@index([patientId, serviceId])
 }
 
 model QuickNote {

@@ -24,6 +24,7 @@ import {
   DatabaseBackup,
   Settings,
   FileSpreadsheet,
+  Syringe,
   type LucideIcon,
 } from "lucide-react";
 
@@ -53,6 +54,7 @@ const ICONS: Record<string, LucideIcon> = {
   DatabaseBackup,
   Settings,
   FileSpreadsheet,
+  Syringe,
 };
 
 export function NavIcon({ name, className }: { name: string; className?: string }) {
