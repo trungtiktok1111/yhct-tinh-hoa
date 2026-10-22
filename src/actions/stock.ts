@@ -294,6 +294,34 @@ export async function fixLotCost(formData: FormData) {
   back(P);
 }
 
+// Hủy cả một phiếu nhập (theo số phiếu PN) — dùng khi nhập nhầm / nhập trùng cả file.
+// Chỉ hủy khi MỌI lô của phiếu chưa bị xuất hay điều chỉnh; nếu không thì không hủy gì cả.
+export async function cancelReceipt(formData: FormData) {
+  const staff = await requireRole(...ITEM_MANAGER_ROLES);
+  const P = "/kho/nhap";
+  const pn = str(formData, "pn");
+  if (!pn || !/^PN-\d{8}-[0-9A-F]{4,6}$/.test(pn)) back(P, "Số phiếu không hợp lệ.");
+  const branchId = assertBranch(staff, str(formData, "branchId"), P);
+  const lots = await prisma.stockLot.findMany({ where: { branchId, note: { contains: pn } }, include: { item: true } });
+  if (!lots.length) back(P, "Không tìm thấy phiếu này.");
+  const used = lots.filter((l) => l.qtyRemaining !== l.qtyReceived);
+  if (used.length)
+    back(P, `Phiếu ${pn} có ${used.length} lô đã xuất hoặc điều chỉnh (${used.slice(0, 3).map((l) => l.item.name).join(", ")}...), nên không hủy cả phiếu được. Hủy từng lô còn nguyên hoặc dùng Điều chỉnh.`);
+  const ids = lots.map((l) => l.id);
+  await prisma.$transaction([
+    prisma.stockMove.deleteMany({ where: { lotId: { in: ids } } }),
+    prisma.stockLot.deleteMany({ where: { id: { in: ids } } }),
+  ]);
+  await logAudit({
+    staffId: staff.id, staffName: staff.fullName, branchId, action: "CANCEL_RECEIPT", entity: "StockLot",
+    entityId: pn, detail: `Hủy cả phiếu ${pn}: ${lots.length} lô`,
+  });
+  revalidatePath("/kho");
+  revalidatePath("/kho/nhap");
+  revalidatePath("/kho/lo");
+  redirect(`${P}?ok=${encodeURIComponent(`Đã hủy phiếu ${pn} (${lots.length} lô).`)}`);
+}
+
 // Số phiếu nhập: PN-yyyymmdd-XXXX (giờ Việt Nam), ghi trong ghi chú lô để truy vết trên thẻ kho.
 function receiptNo() {
   const d = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10).replace(/-/g, "");
