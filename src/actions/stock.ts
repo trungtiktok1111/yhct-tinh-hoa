@@ -158,7 +158,7 @@ export async function receiveStock(formData: FormData) {
     const lot = await tx.stockLot.create({
       data: {
         itemId, branchId, unitCost, expiryDate, supplier: supplierName, supplierId: sup?.id,
-        note: str(formData, "note"), qtyReceived: quantity, qtyRemaining: quantity, staffName: staff.fullName,
+        note: [receiptNo(), str(formData, "note")].filter(Boolean).join(" · "), qtyReceived: quantity, qtyRemaining: quantity, staffName: staff.fullName,
       },
     });
     await tx.stockMove.create({
@@ -272,6 +272,12 @@ export async function cancelLot(formData: FormData) {
   back(P);
 }
 
+// Số phiếu nhập: PN-yyyymmdd-XXXX (giờ Việt Nam), ghi trong ghi chú lô để truy vết trên thẻ kho.
+function receiptNo() {
+  const d = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10).replace(/-/g, "");
+  return `PN-${d}-${randomUUID().slice(0, 4).toUpperCase()}`;
+}
+
 // ---------- Nhập kho hàng loạt từ Excel ----------
 // Kiểm tra lại toàn bộ ở máy chủ; có lỗi thì không lưu dòng nào. Cảnh báo cần tích xác nhận.
 export async function importStockExcel(formData: FormData) {
@@ -294,7 +300,8 @@ export async function importStockExcel(formData: FormData) {
   });
   if (dup) back(P, "File này đã được nhập trước đó. Để tránh nhập trùng, hãy xuất phiếu mới.");
 
-  const label = `Excel ${f.name}`.slice(0, 60);
+  const pn = receiptNo();
+  const label = `${pn} · Excel ${f.name}`.slice(0, 80);
   // Mặt hàng mới: cấp mã liên tiếp theo loại, liên kết vị thuốc tri thức nếu trùng tên.
   const newRows = res.rows.filter((r) => r.newItem);
   const nextCode: Record<string, number> = {};
