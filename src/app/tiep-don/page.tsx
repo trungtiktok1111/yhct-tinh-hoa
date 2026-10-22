@@ -123,9 +123,9 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
                         <td className="hidden max-w-[9rem] truncate whitespace-nowrap text-sm min-[1800px]:table-cell" title={doctorOf(v) || ""}>{doctorOf(v) || "—"}</td>
                         <td className="whitespace-nowrap"><span className={`chip ${c}`}>{t}</span></td>
                         <td className="whitespace-nowrap">
-                          <div className="flex items-center justify-center gap-2 [&_a]:whitespace-nowrap [&_button]:whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5 [&_a]:whitespace-nowrap [&_button]:whitespace-nowrap">
                             {canExam && (v.status === "WAITING" || v.status === "IN_EXAM") && <Link href={`/kham/${v.id}`} className="rounded-lg bg-brand-deep px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-deeper">{v.status === "WAITING" ? "Bắt đầu khám" : "Tiếp tục"}</Link>}
-                            <Link href={`/benh-nhan/${v.patient.id}`} className="flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"><FolderOpen className="h-4 w-4" />Hồ sơ</Link>
+                            <Link href={`/benh-nhan/${v.patient.id}`} title="Hồ sơ bệnh nhân" aria-label="Hồ sơ bệnh nhân" className="flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm hover:bg-slate-50"><FolderOpen className="h-4 w-4" /><span className="hidden min-[1800px]:inline">Hồ sơ</span></Link>
                             {v.status === "WAITING" && (
                               <form action={togglePriority}>
                                 <input type="hidden" name="id" value={v.id} />
