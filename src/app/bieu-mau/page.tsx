@@ -10,13 +10,6 @@ export const dynamic = "force-dynamic";
 const okDay = (v?: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v)) ? v : undefined);
 const nowVN = () => new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
 
-const ROADMAP = [
-  "Phiếu kiểm kê kho (mẫu điền số đếm thực tế, app tự tính chênh lệch và lập phiếu điều chỉnh)",
-  "Mẫu nhập danh mục mặt hàng và bảng giá hàng loạt",
-  "Mẫu nhập hồ sơ bệnh nhân hàng loạt",
-  "Phiếu xuất hủy hàng hết hạn",
-];
-
 export default async function FormsPage({ searchParams }: { searchParams: { cn?: string; tu?: string; den?: string } }) {
   const staff = await requireStaff();
   const branches = await branchesFor(staff);
@@ -81,12 +74,6 @@ export default async function FormsPage({ searchParams }: { searchParams: { cn?:
         );
       })}
 
-      <section className="card !p-4">
-        <h2 className="text-sm font-semibold">Đề xuất làm tiếp</h2>
-        <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-brand-ink/75">
-          {ROADMAP.map((r) => <li key={r}>{r}</li>)}
-        </ul>
-      </section>
     </div>
   );
 }
