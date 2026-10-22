@@ -30,6 +30,7 @@ const COLS = [
   { key: "note", header: "Số hóa đơn / ghi chú", width: 24, ref: false },
 ] as const;
 
+const nf = (v: number) => (Number.isInteger(v) ? "#,##0" : "#,##0.00");
 const YELLOW = "FFFFF4C2";
 const GREY = "FFF1F3F2";
 
@@ -62,9 +63,21 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
     cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: c.ref ? "FF4B5B54" : "FF1B4332" } };
     cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
-    ws.getColumn(i + 1).width = c.width;
+    ws.getColumn(i + 1).width = c.width + 3;
   });
-  head.height = 34;
+  head.height = 44;
+
+  // Nhãn nhóm cột, để biết chỗ nào điền.
+  ws.mergeCells("A4:G4");
+  ws.mergeCells("H4:M4");
+  const g1 = ws.getCell("A4"), g2 = ws.getCell("H4");
+  g1.value = "THÔNG TIN HỆ THỐNG (không sửa)";
+  g2.value = "ĐIỀN VÀO ĐÂY (cột nền vàng)";
+  for (const [c, bg, fg] of [[g1, "FFD9DEDB", "FF3F4A45"], [g2, "FFC9E4D2", "FF1B4332"]] as const) {
+    c.font = { bold: true, size: 10, color: { argb: fg } };
+    c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
+    c.alignment = { horizontal: "center" };
+  }
 
   items.forEach((it, idx) => {
     const r = ws.getRow(HEADER_ROW + 1 + idx);
@@ -80,15 +93,16 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: GREY } };
       cell.protection = { locked: true };
     });
-    r.getCell(5).numFmt = "#,##0.##";
+    r.getCell(5).numFmt = nf(Math.round(stock * 100) / 100);
     r.getCell(6).numFmt = r.getCell(7).numFmt = "#,##0";
+    r.getCell(5).alignment = { horizontal: "right" };
     for (let c = 8; c <= 13; c++) {
       const cell = r.getCell(c);
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: YELLOW } };
       cell.protection = { locked: false };
     }
-    r.getCell(8).numFmt = "#,##0.##";
-    r.getCell(10).numFmt = "#,##0";
+    r.getCell(8).numFmt = "General";
+    r.getCell(10).numFmt = "General";
     r.getCell(11).numFmt = "dd/mm/yyyy";
     r.getCell(8).dataValidation = { type: "decimal", operator: "greaterThan", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Số lượng", error: "Nhập số lớn hơn 0." };
     r.getCell(9).dataValidation = { type: "list", allowBlank: true, formulae: [herb ? '"g,kg"' : `"${it.unit}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: herb ? "Chọn g hoặc kg." : `Chỉ nhập theo ${it.unit}.` };
@@ -111,13 +125,14 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
     r.getCell(4).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,${UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Chọn trong danh sách (vị thuốc dùng g)." };
     r.getCell(7).numFmt = "#,##0";
     r.getCell(7).dataValidation = { type: "whole", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Giá bán", error: "Nhập số đồng nguyên, không âm." };
-    r.getCell(8).numFmt = "#,##0.##";
-    r.getCell(10).numFmt = "#,##0";
+    r.getCell(8).numFmt = "General";
+    r.getCell(10).numFmt = "General";
     r.getCell(11).numFmt = "dd/mm/yyyy";
+    if (k === 0) for (let c = 1; c <= 13; c++) r.getCell(c).border = { top: { style: "medium", color: { argb: "FF1B4332" } } };
     r.getCell(9).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,kg,${UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Chọn trong danh sách." };
   }
 
-  ws.autoFilter = { from: { row: HEADER_ROW, column: 1 }, to: { row: HEADER_ROW + Math.max(items.length, 1) + NEW_ROWS, column: COLS.length } };
+  ws.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: `${HEADER_ROW}:${HEADER_ROW}` };
   await ws.protect("", { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, formatColumns: true, formatRows: true });
 
   addReportSheet(wb, branch, items, opts.cost);
@@ -364,15 +379,13 @@ type ReportItem = {
 function addReportSheet(wb: ExcelJS.Workbook, branch: { name: string }, items: ReportItem[], cost: boolean) {
   const ws = wb.addWorksheet("Tồn kho", { views: [{ state: "frozen", ySplit: 4 }] });
   const cols: [string, number, string?][] = [
-    ["STT", 6], ["Mã hàng", 11], ["Tên mặt hàng", 30], ["Loại", 12], ["Đơn vị", 9], ["Tồn kho", 12, "#,##0.##"],
-    ["Tối thiểu", 11, "#,##0.##"], ["Hạn gần nhất", 14, "dd/mm/yyyy"],
-    ...(cost ? ([["Giá nhập TB", 14, "#,##0.##"], ["Giá trị tồn", 15, "#,##0"]] as [string, number, string][]) : []),
-    ["Giá bán", 12, "#,##0"], ["Trạng thái", 16],
+    ["STT", 8], ["Mã hàng", 13], ["Tên mặt hàng", 32], ["Loại", 14], ["Đơn vị", 10], ["Tồn kho", 13],
+    ["Tối thiểu", 13], ["Hạn gần nhất", 16, "dd/mm/yyyy"],
+    ...(cost ? ([["Giá nhập TB", 15], ["Giá trị tồn", 16, "#,##0"]] as [string, number, string][]) : []),
+    ["Giá bán", 13, "#,##0"], ["Trạng thái", 18],
   ];
   ws.getCell("A1").value = `TỒN KHO · ${branch.name}`;
   ws.getCell("A1").font = { bold: true, size: 14 };
-  ws.getCell("A2").value = `Xuất lúc ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}`;
-  ws.getCell("A2").font = { italic: true, color: { argb: "FF6B7280" } };
   const head = ws.getRow(4);
   cols.forEach(([h, w], i) => {
     const c = head.getCell(i + 1);
@@ -392,8 +405,7 @@ function addReportSheet(wb: ExcelJS.Workbook, branch: { name: string }, items: R
     totalValue += value;
     const exps = lots.map((l) => l.expiryDate).filter(Boolean) as Date[];
     const nearest = exps.length ? new Date(Math.min(...exps.map((d) => d.getTime()))) : null;
-    const status = total <= 0 ? "Hết hàng" : it.minStock > 0 && total < it.minStock ? "Dưới tối thiểu"
-      : nearest && nearest.getTime() < now ? "Có lô hết hạn" : nearest && nearest.getTime() < now + 90 * 86400000 ? "Gần hết hạn" : "Còn hàng";
+    const status = statusOf(it, now);
     const vals: (string | number | Date | null)[] = [
       idx + 1, it.code ?? "", it.name, it.type === "HERB" ? "Vị thuốc" : "Thành phẩm", it.unit, Math.round(total * 100) / 100, it.minStock, nearest,
       ...(cost ? [total ? Math.round((value / total) * 100) / 100 : 0, Math.round(value)] : []), it.prices[0]?.price ?? null, status,
@@ -403,9 +415,20 @@ function addReportSheet(wb: ExcelJS.Workbook, branch: { name: string }, items: R
       const c = row.getCell(i + 1);
       c.value = v;
       if (cols[i][2]) c.numFmt = cols[i][2] as string;
+      else if (typeof v === "number" && i >= 5) c.numFmt = nf(v);
+      if (i >= 5 && i !== 7) c.alignment = { horizontal: "right" };
+      if (i === 0) c.alignment = { horizontal: "center" };
       c.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
+      if (idx % 2 === 1) c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF7F9F8" } };
     });
-    if (status !== "Còn hàng") row.getCell(cols.length).font = { bold: true, color: { argb: status === "Gần hết hạn" ? "FFB45309" : "FFB91C1C" } };
+    if (status !== "Còn hàng") {
+      const warn = status === "Gần hết hạn";
+      const st = row.getCell(cols.length);
+      st.font = { bold: true, color: { argb: warn ? "FF92400E" : "FF991B1B" } };
+      st.fill = { type: "pattern", pattern: "solid", fgColor: { argb: warn ? "FFFEF3C7" : "FFFEE2E2" } };
+      st.alignment = { horizontal: "center" };
+    } else row.getCell(cols.length).alignment = { horizontal: "center" };
+    if (status === "Hết hàng" || status === "Dưới tối thiểu") row.getCell(6).font = { bold: true, color: { argb: "FF991B1B" } };
   });
   if (cost) {
     const r = ws.getRow(5 + items.length + 1);
@@ -415,5 +438,22 @@ function addReportSheet(wb: ExcelJS.Workbook, branch: { name: string }, items: R
     r.getCell(10).numFmt = "#,##0";
     r.getCell(10).font = { bold: true };
   }
+  const cnt = (f: (st: string) => boolean) => items.filter((it) => f(statusOf(it, now))).length;
+  ws.getCell("A2").value = `${items.length} mặt hàng · ${cnt((x) => x === "Dưới tối thiểu" || x === "Hết hàng")} dưới mức tối thiểu · ${cnt((x) => x === "Gần hết hạn" || x === "Có lô hết hạn")} gần hoặc đã hết hạn${cost ? ` · tổng giá trị tồn ${Math.round(totalValue).toLocaleString("vi-VN")} đ` : ""}  (xuất lúc ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })})`;
+  ws.getCell("A2").font = { bold: true, color: { argb: "FF1B4332" } };
   ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4 + Math.max(items.length, 1), column: cols.length } };
+  ws.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: "4:4" };
+  ws.headerFooter = { oddFooter: "&L&8YHCT Tinh Hoa&R&8Trang &P/&N" };
+}
+
+function statusOf(it: ReportItem, now: number): string {
+  const lots = it.lots.filter((l) => l.qtyRemaining > 0);
+  const total = lots.reduce((a, l) => a + l.qtyRemaining, 0);
+  const exps = lots.map((l) => l.expiryDate).filter(Boolean) as Date[];
+  const nearest = exps.length ? Math.min(...exps.map((d) => d.getTime())) : null;
+  if (total <= 0) return "Hết hàng";
+  if (it.minStock > 0 && total < it.minStock) return "Dưới tối thiểu";
+  if (nearest !== null && nearest < now) return "Có lô hết hạn";
+  if (nearest !== null && nearest < now + 90 * 86400000) return "Gần hết hạn";
+  return "Còn hàng";
 }
