@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { createHash } from "crypto";
-import { newVoucher, readVoucher, stampVoucher } from "@/lib/sheetKit";
+import { readVoucher, stampVoucher } from "@/lib/sheetKit";
+import { issueVoucher } from "@/lib/voucher";
 import { prisma } from "@/lib/db";
 import { UNITS } from "@/lib/constants";
 
@@ -38,7 +39,7 @@ const YELLOW = "FFFFF4C2";
 const GREY = "FFF1F3F2";
 const LAST_COL = 13;
 
-export async function buildTemplate(branch: { id: string; name: string }, opts: { cost: boolean } = { cost: false }): Promise<Buffer> {
+export async function buildTemplate(branch: { id: string; name: string }, opts: { cost: boolean; by?: string | null } = { cost: false }): Promise<Buffer> {
   const items = await prisma.item.findMany({
     where: { active: true },
     orderBy: [{ type: "asc" }, { name: "asc" }],
@@ -51,7 +52,7 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
   wb.creator = "YHCT Tinh Hoa";
   const ws = wb.addWorksheet(SHEET, { views: [{ state: "frozen", xSplit: 2, ySplit: HEADER_ROW }] });
 
-  stampVoucher(ws, newVoucher("PN"));
+  stampVoucher(ws, await issueVoucher("PN", branch.id, opts.by ?? null));
   ws.getCell("A1").value = `PHIẾU NHẬP KHO · ${MARKER}`;
   ws.getCell("A1").font = { bold: true, size: 14 };
   ws.getCell("A2").value = "Chi nhánh:";

@@ -3,7 +3,7 @@ import { getCurrentStaff } from "@/lib/auth";
 import { STOCK_WRITE_ROLES, ITEM_MANAGER_ROLES, hasAny } from "@/lib/permissions";
 import { branchesFor } from "@/lib/stock";
 import { analyzeSheet, MAX_BYTES } from "@/lib/stockSheet";
-import { prisma } from "@/lib/db";
+import { checkVoucher } from "@/lib/voucher";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -20,9 +20,7 @@ export async function POST(req: NextRequest) {
   const branch = branches.find((b) => b.id === fd.get("cn"));
   if (!branch) return NextResponse.json({ error: "Chọn chi nhánh hợp lệ." }, { status: 400 });
   const res = await analyzeSheet(Buffer.from(await f.arrayBuffer()), branch, { canCreate: hasAny(staff.roles, ITEM_MANAGER_ROLES) });
-  const dup = await prisma.auditLog.findFirst({
-    where: { action: "IMPORT_RECEIPT", branchId: branch.id, detail: { contains: `#${res.hash}` } },
-    orderBy: { at: "desc" }, select: { at: true },
-  });
-  return NextResponse.json({ ...res, duplicateAt: dup?.at ?? null });
+  const vErr = res.fileErrors.length ? null : await checkVoucher(res.hash, "PN", branch.id);
+  if (vErr) return NextResponse.json({ ...res, fileErrors: [vErr], rows: [], total: 0, duplicateAt: null });
+  return NextResponse.json({ ...res, duplicateAt: null });
 }

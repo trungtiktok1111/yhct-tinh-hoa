@@ -34,7 +34,7 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
   })) as unknown as { branchId: string; note: string | null; qtyReceived: number; qtyRemaining: number; unitCost: number; receivedAt: Date; staffName: string | null }[];
   const batches = new Map<string, { pn: string; branchId: string; at: Date; by: string | null; n: number; value: number; intact: boolean }>();
   for (const l of pnLots) {
-    const pn = l.note?.match(/PN-\d{8}-[0-9A-F]{4,6}/)?.[0];
+    const pn = l.note?.match(/PN-\d{8}-[0-9A-F]{3,6}/)?.[0];
     if (!pn) continue;
     const b = batches.get(pn + l.branchId) ?? { pn, branchId: l.branchId, at: l.receivedAt, by: l.staffName, n: 0, value: 0, intact: true };
     b.n += 1; b.value += Math.round(l.qtyReceived * l.unitCost); if (l.qtyRemaining !== l.qtyReceived) b.intact = false;

@@ -7,6 +7,7 @@ import { logAudit, requireStaff } from "@/lib/auth";
 import { COST_VIEW_ROLES, hasAny } from "@/lib/permissions";
 import { branchesFor } from "@/lib/stock";
 import { IMPORTERS } from "@/lib/importers";
+import { KIND_OF, checkVoucher, claimVoucher, releaseVoucher } from "@/lib/voucher";
 import { MAX_BYTES } from "@/lib/importKit";
 
 // Nhập một mẫu Excel: chạy lại toàn bộ kiểm tra ở máy chủ, có lỗi thì không lưu gì,
@@ -36,12 +37,14 @@ export async function runImport(formData: FormData) {
   if (bad.length) back(`Còn ${bad.length} dòng lỗi (dòng ${bad.slice(0, 5).map((r) => r.row).join(", ")}${bad.length > 5 ? "..." : ""}). Sửa file rồi tải lại. Chưa có gì được lưu.`);
   if (a.rows.some((r) => r.warnings.length) && formData.get("confirmOdd") !== "1") back("Có dòng cảnh báo, hãy tích xác nhận đã kiểm tra rồi nhập lại.");
   const tag = `#${id}:${a.hash}`;
-  const dup = await prisma.auditLog.findFirst({ where: { action: "IMPORT", detail: { contains: tag }, ...(branch ? { branchId: branch.id } : {}) }, select: { id: true } });
-  if (dup) back("Số phiếu này đã được nhập trước đó. Để tránh nhập trùng, hãy tải mẫu mới.");
+  const vErr = await checkVoucher(a.hash, KIND_OF[id], branch?.id ?? null);
+  if (vErr) back(vErr);
+  if (!(await claimVoucher(a.hash, staff.fullName))) back(`Số phiếu ${a.hash} vừa được nhập bởi người khác. Hãy tải phiếu mới.`);
   let msg: string;
   try {
     msg = await imp.commit(a, { ...ctx, fileName: file.name });
   } catch (e) {
+    await releaseVoucher(a.hash);
     back(e instanceof Error ? e.message : "Không lưu được, chưa có gì được ghi.");
     return;
   }

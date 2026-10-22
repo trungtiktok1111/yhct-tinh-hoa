@@ -21,12 +21,12 @@ const COLS: ColSpec[] = [
 type ItemRow = { id: string; code: string | null; name: string; type: string; unit: string; lots: { qtyRemaining: number; unitCost: number }[] };
 const stockOf = (lots: { qtyRemaining: number }[]) => Math.round(lots.reduce((s, l) => s + l.qtyRemaining, 0) * 100) / 100;
 
-async function build(branch: { id: string; name: string }): Promise<Buffer> {
+async function build(branch: { id: string; name: string }, voucher: string): Promise<Buffer> {
   const items = (await prisma.item.findMany({ where: { active: true }, orderBy: [{ type: "asc" }, { name: "asc" }], include: { lots: { where: { branchId: branch.id, qtyRemaining: { gt: 0 } }, select: { qtyRemaining: true, unitCost: true } } } })) as unknown as ItemRow[];
   const wb = new ExcelJS.Workbook();
   wb.creator = "YHCT Tinh Hoa";
   const ws = makeSheet(wb, {
-    prefix: "KK",
+    voucher,
     name: SHEET, marker: MARKER, title: "PHIẾU KIỂM KÊ KHO", scope: branch.name,
     note: "Đếm thực tế rồi điền vào cột Số đếm thực tế (nền vàng). Mặt hàng không đếm thì để trống. Dược liệu tính bằng gam.",
     cols: COLS, groups: [{ from: 1, to: 5, label: "HỆ THỐNG (không sửa)" }, { from: 6, to: 8, label: "ĐIỀN VÀO ĐÂY (Chênh lệch tự tính)", input: true }],
@@ -112,7 +112,7 @@ async function analyze(buf: Buffer, branch: { id: string; name: string }): Promi
 export const kiemKe: Importer = {
   id: "kiem-ke", name: "Phiếu kiểm kê kho", roles: STOCK_WRITE_ROLES, needsBranch: true,
   columns: ["Mặt hàng", "Kết quả kiểm kê"], allowedHint: "Dòng khớp sổ không tạo điều chỉnh. Dòng lệch lập điều chỉnh tăng hoặc giảm.",
-  build: (c) => build(c.branch!), fileName: () => "phieu-kiem-ke",
+  build: (c) => build(c.branch!, c.voucher), fileName: () => "phieu-kiem-ke",
   analyze: (b, c) => analyze(b, c.branch!),
   async commit(a, c) {
     const ops = a.payload as Op[];

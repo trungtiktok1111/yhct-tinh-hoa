@@ -26,11 +26,11 @@ const COLS: ColSpec[] = [
 // Thứ tự cột -> tên trường của form bệnh nhân.
 const FIELD = [null, "fullName", "sex", "birthDate", "phone", "nationalId", "email", "address", "ward", "province", "occupation", "bloodType", "insuranceNo", "allergies", "chronicConditions", "note"] as const;
 
-async function build(): Promise<Buffer> {
+async function build(voucher: string): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "YHCT Tinh Hoa";
   const ws = makeSheet(wb, {
-    prefix: "BN",
+    voucher,
     name: SHEET, marker: MARKER, title: "NHẬP HỒ SƠ BỆNH NHÂN", scope: "Toàn hệ thống",
     note: "Mỗi dòng một bệnh nhân. Cột có dấu * là bắt buộc. Họ tên + năm sinh + điện thoại, hoặc CCCD đã có thì app chặn để tránh trùng hồ sơ.",
     cols: COLS, groups: [{ from: 1, to: 1, label: "" }, { from: 2, to: 5, label: "BẮT BUỘC", input: true }, { from: 6, to: 16, label: "TÙY CHỌN", input: true }], frozenCols: 2,
@@ -123,7 +123,7 @@ async function analyze(buf: Buffer): Promise<Analysis> {
 export const benhNhan: Importer = {
   id: "benh-nhan", name: "Nhập hồ sơ bệnh nhân", roles: ["OWNER", "BRANCH_MANAGER", "RECEPTION"], needsBranch: false,
   columns: ["Bệnh nhân", "Ngày sinh · giới · điện thoại"], allowedHint: "Dùng chung luật kiểm tra với form Bệnh nhân mới. Có lỗi ở dòng nào thì không lưu dòng nào.",
-  build: () => build(), fileName: () => "nhap-ho-so-benh-nhan",
+  build: (c) => build(c.voucher), fileName: () => "nhap-ho-so-benh-nhan",
   analyze: (b) => analyze(b),
   async commit(a, c) {
     const p = a.payload as Payload;

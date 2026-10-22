@@ -22,7 +22,7 @@ type LotRow = { id: string; branchId: string; qtyRemaining: number; unitCost: nu
 const dmy = (d: Date) => d.toISOString().slice(0, 10).split("-").reverse().join("/");
 const q2 = (n: number) => Math.round(n * 100) / 100;
 
-async function build(branch: { id: string; name: string }): Promise<Buffer> {
+async function build(branch: { id: string; name: string }, voucher: string): Promise<Buffer> {
   const lots = (await prisma.stockLot.findMany({
     where: { branchId: branch.id, qtyRemaining: { gt: 0 }, expiryDate: { lt: new Date(Date.now() + 30 * DAY) } },
     include: { item: { select: { id: true, code: true, name: true, unit: true } } }, orderBy: { expiryDate: "asc" },
@@ -30,7 +30,7 @@ async function build(branch: { id: string; name: string }): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "YHCT Tinh Hoa";
   const ws = makeSheet(wb, {
-    prefix: "XH",
+    voucher,
     name: SHEET, marker: MARKER, title: "PHIẾU XUẤT HỦY HÀNG", scope: branch.name,
     note: "Liệt kê lô đã hết hạn hoặc hết hạn trong 30 ngày. Điền Số lượng hủy và Lý do cho lô cần hủy. Lô không điền được bỏ qua.",
     cols: COLS, groups: [{ from: 1, to: 8, label: "HỆ THỐNG (không sửa)" }, { from: 9, to: 10, label: "ĐIỀN VÀO ĐÂY", input: true }], frozenCols: 3,
@@ -40,7 +40,7 @@ async function build(branch: { id: string; name: string }): Promise<Buffer> {
     const r = FIRST_ROW + idx;
     const row = ws.getRow(r);
     const e = l.expiryDate as Date;
-    [l.id, l.item.code ?? "", l.item.name, l.item.unit, l.note?.match(/PN-[0-9]{8}-[0-9A-F]{4,6}/)?.[0] ?? "", dmy(e), q2(l.qtyRemaining), e.getTime() < now ? "Đã hết hạn" : "Sắp hết hạn"].forEach((v, i) => (row.getCell(i + 1).value = v));
+    [l.id, l.item.code ?? "", l.item.name, l.item.unit, l.note?.match(/PN-[0-9]{8}-[0-9A-F]{3,6}/)?.[0] ?? "", dmy(e), q2(l.qtyRemaining), e.getTime() < now ? "Đã hết hạn" : "Sắp hết hạn"].forEach((v, i) => (row.getCell(i + 1).value = v));
     styleRow(ws, r, COLS);
     row.getCell(1).font = { size: 7, color: { argb: "FF9CA3AF" } };
     row.getCell(1).alignment = { shrinkToFit: true };
@@ -116,7 +116,7 @@ async function analyze(buf: Buffer, branch: { id: string; name: string }): Promi
 export const huyHang: Importer = {
   id: "xuat-huy", name: "Phiếu xuất hủy hàng", roles: STOCK_WRITE_ROLES, needsBranch: true,
   columns: ["Lô hàng", "Số lượng hủy và lý do"], allowedHint: "Mỗi dòng trừ đúng một lô và ghi vào thẻ kho.",
-  build: (c) => build(c.branch!), fileName: () => "phieu-xuat-huy",
+  build: (c) => build(c.branch!, c.voucher), fileName: () => "phieu-xuat-huy",
   analyze: (b, c) => analyze(b, c.branch!),
   async commit(a, c) {
     const ops = a.payload as Op[];

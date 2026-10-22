@@ -16,7 +16,7 @@ export type Importer = {
   needsBranch: boolean;
   columns: [string, string]; // tiêu đề 2 cột của bảng xem trước
   allowedHint: string;
-  build(ctx: Ctx): Promise<Buffer>;
+  build(ctx: Ctx & { voucher: string }): Promise<Buffer>;
   fileName(ctx: Ctx): string;
   analyze(buf: Buffer, ctx: Ctx): Promise<Analysis>;
   commit(a: Analysis, ctx: Ctx & { fileName: string }): Promise<string>; // trả thông báo thành công

@@ -272,7 +272,7 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
     put(["", "", "", "", "Số dư đầu kỳ", null, null, round(open), ""], true);
     for (const m of mv) {
       run += m.qty;
-      const pn = m.note?.match(/PN-[0-9]{8}-[0-9A-F]{4,6}/)?.[0] ?? "";
+      const pn = m.note?.match(/PN-[0-9]{8}-[0-9A-F]{3,6}/)?.[0] ?? "";
       const code = m.type === "DISPENSE" ? (m.reason?.replace("Phát thuốc ", "") ?? "") : pn;
       put([++n, dmyVN(m.at), m.qty > 0 ? code : "", m.qty < 0 ? code : "", lbl(m), m.qty > 0 ? round(m.qty) : null, m.qty < 0 ? round(-m.qty) : null, round(run), ""]);
     }

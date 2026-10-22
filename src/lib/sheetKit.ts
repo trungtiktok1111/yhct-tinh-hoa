@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { createHash, randomUUID } from "crypto";
+import { createHash } from "crypto";
 
 // Khung chung cho mọi mẫu Excel điền rồi tải lên: cùng bố cục, cùng cách khóa ô, cùng cách đọc.
 // Cấu trúc mỗi mẫu: A1 tiêu đề + mã nhận diện, B2 chi nhánh (hoặc "Toàn hệ thống"), hàng 4 nhãn nhóm,
@@ -17,24 +17,21 @@ export type Group = { from: number; to: number; label: string; input?: boolean }
 
 const fill = (argb: string) => ({ type: "pattern", pattern: "solid", fgColor: { argb } }) as ExcelJS.Fill;
 
-// Số phiếu: mỗi lần tải mẫu sinh một số riêng (vd PN-20261022-A1B2C3), ghi ở ô F1 (khóa).
-// Mỗi số phiếu chỉ nhập được MỘT lần, dù file đã sửa hay chưa, nên không thể nhập trùng.
-export const newVoucher = (prefix: string) =>
-  `${prefix}-${new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10).replace(/-/g, "")}-${randomUUID().slice(0, 6).toUpperCase()}`;
+// Số phiếu do app cấp (lib/voucher.ts), ghi ở ô F1 (khóa). Mỗi số phiếu chỉ nhập được một lần.
 export function stampVoucher(ws: ExcelJS.Worksheet, code: string) {
   const c = ws.getCell(1, 6);
   c.value = `Số phiếu: ${code}`;
   c.font = { bold: true, size: 12, color: { argb: "FFB42318" } };
 }
 export function readVoucher(ws: ExcelJS.Worksheet): string | null {
-  return text(ws.getCell(1, 6).value).match(/^Số phiếu:\s*([A-Z]{2}-\d{8}-[0-9A-F]{6})$/)?.[1] ?? null;
+  return text(ws.getCell(1, 6).value).match(/^Số phiếu:\s*([A-Z]{2}-\d{8}-\d{3,})$/)?.[1] ?? null;
 }
 
-export function makeSheet(wb: ExcelJS.Workbook, o: { prefix: string; name: string; marker: string; title: string; scope: string; note: string; cols: ColSpec[]; groups: Group[]; frozenCols?: number }): ExcelJS.Worksheet {
+export function makeSheet(wb: ExcelJS.Workbook, o: { voucher: string; name: string; marker: string; title: string; scope: string; note: string; cols: ColSpec[]; groups: Group[]; frozenCols?: number }): ExcelJS.Worksheet {
   const ws = wb.addWorksheet(o.name, { views: [{ state: "frozen", xSplit: o.frozenCols ?? 2, ySplit: HEADER_ROW }] });
   ws.getCell("A1").value = `${o.title} · ${o.marker}`;
   ws.getCell("A1").font = { bold: true, size: 14 };
-  stampVoucher(ws, newVoucher(o.prefix));
+  stampVoucher(ws, o.voucher);
   ws.getCell("A2").value = o.scope.startsWith("Toàn") ? "Phạm vi:" : "Chi nhánh:";
   ws.getCell("B2").value = o.scope;
   ws.getCell("A2").font = ws.getCell("B2").font = { bold: true };

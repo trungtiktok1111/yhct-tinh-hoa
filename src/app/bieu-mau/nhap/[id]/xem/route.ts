@@ -4,7 +4,7 @@ import { COST_VIEW_ROLES, hasAny } from "@/lib/permissions";
 import { branchesFor } from "@/lib/stock";
 import { IMPORTERS } from "@/lib/importers";
 import { MAX_BYTES } from "@/lib/importKit";
-import { prisma } from "@/lib/db";
+import { KIND_OF, checkVoucher } from "@/lib/voucher";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,6 +26,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (!branch) return Response.json({ error: "Chọn chi nhánh." }, { status: 400 });
   }
   const a = await imp.analyze(Buffer.from(await f.arrayBuffer()), { branch, staff, cost: hasAny(staff.roles, COST_VIEW_ROLES) });
-  const dup = a.fileErrors.length ? null : await prisma.auditLog.findFirst({ where: { action: "IMPORT", detail: { contains: `#${imp.id}:${a.hash}` }, ...(branch ? { branchId: branch.id } : {}) }, select: { at: true } });
-  return Response.json({ fileErrors: a.fileErrors, rows: a.rows, summary: a.summary, duplicate: !!dup });
+  const vErr = a.fileErrors.length ? null : await checkVoucher(a.hash, KIND_OF[imp.id], branch?.id ?? null);
+  if (vErr) return Response.json({ fileErrors: [vErr], rows: [], summary: "", duplicate: false });
+  return Response.json({ fileErrors: a.fileErrors, rows: a.rows, summary: a.summary, duplicate: false });
 }

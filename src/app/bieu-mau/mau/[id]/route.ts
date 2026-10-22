@@ -3,6 +3,7 @@ import { getCurrentStaff } from "@/lib/auth";
 import { COST_VIEW_ROLES, hasAny } from "@/lib/permissions";
 import { branchesFor } from "@/lib/stock";
 import { IMPORTERS } from "@/lib/importers";
+import { KIND_OF, issueVoucher } from "@/lib/voucher";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -20,7 +21,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const ctx = { branch, staff, cost: hasAny(staff.roles, COST_VIEW_ROLES) };
   let buf: Buffer;
   try {
-    buf = await imp.build(ctx);
+    const voucher = await issueVoucher(KIND_OF[params.id], branch?.id ?? null, staff.fullName);
+    buf = await imp.build({ ...ctx, voucher });
   } catch (e) {
     console.error("Lỗi dựng mẫu", params.id, e);
     return new Response(`Không tạo được mẫu: ${e instanceof Error ? e.message : "lỗi không rõ"}`, { status: 500 });

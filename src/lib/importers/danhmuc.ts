@@ -23,12 +23,12 @@ const COLS: ColSpec[] = [
 type ItemRow = { id: string; code: string | null; name: string; type: string; unit: string; minStock: number; active: boolean; prices: { price: number }[] };
 const q2 = (n: number) => Math.round(n * 100) / 100;
 
-async function build(): Promise<Buffer> {
+async function build(voucher: string): Promise<Buffer> {
   const items = (await prisma.item.findMany({ orderBy: [{ type: "asc" }, { name: "asc" }], include: { prices: { orderBy: { effectiveFrom: "desc" }, take: 1 } } })) as unknown as ItemRow[];
   const wb = new ExcelJS.Workbook();
   wb.creator = "YHCT Tinh Hoa";
   const ws = makeSheet(wb, {
-    prefix: "DM",
+    voucher,
     name: SHEET, marker: MARKER, title: "DANH MỤC MẶT HÀNG VÀ BẢNG GIÁ", scope: "Toàn hệ thống",
     note: "Mặt hàng có sẵn: chỉ sửa Giá bán, Tồn tối thiểu, Trạng thái (ô vàng). Mặt hàng mới: điền ở các dòng xanh nhạt phía dưới.",
     cols: COLS, groups: [{ from: 1, to: 4, label: "THÔNG TIN (có sẵn không sửa; dòng mới điền được)" }, { from: 5, to: 7, label: "ĐIỀN / SỬA Ở ĐÂY", input: true }],
@@ -168,7 +168,7 @@ async function analyze(buf: Buffer): Promise<Analysis> {
 export const danhMuc: Importer = {
   id: "danh-muc", name: "Danh mục mặt hàng và bảng giá", roles: ITEM_MANAGER_ROLES, needsBranch: false,
   columns: ["Mặt hàng", "Thay đổi"], allowedHint: "Chỉ các dòng có thay đổi được lưu. Đổi giá được ghi vào lịch sử giá.",
-  build: () => build(), fileName: () => "danh-muc-mat-hang",
+  build: (c) => build(c.voucher), fileName: () => "danh-muc-mat-hang",
   analyze: (b) => analyze(b),
   async commit(a, c) {
     const p = a.payload as Payload;

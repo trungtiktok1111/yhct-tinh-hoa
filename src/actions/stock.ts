@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { nextItemCode } from "@/lib/stock";
 import { analyzeSheet, MAX_BYTES } from "@/lib/stockSheet";
 import { randomUUID } from "crypto";
+import { checkVoucher, claimVoucher, releaseVoucher } from "@/lib/voucher";
 import { logAudit, requireRole, type CurrentStaff } from "@/lib/auth";
 import { ITEM_MANAGER_ROLES, STOCK_WRITE_ROLES, hasAny } from "@/lib/permissions";
 
@@ -300,7 +301,7 @@ export async function cancelReceipt(formData: FormData) {
   const staff = await requireRole(...ITEM_MANAGER_ROLES);
   const P = "/kho/nhap";
   const pn = str(formData, "pn");
-  if (!pn || !/^PN-\d{8}-[0-9A-F]{4,6}$/.test(pn)) back(P, "Số phiếu không hợp lệ.");
+  if (!pn || !/^PN-\d{8}-[0-9A-F]{3,6}$/.test(pn)) back(P, "Số phiếu không hợp lệ.");
   const branchId = assertBranch(staff, str(formData, "branchId"), P);
   const lots = await prisma.stockLot.findMany({ where: { branchId, note: { contains: pn } }, include: { item: true } });
   if (!lots.length) back(P, "Không tìm thấy phiếu này.");
@@ -345,10 +346,9 @@ export async function importStockExcel(formData: FormData) {
   if (bad.length) back(P, `Còn ${bad.length} dòng lỗi (dòng ${bad.slice(0, 5).map((r) => r.row).join(", ")}...). Sửa file rồi tải lại.`);
   const warned = res.rows.filter((r) => r.warnings.length);
   if (warned.length && formData.get("confirmOdd") !== "1") back(P, "Có dòng cảnh báo, hãy tích xác nhận đã kiểm tra rồi nhập lại.");
-  const dup = await prisma.auditLog.findFirst({
-    where: { action: "IMPORT_RECEIPT", branchId, detail: { contains: `#${res.hash}` } }, select: { id: true },
-  });
-  if (dup) back(P, "Số phiếu này đã được nhập trước đó. Để tránh nhập trùng, hãy tải phiếu nhập kho mới.");
+  const vErr = await checkVoucher(res.hash, "PN", branchId);
+  if (vErr) back(P, vErr);
+  if (!(await claimVoucher(res.hash, staff.fullName))) back(P, `Số phiếu ${res.hash} vừa được nhập bởi người khác. Hãy tải phiếu mới.`);
 
   const pn = res.hash; // số phiếu in trên file mẫu, mỗi số chỉ nhập được một lần
   const label = `${pn} · Excel ${f.name}`.slice(0, 80);
@@ -389,7 +389,8 @@ export async function importStockExcel(formData: FormData) {
       }),
     ]);
   } catch {
-    back(P, "Không lưu được (có thể mã hàng vừa bị trùng). Chưa có gì được ghi, hãy thử lại.");
+    await releaseVoucher(res.hash);
+    back(P, "Không lưu được (có thể mã hàng vừa bị trùng). Chưa có gì được ghi, số phiếu vẫn dùng được, hãy thử lại.");
   }
   for (const it of newItems) {
     await logAudit({ staffId: staff.id, staffName: staff.fullName, action: "CREATE", entity: "Item", entityId: it.id, detail: `${it.name} · ${it.price}đ/${it.unit} (nhập Excel)` });

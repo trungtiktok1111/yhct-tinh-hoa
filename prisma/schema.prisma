@@ -404,6 +404,28 @@ model AuditLog {
   @@index([entity, entityId])
 }
 
+// Số phiếu của các mẫu Excel điền rồi tải lên: cấp liên tục theo loại phiếu và ngày (PN-20261022-001, -002...),
+// mỗi số chỉ dùng một lần, không cấp lại. Trạng thái: ISSUED (đã cấp, chưa nhập) → USED (đã nhập) hoặc VOID (đã hủy).
+model Voucher {
+  id       String    @id @default(cuid())
+  code     String    @unique
+  kind     String // PN, KK, XH, DM, BN
+  day      String // yyyymmdd (giờ Việt Nam)
+  seq      Int
+  branchId String?
+  status   String    @default("ISSUED")
+  issuedAt DateTime  @default(now())
+  issuedBy String?
+  usedAt   DateTime?
+  usedBy   String?
+  voidedAt DateTime?
+  voidedBy String?
+  note     String?
+
+  @@index([kind, day])
+  @@index([status])
+}
+
 // ---------- Kho và giá ----------
 
 // Mặt hàng bán/dùng: dược liệu (tính theo gam) hoặc thành phẩm (viên, hộp, chai...).

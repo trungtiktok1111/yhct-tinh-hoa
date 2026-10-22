@@ -90,7 +90,7 @@ export const BUILDERS: Record<string, (c: Ctx) => Promise<{ buf: Buffer; file: s
     const rows: Row[] = lots.map((l, k) => {
       const e = l.expiryDate?.getTime();
       const st = e == null ? "Chưa ghi hạn" : e < now ? "Đã hết hạn" : e < now + SOON ? "Sắp hết hạn (≤ 90 ngày)" : "Còn hạn";
-      return { stt: k + 1, code: l.item.code ?? "", name: l.item.name, pn: l.note?.match(/PN-[0-9]{8}-[0-9A-F]{4,6}/)?.[0] ?? "", at: fmtDay(l.receivedAt), sup: l.supplier ?? "", exp: l.expiryDate ? new Date(l.expiryDate.getTime()).toISOString().slice(0, 10).split("-").reverse().join("/") : "", unit: l.item.unit, left: Math.round(l.qtyRemaining * 100) / 100, cost: c.cost ? l.unitCost : null, val: c.cost ? Math.round(l.qtyRemaining * l.unitCost) : null, st };
+      return { stt: k + 1, code: l.item.code ?? "", name: l.item.name, pn: l.note?.match(/PN-[0-9]{8}-[0-9A-F]{3,6}/)?.[0] ?? "", at: fmtDay(l.receivedAt), sup: l.supplier ?? "", exp: l.expiryDate ? new Date(l.expiryDate.getTime()).toISOString().slice(0, 10).split("-").reverse().join("/") : "", unit: l.item.unit, left: Math.round(l.qtyRemaining * 100) / 100, cost: c.cost ? l.unitCost : null, val: c.cost ? Math.round(l.qtyRemaining * l.unitCost) : null, st };
     });
     const cols: KitCol[] = [
       { h: "STT", w: 6, key: "stt", kind: "center" }, { h: "Mã hàng", w: 10, key: "code", kind: "center" }, { h: "Tên mặt hàng", w: 28, key: "name" }, { h: "Số phiếu nhập", w: 19, key: "pn", kind: "center" },
