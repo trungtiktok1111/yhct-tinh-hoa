@@ -161,7 +161,7 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
                           <div><Link href={link({ sel: it.id })} className="font-semibold hover:underline">{it.name}</Link>{latin(it) && <div className="text-xs italic text-brand-ink/70">{latin(it)}</div>}</div>
                         </div>
                       </td>
-                      <td>{it.type === "HERB" ? "Vị thuốc" : "Thành phẩm"}</td>
+                      <td className="whitespace-nowrap">{it.type === "HERB" ? "Vị thuốc" : "Thành phẩm"}</td>
                       <td className="text-sm">{a.nearest ? <>{a.lot}<div className="text-xs text-brand-ink/70">{dateVN(a.nearest)}</div></> : "—"}</td>
                       <td className="text-sm">{a.supplier ?? "—"}</td>
                       <td className={`text-right font-bold tabular-nums ${low ? "text-red-700" : ""}`}>{qty(a.total)}</td>

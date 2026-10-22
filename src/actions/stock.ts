@@ -24,6 +24,8 @@ function num(fd: FormData, key: string): number | undefined {
 function money(fd: FormData, key: string): number | undefined {
   const t = str(fd, key);
   if (!t) return undefined;
+  // "120.5" hay "1,5" là số thập phân, không phải hàng nghìn: từ chối thay vì âm thầm hiểu thành 1205 / 15.
+  if (/[.,]\d{1,2}$/.test(t)) return undefined;
   const n = Number(t.replace(/[.,\s]/g, ""));
   return Number.isInteger(n) && n >= 0 ? n : undefined;
 }
@@ -131,6 +133,21 @@ export async function receiveStock(formData: FormData) {
   if (expiryDate && isNaN(expiryDate.getTime())) back(P, "Hạn dùng không hợp lệ.");
   const item = await prisma.item.findUnique({ where: { id: itemId } });
   if (!item || !item.active) back(P, "Mặt hàng không tồn tại hoặc đã ngừng.");
+
+  // Chặn nhầm số: giá/số lượng khác thường phải được tích xác nhận mới lưu.
+  const [lastLot, curPrice] = await Promise.all([
+    prisma.stockLot.findFirst({ where: { itemId }, orderBy: { receivedAt: "desc" }, select: { unitCost: true } }),
+    prisma.itemPrice.findFirst({ where: { itemId }, orderBy: { effectiveFrom: "desc" }, select: { price: true } }),
+  ]);
+  const warn: string[] = [];
+  if (unitCost === 0) warn.push("giá nhập bằng 0");
+  if (lastLot && lastLot.unitCost > 0 && (unitCost > lastLot.unitCost * 3 || unitCost * 3 < lastLot.unitCost))
+    warn.push(`giá nhập ${unitCost}đ lệch nhiều so với lần nhập trước (${lastLot.unitCost}đ)`);
+  if (curPrice && unitCost > curPrice.price) warn.push(`giá nhập ${unitCost}đ cao hơn giá bán ${curPrice.price}đ (bán lỗ)`);
+  if (item.type === "HERB" && (quantity < 10 || quantity > 200000))
+    warn.push(`số lượng ${quantity}g bất thường (dược liệu tính bằng gam, 1 kg = 1000)`);
+  if (warn.length && formData.get("confirmOdd") !== "1")
+    back(P, `Kiểm tra lại: ${warn.join("; ")}. Nếu đúng, tích "Tôi đã kiểm tra" rồi lưu lại.`);
 
   const supplierId = str(formData, "supplierId");
   const sup = supplierId ? await prisma.supplier.findUnique({ where: { id: supplierId } }) : null;

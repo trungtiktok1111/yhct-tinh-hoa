@@ -67,6 +67,7 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
             <input name="supplier" className={input} />
           </label>
           <input name="note" placeholder="Ghi chú (số hóa đơn, lô...)" className={`${input} sm:col-span-2`} />
+          <label className="flex items-center gap-2 text-sm text-brand-ink/80 sm:col-span-2"><input type="checkbox" name="confirmOdd" value="1" />Tôi đã kiểm tra giá và số lượng (chỉ cần tích khi hệ thống báo giá hoặc số lượng khác thường)</label>
           <button type="submit" className={`${btn} sm:col-span-2`}>Nhập kho</button>
         </form>
       )}
