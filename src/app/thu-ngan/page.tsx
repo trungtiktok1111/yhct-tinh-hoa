@@ -94,14 +94,14 @@ export default async function CashierPage({ searchParams }: { searchParams: { cn
 
       {tab === "cho" && (
         <Panel icon={FileText} title={`Khám xong, chờ lập hóa đơn (${pending.length})`} pad={false}>
-          {pending.length === 0 && <p className="p-4 text-sm text-brand-ink/60">Không có.</p>}
+          {pending.length === 0 && <p className="p-4 text-sm text-brand-ink/70">Không có.</p>}
           <div className="divide-y divide-slate-100">
             {pending.map((v) => (
               <form key={v.id} action={createExamInvoice} className="flex flex-wrap items-end gap-3 p-4">
                 <input type="hidden" name="visitId" value={v.id} />
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold">{v.queueNo}. {v.patient.fullName}</div>
-                  <div className="text-xs text-brand-ink/60">{patientCode(v.patient.seq)} · {v.exam?.prescription?._count.lines ?? 0} dòng thuốc</div>
+                  <div className="text-xs text-brand-ink/70">{patientCode(v.patient.seq)} · {v.exam?.prescription?._count.lines ?? 0} dòng thuốc</div>
                 </div>
                 <label className="text-xs">Công khám (để trống = giá dịch vụ đầu tiên)
                   <input name="fee" inputMode="numeric" placeholder="tự động" className={`${input} w-36`} />
@@ -126,14 +126,14 @@ export default async function CashierPage({ searchParams }: { searchParams: { cn
       )}
 
       <Panel icon={Receipt} title={tab === "cho" ? `Hóa đơn chờ thanh toán (${shown.length})` : tab === "da" ? `Hóa đơn đã thanh toán (${shown.length})` : `Hóa đơn bán lẻ (${shown.length})`} pad={false}>
-        {shown.length === 0 ? <p className="p-4 text-sm text-brand-ink/60">Chưa có hóa đơn.</p> : (
+        {shown.length === 0 ? <p className="p-4 text-sm text-brand-ink/70">Chưa có hóa đơn.</p> : (
           <div className="overflow-x-auto">
             <table>
               <thead><tr><th className="w-12">STT</th><th>Số hóa đơn</th><th>Thời gian</th><th>Bệnh nhân</th><th>Nội dung</th><th className="text-right">Tổng tiền</th><th>Phương thức</th><th>Trạng thái</th><th></th></tr></thead>
               <tbody>
                 {shown.map((i, k) => (
                   <tr key={i.id} className={i.status === "VOID" ? "opacity-50" : ""}>
-                    <td className="text-brand-ink/60">{k + 1}</td>
+                    <td className="text-brand-ink/70">{k + 1}</td>
                     <td><Link href={`/thu-ngan/${i.id}`} className="font-mono text-sky-700 hover:underline">HD-{String(i.seq).padStart(6, "0")}</Link></td>
                     <td>{timeVN(i.createdAt)}</td>
                     <td className="font-semibold">{i.patient?.fullName ?? i.customerName ?? "Khách lẻ"}</td>

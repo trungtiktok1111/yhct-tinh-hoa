@@ -182,11 +182,11 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
                 <Link href={`/kham/${q.id}`} className={`flex items-start gap-3 px-4 py-3 hover:bg-slate-50 ${q.id === visit.id ? "bg-amber-50" : ""}`}>
                   <span className="w-5 pt-0.5 text-lg font-bold text-brand-deep">{q.queueNo}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">{q.patient.fullName}</span>
-                    <span className="block truncate text-xs text-brand-ink/55">{q.reason ?? "—"}</span>
+                    <span className="block truncate font-semibold" title={q.patient.fullName}>{q.patient.fullName}</span>
+                    <span className="block truncate text-xs text-brand-ink/70" title={q.reason ?? undefined}>{q.reason ?? "—"}</span>
                     <span className={`chip mt-1 ${c}`}>{t}</span>
                   </span>
-                  <span className="text-xs text-brand-ink/55">{timeVN(q.createdAt)}</span>
+                  <span className="text-xs text-brand-ink/70">{timeVN(q.createdAt)}</span>
                 </Link>
               </li>
             );
@@ -218,7 +218,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
             ["Lượt khám", `Số ${visit.queueNo} · ${timeVN(visit.createdAt)} · ${visit.branch.name}`],
             ["Lý do đến khám", visit.reason],
           ] as [string, string | null | undefined][]).map(([k, v]) => (
-            <div key={k}><dt className="text-xs uppercase tracking-wide text-brand-ink/50">{k}</dt><dd className="font-medium">{v || "—"}</dd></div>
+            <div key={k}><dt className="text-xs uppercase tracking-wide text-brand-ink/70">{k}</dt><dd className="font-medium">{v || "—"}</dd></div>
           ))}
         </dl>
         <form action={saveAllergies} className="flex flex-wrap items-end gap-2 rounded-xl border border-red-200 bg-red-50/60 p-3">
@@ -431,7 +431,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
                 <label className="block text-sm">Mã ICD-10
                   <input name="icd10Code" defaultValue={exam.icd10Code ?? ""} placeholder="vd: M47.8" className={input} />
                 </label>
-                <p className="text-xs text-brand-ink/60">Mã ICD-10 do bác sĩ tự nhập (chưa có danh mục tra cứu tự động).</p>
+                <p className="text-xs text-brand-ink/70">Mã ICD-10 do bác sĩ tự nhập (chưa có danh mục tra cứu tự động).</p>
               </div>
             </div>
           </fieldset>

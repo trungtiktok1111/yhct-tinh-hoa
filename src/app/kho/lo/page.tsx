@@ -52,7 +52,7 @@ export default async function LotsPage({ searchParams }: { searchParams: { cn?: 
                   </tr>
                 );
               })}
-              {lots.length === 0 && <tr><td colSpan={8} className="p-4 text-center text-brand-ink/60">Không có lô nào.</td></tr>}
+              {lots.length === 0 && <tr><td colSpan={8} className="p-4 text-center text-brand-ink/70">Không có lô nào.</td></tr>}
             </tbody>
           </table>
         </div>

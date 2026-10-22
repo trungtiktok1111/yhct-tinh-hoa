@@ -13,7 +13,7 @@ export function Pagination({
   params?: Record<string, string | undefined>;
 }) {
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  if (pages <= 1) return <p className="text-xs text-brand-ink/50">{total} mục</p>;
+  if (pages <= 1) return <p className="text-xs text-brand-ink/70">{total} mục</p>;
   const href = (p: number) => {
     const sp = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) if (v) sp.set(k, v);

@@ -72,7 +72,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { ok?:
       </div>
 
       <div className="card flex flex-wrap items-center gap-2 text-sm font-semibold">
-        <span className="mr-2 text-brand-ink/60">Quy trình thẩm định:</span>
+        <span className="mr-2 text-brand-ink/70">Quy trình thẩm định:</span>
         {[["Bản nháp", "chip-blue"], ["Chờ thẩm định", "chip-amber"], ["Đã duyệt", "chip-green"], ["Cần chỉnh sửa", "chip-red"]].map(([t, c], i) => (
           <span key={t} className="flex items-center gap-2">{i > 0 && <ArrowRight className="h-4 w-4 text-brand-ink/40" />}<span className={`chip ${c}`}>{i + 1}. {t}</span></span>
         ))}
@@ -80,7 +80,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { ok?:
 
       <div className="grid xl:grid-cols-[1fr_22rem] gap-4 items-start">
         <Panel pad={false} icon={BookOpen} title="Thống kê nội dung theo chuyên mục" right={
-          <form className="flex items-center gap-1"><Search className="h-4 w-4 text-brand-ink/50" /><input name="q" defaultValue={searchParams.q ?? ""} placeholder="Tìm chuyên mục…" className="w-40 rounded-lg border border-slate-300 px-2 py-1 text-sm" /></form>
+          <form className="flex items-center gap-1"><Search className="h-4 w-4 text-brand-ink/70" /><input name="q" defaultValue={searchParams.q ?? ""} placeholder="Tìm chuyên mục…" className="w-40 rounded-lg border border-slate-300 px-2 py-1 text-sm" /></form>
         }>
           <div className="overflow-x-auto">
             <table>
@@ -91,7 +91,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { ok?:
                   const I = ICON[r.label] ?? BookOpen;
                   return (
                     <tr key={r.label}>
-                      <td className="text-brand-ink/60">{i + 1}</td>
+                      <td className="text-brand-ink/70">{i + 1}</td>
                       <td><span className="flex items-center gap-3 font-semibold"><span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-50 text-emerald-700"><I className="h-4 w-4" /></span>{r.label}</span></td>
                       <td className="text-center"><span className="chip chip-blue">{r.byStatus.DRAFT ?? 0}</span></td>
                       <td className="text-center"><span className="chip chip-amber">{r.byStatus.PENDING_REVIEW ?? 0}</span></td>
@@ -112,26 +112,26 @@ export default async function AdminPage({ searchParams }: { searchParams: { ok?:
           <aside className="space-y-4">
             <Panel icon={Building2} title="Chi nhánh" right={<Link href="/quan-tri/chi-nhanh" className="text-sky-700 hover:underline">Quản lý</Link>}>
               <ul className="space-y-2 text-sm">
-                {branches.map((b) => <li key={b.id}><b>{b.name}</b><div className="text-xs text-brand-ink/60">{b.address ?? "Chưa có địa chỉ"}</div></li>)}
+                {branches.map((b) => <li key={b.id}><b>{b.name}</b><div className="text-xs text-brand-ink/70">{b.address ?? "Chưa có địa chỉ"}</div></li>)}
               </ul>
             </Panel>
             <Panel icon={UserCog} title="Nhân viên & phân quyền" right={<Link href="/quan-tri/nhan-vien" className="text-sky-700 hover:underline">Quản lý</Link>}>
               <div className="grid grid-cols-4 gap-2 text-center text-sm">
                 {[["Tổng", staffCount], ["Quản lý", admins], ["Bác sĩ", doctors], ["Khác", others]].map(([t, n]) => (
-                  <div key={t as string} className="rounded-lg bg-slate-50 py-2"><div className="text-lg font-bold">{n}</div><div className="text-xs text-brand-ink/60">{t}</div></div>
+                  <div key={t as string} className="rounded-lg bg-slate-50 py-2"><div className="text-lg font-bold">{n}</div><div className="text-xs text-brand-ink/70">{t}</div></div>
                 ))}
               </div>
-              <div className="mt-2 text-xs text-brand-ink/50">{Object.values(ROLES).length} vai trò trong hệ thống</div>
+              <div className="mt-2 text-xs text-brand-ink/70">{Object.values(ROLES).length} vai trò trong hệ thống</div>
             </Panel>
             <Panel icon={ScrollText} title="Nhật ký thao tác" right={<Link href="/quan-tri/nhat-ky" className="text-sky-700 hover:underline">Xem tất cả</Link>}>
               <ul className="space-y-2.5 text-sm">
-                {logs.length === 0 && <li className="text-brand-ink/60">Chưa có.</li>}
+                {logs.length === 0 && <li className="text-brand-ink/70">Chưa có.</li>}
                 {logs.map((l) => (
                   <li key={l.id} className="flex gap-2">
                     <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${dot(l.action)}`} />
                     <div>
                       <div><b>{l.staffName ?? "Hệ thống"}</b> <span className="text-brand-ink/70">{l.action} {l.entity}</span></div>
-                      <div className="text-xs text-brand-ink/50">{dateVN(l.at)} {timeVN(l.at)}</div>
+                      <div className="text-xs text-brand-ink/70">{dateVN(l.at)} {timeVN(l.at)}</div>
                     </div>
                   </li>
                 ))}
@@ -156,7 +156,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { ok?:
           ].map((x) => (
             <Link key={x.href} href={x.href} className="card flex items-center gap-3 hover:bg-emerald-50">
               <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><x.icon className="h-5 w-5" /></span>
-              <span className="min-w-0 flex-1"><b>{x.t}</b><span className="block text-xs text-brand-ink/60">{x.d}</span></span>
+              <span className="min-w-0 flex-1"><b>{x.t}</b><span className="block text-xs text-brand-ink/70">{x.d}</span></span>
               <ArrowRight className="h-4 w-4 text-brand-ink/40" />
             </Link>
           ))}

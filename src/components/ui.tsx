@@ -42,7 +42,7 @@ export function Stat({ icon: Icon, label, value, unit, tone = "green", href }: {
       <div className="min-w-0">
         <div className="text-sm font-bold leading-tight">{label}</div>
         <div className={`text-2xl font-bold leading-tight ${tx}`}>{value}</div>
-        {unit && <div className="text-xs text-brand-ink/60">{unit}</div>}
+        {unit && <div className="text-xs text-brand-ink/70">{unit}</div>}
       </div>
       <Icon className={`absolute -bottom-3 -right-2 h-16 w-16 opacity-[0.1] ${tx}`} />
     </div>

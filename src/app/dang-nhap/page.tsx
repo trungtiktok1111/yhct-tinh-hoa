@@ -16,7 +16,7 @@ export default async function LoginPage() {
           <div className="text-center">
             <Image src="/images/logo-badge.png" alt="" width={72} height={72} className="mx-auto rounded-full ring-2 ring-brand-gold/60" />
             <div className="brand-serif font-bold text-xl text-brand-deep mt-2">YHCT TINH HOA</div>
-            <div className="text-sm text-brand-ink/60">Phòng khám Đông y</div>
+            <div className="text-sm text-brand-ink/70">Phòng khám Đông y</div>
           </div>
           <LoginForm />
         </div>

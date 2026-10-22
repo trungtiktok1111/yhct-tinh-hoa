@@ -115,20 +115,20 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
               {tab === "da" && <input type="date" name="ngay" defaultValue={day} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />}
               <button className="rounded-lg bg-brand-deep px-4 py-1.5 text-sm font-semibold text-white">Tìm kiếm</button>
             </form>
-            {shown.length === 0 ? <p className="p-4 text-sm text-brand-ink/60">Không có đơn nào.</p> : (
+            {shown.length === 0 ? <p className="p-4 text-sm text-brand-ink/70">Không có đơn nào.</p> : (
               <div className="overflow-x-auto">
                 <table>
                   <thead><tr><th className="w-10">STT</th><th>Bệnh nhân</th><th>Mã đơn</th><th>Bác sĩ kê đơn</th><th className="text-right">Số thang</th><th>Thanh toán</th><th>Ưu tiên</th><th></th></tr></thead>
                   <tbody>
                     {shown.map((i, k) => (
                       <tr key={i.id} className={sel?.id === i.id ? "bg-amber-50" : ""}>
-                        <td className="text-brand-ink/60">{k + 1}</td>
+                        <td className="text-brand-ink/70">{k + 1}</td>
                         <td>
                           <Link href={href({ sel: i.id })} className="font-semibold hover:underline">{name(i)}</Link>
-                          {i.patient && <div className="text-xs text-brand-ink/55">{patientCode(i.patient.seq)} · {ageOf(i.patient.birthDate, i.patient.birthYear)} tuổi · {i.patient.phone}</div>}
+                          {i.patient && <div className="text-xs text-brand-ink/70">{patientCode(i.patient.seq)} · {ageOf(i.patient.birthDate, i.patient.birthYear)} tuổi · {i.patient.phone}</div>}
                           {i.patient?.allergies && <span className="chip chip-red mt-0.5">Dị ứng: {i.patient.allergies}</span>}
                         </td>
-                        <td className="whitespace-nowrap font-mono text-xs">{code(i)}<div className="text-brand-ink/55">{i.paidAt ? timeVN(i.paidAt) : ""}</div></td>
+                        <td className="whitespace-nowrap font-mono text-xs">{code(i)}<div className="text-brand-ink/70">{i.paidAt ? timeVN(i.paidAt) : ""}</div></td>
                         <td className="max-w-[9rem] truncate whitespace-nowrap text-sm" title={doctorOf(i) || ""}>{doctorOf(i) || (i.kind === "RETAIL" ? "Bán lẻ" : "—")}</td>
                         <td className="text-right">{i.visit?.exam?.prescription?.thangCount || "—"}</td>
                         <td className="whitespace-nowrap"><span className="chip chip-green">Đã thanh toán</span></td>
@@ -150,7 +150,7 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
                 return (
                   <li key={t} className="flex flex-col items-center gap-1 text-center">
                     <span className={`grid h-9 w-9 place-items-center rounded-full text-sm font-bold text-white ${state === "done" ? "bg-emerald-600" : state === "cur" ? "bg-amber-500" : "bg-slate-300"}`}>{state === "done" ? "✓" : n}</span>
-                    <span className="text-sm font-semibold">{t}</span><span className="text-xs text-brand-ink/60">{sub}</span>
+                    <span className="text-sm font-semibold">{t}</span><span className="text-xs text-brand-ink/70">{sub}</span>
                   </li>
                 );
               })}
@@ -166,9 +166,9 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-amber-100 text-amber-700"><Pill className="h-5 w-5" /></span>
                 <div className="min-w-0 flex-1">
                   <div className="font-bold">{sel.patient?.fullName ?? sel.customerName ?? "Khách lẻ"}</div>
-                  <div className="text-xs text-brand-ink/60">{sel.patient ? `${patientCode(sel.patient.seq)} · ${ageOf(sel.patient.birthDate, sel.patient.birthYear)} tuổi · ${SEX_LABEL[sel.patient.sex] ?? ""} · ${sel.patient.phone}` : "Bán lẻ"}</div>
+                  <div className="text-xs text-brand-ink/70">{sel.patient ? `${patientCode(sel.patient.seq)} · ${ageOf(sel.patient.birthDate, sel.patient.birthYear)} tuổi · ${SEX_LABEL[sel.patient.sex] ?? ""} · ${sel.patient.phone}` : "Bán lẻ"}</div>
                 </div>
-                <div className="text-right text-xs text-brand-ink/60">{code(sel)}<br />{dateVN(sel.visit?.createdAt ?? sel.createdAt)}</div>
+                <div className="text-right text-xs text-brand-ink/70">{code(sel)}<br />{dateVN(sel.visit?.createdAt ?? sel.createdAt)}</div>
               </div>
               {sel.patient?.allergies && <div className="warn-box text-sm"><b>Dị ứng:</b> {sel.patient.allergies}</div>}
               <div className="flex gap-1 text-sm font-semibold">
@@ -203,10 +203,10 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
               )}
               {dt === "tt" && (
                 <dl className="space-y-1.5 text-sm">
-                  <div className="flex justify-between"><dt className="text-brand-ink/60">Bác sĩ kê đơn</dt><dd className="font-medium">{sel.visit?.exam?.doctorName ?? "—"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-brand-ink/60">Số thang</dt><dd className="font-medium">{rx?.thangCount || "—"}</dd></div>
-                  <div><dt className="text-brand-ink/60">Cách sắc, cách dùng</dt><dd className="font-medium">{rx?.decoctionNote || "—"}</dd></div>
-                  <div><dt className="text-brand-ink/60">Dặn dò</dt><dd className="font-medium">{sel.visit?.exam?.advice || "—"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-brand-ink/70">Bác sĩ kê đơn</dt><dd className="font-medium">{sel.visit?.exam?.doctorName ?? "—"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-brand-ink/70">Số thang</dt><dd className="font-medium">{rx?.thangCount || "—"}</dd></div>
+                  <div><dt className="text-brand-ink/70">Cách sắc, cách dùng</dt><dd className="font-medium">{rx?.decoctionNote || "—"}</dd></div>
+                  <div><dt className="text-brand-ink/70">Dặn dò</dt><dd className="font-medium">{sel.visit?.exam?.advice || "—"}</dd></div>
                 </dl>
               )}
               {dt === "gc" && <p className="text-sm">{sel.note?.replace("[DEMO]", "").trim() || "Không có ghi chú."}</p>}
@@ -234,7 +234,7 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
                   <Link href={`/duoc/${sel.id}/in?kieu=huongdan`} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 py-2 text-sm font-semibold hover:bg-slate-50"><FileText className="h-4 w-4" />In hướng dẫn</Link>
                 </div>
                 <button formAction={confirmDispense} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-deep py-3 font-semibold text-white hover:bg-brand-deeper"><CheckCircle2 className="h-5 w-5" />Xác nhận phát thuốc</button>
-                <p className="text-xs text-brand-ink/60">Xác nhận sẽ trừ kho theo lô hết hạn sớm nhất. Cần tick đủ 4 bước.</p>
+                <p className="text-xs text-brand-ink/70">Xác nhận sẽ trừ kho theo lô hết hạn sớm nhất. Cần tick đủ 4 bước.</p>
               </form>
             )}
           </aside>

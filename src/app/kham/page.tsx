@@ -59,7 +59,7 @@ export default async function ExamQueuePage({ searchParams }: { searchParams: { 
         <Stat icon={CheckCircle2} label="Đã khám" value={count("DONE")} unit="bệnh nhân" tone="green" />
       </div>
       <Panel pad={false} icon={Users} title={`Danh sách khám (${visits.length})`}>
-        {visits.length === 0 ? <p className="p-5 text-brand-ink/60">Hôm nay chưa có lượt khám nào. Lễ tân cần tiếp đón bệnh nhân trước.</p> : (
+        {visits.length === 0 ? <p className="p-5 text-brand-ink/70">Hôm nay chưa có lượt khám nào. Lễ tân cần tiếp đón bệnh nhân trước.</p> : (
           <div className="overflow-x-auto">
             <table>
               <thead><tr><th className="w-14">STT</th><th>Bệnh nhân</th><th>Mã BN</th><th>Giờ đến</th><th>Lý do khám</th><th>Bác sĩ</th><th>Trạng thái</th><th className="text-center">Thao tác</th></tr></thead>
@@ -72,7 +72,7 @@ export default async function ExamQueuePage({ searchParams }: { searchParams: { 
                       <td>
                         <span className="font-semibold">{v.patient.fullName}</span>{v.priority && <span className="chip chip-red ml-1.5">Ưu tiên</span>}
                         {v.patient.allergies && <AlertTriangle className="inline h-4 w-4 ml-1 text-red-600" aria-label={`Dị ứng: ${v.patient.allergies}`} />}
-                        <div className="text-xs text-brand-ink/55">{SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi</div>
+                        <div className="text-xs text-brand-ink/70">{SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi</div>
                       </td>
                       <td className="text-brand-ink/70">{patientCode(v.patient.seq)}</td>
                       <td>{timeVN(v.createdAt)}</td>

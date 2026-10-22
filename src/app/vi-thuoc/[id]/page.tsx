@@ -26,7 +26,7 @@ function Fact({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div className="flex gap-2 text-sm">
-      <span className="text-brand-ink/50 shrink-0 w-28">{label}</span>
+      <span className="text-brand-ink/70 shrink-0 w-28">{label}</span>
       <span className="text-brand-ink font-medium whitespace-pre-wrap">{value}</span>
     </div>
   );
@@ -36,7 +36,7 @@ function Prose({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-brand-ink/45 font-semibold mb-1">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-brand-ink/70 font-semibold mb-1">{label}</div>
       <p className="text-sm text-brand-ink whitespace-pre-wrap leading-relaxed">{value}</p>
     </div>
   );
@@ -80,10 +80,10 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
               <StatusPill status={herb.status} />
             </div>
             {herb.latinName && (
-              <p className="italic text-brand-ink/60 text-sm mt-0.5">{herb.latinName}</p>
+              <p className="italic text-brand-ink/70 text-sm mt-0.5">{herb.latinName}</p>
             )}
             {herb.aliases && (
-              <p className="text-sm text-brand-ink/50 mt-1">Tên khác: {herb.aliases}</p>
+              <p className="text-sm text-brand-ink/70 mt-1">Tên khác: {herb.aliases}</p>
             )}
           </div>
         </div>
@@ -163,18 +163,18 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
               ))}
             </div>
           ) : (
-            <p className="text-sm text-brand-ink/40">Chưa có dữ liệu.</p>
+            <p className="text-sm text-brand-ink/70">Chưa có dữ liệu.</p>
           )}
           {herb.meridians && (
-            <p className="text-sm text-brand-ink/60 mt-3">
-              <span className="text-brand-ink/40">Quy kinh (nguyên văn): </span>
+            <p className="text-sm text-brand-ink/70 mt-3">
+              <span className="text-brand-ink/70">Quy kinh (nguyên văn): </span>
               {herb.meridians}
             </p>
           )}
         </div>
         {herb.meridians && (
           <div className="card flex flex-col items-center justify-center gap-1 px-6">
-            <span className="text-xs uppercase tracking-wide text-brand-ink/40">Vòng Quy Kinh</span>
+            <span className="text-xs uppercase tracking-wide text-brand-ink/70">Vòng Quy Kinh</span>
             <MeridianWheel meridians={herb.meridians} />
           </div>
         )}
@@ -239,16 +239,16 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
                 className="herb-chip !rounded-lg !py-2 !px-3 justify-start hover:bg-brand-gold/20 transition-colors"
               >
                 <span className="truncate">{fi.formula.name}</span>
-                {fi.role && <span className="text-brand-ink/40 font-normal shrink-0">· {fi.role}</span>}
+                {fi.role && <span className="text-brand-ink/70 font-normal shrink-0">· {fi.role}</span>}
               </Link>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-brand-ink/40">Chưa thuộc bài thuốc nào trong hệ thống.</p>
+          <p className="text-sm text-brand-ink/70">Chưa thuộc bài thuốc nào trong hệ thống.</p>
         )}
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-brand-ink/40 pt-1">
+      <div className="flex items-center gap-2 text-xs text-brand-ink/70 pt-1">
         <ScrollText className="h-3.5 w-3.5" strokeWidth={1.75} />
         {herb.source ? <span>Nguồn: {herb.source.title}</span> : <span className="text-amber-700">Chưa gắn nguồn cho mục này.</span>}
       </div>

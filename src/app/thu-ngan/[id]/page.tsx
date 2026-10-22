@@ -60,7 +60,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
 
   const lineRow = (l: (typeof inv.lines)[number], k: number) => (
     <tr key={l.id}>
-      <td className="text-brand-ink/60">{k + 1}</td>
+      <td className="text-brand-ink/70">{k + 1}</td>
       <td className="text-sm">{l.name}</td>
       <td className="text-sm">{l.unit}</td>
       {open ? (
@@ -95,11 +95,11 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
         <div className="space-y-4 print:hidden xl:col-span-1">
           <Sec n={1} icon={User} title="Thông tin bệnh nhân">
             <div className="grid gap-x-6 gap-y-2 p-4 text-sm sm:grid-cols-4">
-              <div><div className="text-xs text-brand-ink/55">Khách</div><b>{who}</b></div>
-              <div><div className="text-xs text-brand-ink/55">Mã BN</div><b>{inv.patient ? patientCode(inv.patient.seq) : "—"}</b></div>
-              <div><div className="text-xs text-brand-ink/55">Tuổi</div><b>{inv.patient ? ageOf(inv.patient.birthDate, inv.patient.birthYear) : "—"}</b></div>
-              <div><div className="text-xs text-brand-ink/55">Số điện thoại</div><b>{inv.patient?.phone ?? "—"}</b></div>
-              <div className="sm:col-span-4"><div className="text-xs text-brand-ink/55">Địa chỉ</div><b>{inv.patient ? [inv.patient.address, inv.patient.ward, inv.patient.district, inv.patient.province].filter(Boolean).join(", ") || "—" : "—"}</b></div>
+              <div><div className="text-xs text-brand-ink/70">Khách</div><b>{who}</b></div>
+              <div><div className="text-xs text-brand-ink/70">Mã BN</div><b>{inv.patient ? patientCode(inv.patient.seq) : "—"}</b></div>
+              <div><div className="text-xs text-brand-ink/70">Tuổi</div><b>{inv.patient ? ageOf(inv.patient.birthDate, inv.patient.birthYear) : "—"}</b></div>
+              <div><div className="text-xs text-brand-ink/70">Số điện thoại</div><b>{inv.patient?.phone ?? "—"}</b></div>
+              <div className="sm:col-span-4"><div className="text-xs text-brand-ink/70">Địa chỉ</div><b>{inv.patient ? [inv.patient.address, inv.patient.ward, inv.patient.district, inv.patient.province].filter(Boolean).join(", ") || "—" : "—"}</b></div>
             </div>
           </Sec>
 
@@ -108,7 +108,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
               <table>
                 {head}
                 <tbody>
-                  {svcLines.length === 0 && <tr><td colSpan={8} className="p-3 text-sm text-brand-ink/60">Chưa có dịch vụ.</td></tr>}
+                  {svcLines.length === 0 && <tr><td colSpan={8} className="p-3 text-sm text-brand-ink/70">Chưa có dịch vụ.</td></tr>}
                   {svcLines.map((l, k) => lineRow(l, k))}
                 </tbody>
               </table>
@@ -132,7 +132,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
               <table>
                 {head}
                 <tbody>
-                  {drugLines.length === 0 && <tr><td colSpan={8} className="p-3 text-sm text-brand-ink/60">Chưa có thuốc.</td></tr>}
+                  {drugLines.length === 0 && <tr><td colSpan={8} className="p-3 text-sm text-brand-ink/70">Chưa có thuốc.</td></tr>}
                   {drugLines.map((l, k) => lineRow(l, k))}
                 </tbody>
               </table>
@@ -175,7 +175,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
                 </>
               )}
               <div className="flex justify-between border-t border-slate-100 pt-2"><span>Tạm tính</span><b className="tabular-nums">{vnd(inv.subtotal)}</b></div>
-              {open && (inv.discount > 0 || inv.vat > 0) && <div className="flex justify-between text-xs text-brand-ink/60"><span>Giảm {vnd(inv.discount)} · VAT {vnd(inv.vat)}</span></div>}
+              {open && (inv.discount > 0 || inv.vat > 0) && <div className="flex justify-between text-xs text-brand-ink/70"><span>Giảm {vnd(inv.discount)} · VAT {vnd(inv.vat)}</span></div>}
               <div className="flex items-center justify-between rounded-xl bg-amber-50 px-3 py-2.5"><span className="font-bold">Tổng thanh toán</span><b className="text-2xl text-amber-600 tabular-nums">{vnd(inv.total)}</b></div>
             </div>
           </Sec>
@@ -205,7 +205,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
         </div>
 
         <section className="card space-y-3 text-sm xl:sticky xl:top-[4.5rem] 2xl:col-start-3 xl:col-start-2 print:border-0 print:shadow-none">
-          <div className="print:hidden text-xs font-semibold uppercase tracking-wide text-brand-ink/50">Xem trước hóa đơn</div>
+          <div className="print:hidden text-xs font-semibold uppercase tracking-wide text-brand-ink/70">Xem trước hóa đơn</div>
           <div className="text-center">
             <Image src="/images/logo-badge.png" alt="" width={56} height={56} className="mx-auto rounded-full" />
             <div className="brand-serif text-lg font-bold text-brand-deep">YHCT TINH HOA</div>
@@ -231,7 +231,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
             {inv.method && <div className="flex justify-between"><span>Hình thức</span><span>{METHOD[inv.method]}</span></div>}
             {inv.cashGiven != null && <div className="flex justify-between"><span>Khách đưa / Tiền thừa</span><span>{vnd(inv.cashGiven)} / {vnd(inv.cashGiven - inv.total)}</span></div>}
           </div>
-          <div className="text-center text-xs italic text-brand-ink/60">Cảm ơn Quý khách! Chúc Quý khách luôn mạnh khỏe!</div>
+          <div className="text-center text-xs italic text-brand-ink/70">Cảm ơn Quý khách! Chúc Quý khách luôn mạnh khỏe!</div>
         </section>
       </div>
     </div>

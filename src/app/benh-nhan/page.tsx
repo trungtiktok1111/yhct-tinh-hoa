@@ -96,7 +96,7 @@ export default async function PatientListPage({ searchParams }: { searchParams: 
             <tbody>
               {patients.map((p, i) => (
                 <tr key={p.id} className={selP?.id === p.id ? "bg-emerald-50" : ""}>
-                  <td className="text-brand-ink/60">{(page - 1) * PAGE_SIZE + i + 1}</td>
+                  <td className="text-brand-ink/70">{(page - 1) * PAGE_SIZE + i + 1}</td>
                   <td><Link href={sp({ sel: p.id })} className="font-semibold hover:underline">{p.fullName}</Link></td>
                   <td className="text-brand-ink/70">{patientCode(p.seq)}</td>
                   <td>{SEX_LABEL[p.sex] ?? p.sex} · {ageOf(p.birthDate, p.birthYear)}</td>
@@ -117,7 +117,7 @@ export default async function PatientListPage({ searchParams }: { searchParams: 
                   </td>
                 </tr>
               ))}
-              {patients.length === 0 && <tr><td colSpan={9} className="p-6 text-center text-brand-ink/60">{q ? "Không tìm thấy bệnh nhân." : "Chưa có bệnh nhân nào."}</td></tr>}
+              {patients.length === 0 && <tr><td colSpan={9} className="p-6 text-center text-brand-ink/70">{q ? "Không tìm thấy bệnh nhân." : "Chưa có bệnh nhân nào."}</td></tr>}
             </tbody>
           </table>
         </div>
@@ -127,14 +127,14 @@ export default async function PatientListPage({ searchParams }: { searchParams: 
           <div className="flex items-start gap-3">
             <span className="grid h-14 w-14 place-items-center rounded-full bg-violet-100 text-lg font-bold text-violet-700">{selP.fullName.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase()}</span>
             <Link href={`/benh-nhan/${selP.id}/sua`} className="order-last flex items-center gap-1 rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50"><Pencil className="h-3 w-3" />Sửa</Link>
-            <div className="min-w-0 flex-1"><div className="text-lg font-bold">{selP.fullName}</div><div className="text-sm text-brand-ink/60">{patientCode(selP.seq)} · {SEX_LABEL[selP.sex] ?? selP.sex} · {ageOf(selP.birthDate, selP.birthYear)} tuổi</div></div>
+            <div className="min-w-0 flex-1"><div className="text-lg font-bold">{selP.fullName}</div><div className="text-sm text-brand-ink/70">{patientCode(selP.seq)} · {SEX_LABEL[selP.sex] ?? selP.sex} · {ageOf(selP.birthDate, selP.birthYear)} tuổi</div></div>
             <Link href={sp({})} className="rounded-full p-1.5 hover:bg-slate-100"><X className="h-5 w-5" /></Link>
           </div>
           <ul className="space-y-1.5 text-sm">
-            <li className="flex gap-2"><Phone className="mt-0.5 h-4 w-4 text-brand-ink/50" />{selP.phone}</li>
-            {selP.birthDate && <li className="flex gap-2"><CalendarDays className="mt-0.5 h-4 w-4 text-brand-ink/50" />{dateVN(selP.birthDate)}</li>}
-            {(selP.address || selP.province) && <li className="flex gap-2"><MapPin className="mt-0.5 h-4 w-4 text-brand-ink/50" />{[selP.address, selP.ward, selP.district, selP.province].filter(Boolean).join(", ")}</li>}
-            {selP.occupation && <li className="flex gap-2"><Briefcase className="mt-0.5 h-4 w-4 text-brand-ink/50" />{selP.occupation}</li>}
+            <li className="flex gap-2"><Phone className="mt-0.5 h-4 w-4 text-brand-ink/70" />{selP.phone}</li>
+            {selP.birthDate && <li className="flex gap-2"><CalendarDays className="mt-0.5 h-4 w-4 text-brand-ink/70" />{dateVN(selP.birthDate)}</li>}
+            {(selP.address || selP.province) && <li className="flex gap-2"><MapPin className="mt-0.5 h-4 w-4 text-brand-ink/70" />{[selP.address, selP.ward, selP.district, selP.province].filter(Boolean).join(", ")}</li>}
+            {selP.occupation && <li className="flex gap-2"><Briefcase className="mt-0.5 h-4 w-4 text-brand-ink/70" />{selP.occupation}</li>}
           </ul>
           <div className="rounded-xl border border-slate-200 p-3 text-sm">
             <div className="mb-1 flex items-center gap-1.5 font-bold"><AlertTriangle className="h-4 w-4 text-red-600" />Cảnh báo y tế</div>
@@ -150,7 +150,7 @@ export default async function PatientListPage({ searchParams }: { searchParams: 
             </div>
           )}
           {selP.visits[0]?.exam?.followUpDate && (
-            <div className="rounded-xl border border-slate-200 p-3 text-sm"><div className="mb-1 font-bold">Hẹn tái khám</div><div className="text-base font-bold">{dateVN(selP.visits[0].exam.followUpDate)} <span className="text-sm font-normal text-brand-ink/60">({Math.ceil((selP.visits[0].exam.followUpDate.getTime() - Date.now()) / 86400000) >= 0 ? `còn ${Math.ceil((selP.visits[0].exam.followUpDate.getTime() - Date.now()) / 86400000)} ngày` : "đã quá hạn"})</span></div></div>
+            <div className="rounded-xl border border-slate-200 p-3 text-sm"><div className="mb-1 font-bold">Hẹn tái khám</div><div className="text-base font-bold">{dateVN(selP.visits[0].exam.followUpDate)} <span className="text-sm font-normal text-brand-ink/70">({Math.ceil((selP.visits[0].exam.followUpDate.getTime() - Date.now()) / 86400000) >= 0 ? `còn ${Math.ceil((selP.visits[0].exam.followUpDate.getTime() - Date.now()) / 86400000)} ngày` : "đã quá hạn"})</span></div></div>
           )}
           {selP.note && <div className="rounded-xl border border-slate-200 p-3 text-sm"><div className="mb-1 flex items-center gap-1.5 font-bold"><StickyNote className="h-4 w-4" />Ghi chú</div>{selP.note.replace("[DEMO]", "").trim()}</div>}
           <div className="grid grid-cols-2 gap-2 pt-1">

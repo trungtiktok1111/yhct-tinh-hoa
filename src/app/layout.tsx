@@ -96,7 +96,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     <span className="h-9 w-9 rounded-full bg-brand-deep text-brand-goldLight grid place-items-center text-sm font-bold">{initials}</span>
                     <span className="hidden sm:block text-left leading-tight">
                       <span className="block text-sm font-bold uppercase">{staff.fullName}</span>
-                      <span className="block text-[11px] text-brand-ink/60">{rolesLabel(staff.role)}</span>
+                      <span className="block text-[11px] text-brand-ink/70">{rolesLabel(staff.role)}</span>
                     </span>
                     <ChevronDown className="hidden sm:block h-4 w-4 text-slate-500" />
                   </summary>
@@ -112,7 +112,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
               <main className="flex-1 p-4 md:px-5 md:py-4 pb-24 md:pb-4 w-full">
                 {children}
-                <footer className="mt-4 pt-3 border-t border-slate-200 text-center text-xs text-brand-ink/50">
+                <footer className="mt-4 pt-3 border-t border-slate-200 text-center text-xs text-brand-ink/70">
                   YHCT Tinh Hoa — bản demo kỹ thuật, dữ liệu minh họa, không dùng chẩn đoán hoặc điều trị thật.
                 </footer>
               </main>

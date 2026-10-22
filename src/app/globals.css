@@ -142,6 +142,8 @@ main tbody td { padding: .6rem .75rem; }
 main tbody tr { border-bottom: 1px solid #eef2ef; }
 main tbody tr:hover { background: #f8faf9; }
 main input:not([type=checkbox]):not([type=radio]), main select, main textarea { border-radius: .6rem; }
+/* Ô tích lớn hơn mặc định (dễ bấm trên máy tính bảng), đúng màu thương hiệu, không bị co khi nhãn xuống dòng */
+main input[type=checkbox], main input[type=radio] { accent-color: #1b4332; width: 1.1rem; height: 1.1rem; flex-shrink: 0; cursor: pointer; }
 
 @media print {
   body { background: #fff; }

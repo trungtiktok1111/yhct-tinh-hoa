@@ -42,7 +42,7 @@ export async function NotificationBell({ staff, branchIds }: { staff: CurrentSta
       </summary>
       <div className="absolute right-0 z-30 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
         <div className="px-3 py-2 text-sm font-bold">Thông báo</div>
-        {rows.length === 0 && <p className="px-3 pb-3 text-sm text-brand-ink/60">Không có thông báo mới.</p>}
+        {rows.length === 0 && <p className="px-3 pb-3 text-sm text-brand-ink/70">Không có thông báo mới.</p>}
         {rows.map((r) => (
           <Link key={r.href} href={r.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-slate-50">
             <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${r.c}`}><r.Icon className="h-4 w-4" /></span>

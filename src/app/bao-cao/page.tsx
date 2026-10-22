@@ -173,7 +173,7 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
             </div>
             <ul className="w-full space-y-1.5 text-sm">
               {Object.entries(METHOD).map(([k, v]) => (
-                <li key={k} className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm" style={{ background: COL[k] }} />{v}<b className="ml-auto whitespace-nowrap pl-3 tabular-nums">{vnd(byMethod.get(k) ?? 0)}</b><span className="w-12 text-right text-xs text-brand-ink/60">{(((byMethod.get(k) ?? 0) / mTotal) * 100).toFixed(1).replace(".", ",")}%</span></li>
+                <li key={k} className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm" style={{ background: COL[k] }} />{v}<b className="ml-auto whitespace-nowrap pl-3 tabular-nums">{vnd(byMethod.get(k) ?? 0)}</b><span className="w-12 text-right text-xs text-brand-ink/70">{(((byMethod.get(k) ?? 0) / mTotal) * 100).toFixed(1).replace(".", ",")}%</span></li>
               ))}
               <li className="border-t pt-1.5 text-brand-ink/70">Khám: {byKind.get("EXAM")?.n ?? 0} HĐ · {vnd(byKind.get("EXAM")?.sum ?? 0)}</li>
               <li className="text-brand-ink/70">Bán lẻ: {byKind.get("RETAIL")?.n ?? 0} HĐ · {vnd(byKind.get("RETAIL")?.sum ?? 0)}</li>
@@ -185,7 +185,7 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
       {tab === "kham-benh" && (
         <div className="grid lg:grid-cols-2 gap-4 items-start">
           <Panel icon={Stethoscope} title="Top bệnh lý khám nhiều nhất">
-            {dis.length === 0 && <p className="text-sm text-brand-ink/60">Chưa có bệnh án hoàn tất trong kỳ.</p>}
+            {dis.length === 0 && <p className="text-sm text-brand-ink/70">Chưa có bệnh án hoàn tất trong kỳ.</p>}
             <ul className="space-y-2.5">
               {dis.map((d) => (
                 <li key={d.diseaseText} className="text-sm">
@@ -208,7 +208,7 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
       {tab === "tong-quan" && (
         <div className="grid items-start gap-4 lg:grid-cols-3">
           <Panel icon={Leaf} title="Top 5 vị thuốc sử dụng nhiều nhất">
-            {topQty.length === 0 && <p className="text-sm text-brand-ink/60">Chưa có.</p>}
+            {topQty.length === 0 && <p className="text-sm text-brand-ink/70">Chưa có.</p>}
             <ul className="space-y-2.5">
               {topQty.map((t) => (
                 <li key={t.name} className="text-sm"><div className="flex justify-between"><span>{t.name}</span><b className="tabular-nums">{fq(t.qty)} {t.unit}</b></div><div className="mt-1 h-2.5 rounded bg-slate-100"><div className="h-2.5 rounded bg-brand-deep" style={{ width: `${(t.qty / maxQty) * 100}%` }} /></div></li>
@@ -216,7 +216,7 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
             </ul>
           </Panel>
           <Panel icon={Stethoscope} title="Top 5 bệnh lý khám nhiều nhất">
-            {dis.length === 0 && <p className="text-sm text-brand-ink/60">Chưa có bệnh án hoàn tất trong kỳ.</p>}
+            {dis.length === 0 && <p className="text-sm text-brand-ink/70">Chưa có bệnh án hoàn tất trong kỳ.</p>}
             <ul className="space-y-2.5">
               {dis.slice(0, 5).map((d) => (
                 <li key={d.diseaseText} className="text-sm"><div className="flex justify-between"><span>{d.diseaseText}</span><b>{d._count._all}</b></div><div className="mt-1 h-2.5 rounded bg-slate-100"><div className="h-2.5 rounded bg-amber-500" style={{ width: `${(d._count._all / maxDis) * 100}%` }} /></div></li>
@@ -230,13 +230,13 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
             </div>
             {kt === "sap" ? (
               <ul className="space-y-1.5 text-sm">
-                {expiring.length === 0 && <li className="text-brand-ink/60">Không có.</li>}
+                {expiring.length === 0 && <li className="text-brand-ink/70">Không có.</li>}
                 {expiring.slice(0, 6).map((l, n) => { const dd = Math.ceil(((l.expiryDate as Date).getTime() - Date.now()) / DAY); return (
                   <li key={n} className="flex justify-between gap-2"><span>{l.item.name}</span><span className={`chip ${dd < 0 ? "chip-red" : dd <= 30 ? "chip-amber" : "chip-blue"} tabular-nums`}>{fq(l.qtyRemaining)} {l.item.unit} · {dd < 0 ? "hết hạn" : `${dd} ngày`}</span></li>); })}
               </ul>
             ) : (
               <ul className="space-y-1.5 text-sm">
-                {low.length === 0 && <li className="text-brand-ink/60">Không có.</li>}
+                {low.length === 0 && <li className="text-brand-ink/70">Không có.</li>}
                 {low.slice(0, 6).map((i) => <li key={i.id} className="flex justify-between gap-2"><span>{i.name}</span><span className="chip chip-red tabular-nums">{fq(i.have)}/{fq(i.minStock)} {i.unit}</span></li>)}
               </ul>
             )}
@@ -250,13 +250,13 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
             <table>
               <thead><tr><th className="w-10">STT</th><th>Ngày giờ</th><th>Loại giao dịch</th><th>Mã hóa đơn</th><th>Bệnh nhân</th><th>Nội dung</th><th className="text-right">Số tiền</th><th>Hình thức</th><th>Trạng thái</th></tr></thead>
               <tbody>
-                {recent.length === 0 && <tr><td colSpan={9} className="p-4 text-center text-brand-ink/60">Chưa có giao dịch.</td></tr>}
+                {recent.length === 0 && <tr><td colSpan={9} className="p-4 text-center text-brand-ink/70">Chưa có giao dịch.</td></tr>}
                 {recent.map((i, k) => {
                   const fee = i.lines.filter((l) => l.kind === "FEE");
                   const drugs = i.lines.length - fee.length;
                   return (
                     <tr key={i.id}>
-                      <td className="text-brand-ink/60">{k + 1}</td>
+                      <td className="text-brand-ink/70">{k + 1}</td>
                       <td>{dateVN(i.paidAt as Date)} {new Date((i.paidAt as Date).getTime() + 7 * 3600000).toISOString().slice(11, 16)}</td>
                       <td>{i.kind === "RETAIL" ? "Thuốc" : drugs ? "Khám bệnh + Thuốc" : "Khám bệnh"}</td>
                       <td><Link href={`/thu-ngan/${i.id}`} className="font-mono text-sky-700 hover:underline">HD-{String(i.seq).padStart(6, "0")}</Link></td>
@@ -276,25 +276,25 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
 
       {tab === "thuoc-kho" && <div className="grid lg:grid-cols-3 gap-4 items-start">
         <Panel icon={Leaf} title="Thuốc bán nhiều nhất (theo tiền)">
-          {topList.length === 0 && <p className="text-sm text-brand-ink/60">Chưa có.</p>}
+          {topList.length === 0 && <p className="text-sm text-brand-ink/70">Chưa có.</p>}
           <ul className="space-y-2.5">
             {topList.slice(0, 8).map((t, i) => (
               <li key={t.name} className="text-sm">
-                <div className="flex justify-between"><span><b className="mr-1.5 text-brand-ink/50">{i + 1}.</b>{t.name}</span><span className="tabular-nums text-brand-ink/70">{fq(t.qty)} {t.unit} · <b className="text-brand-ink">{vnd(t.sum)}</b></span></div>
+                <div className="flex justify-between"><span><b className="mr-1.5 text-brand-ink/70">{i + 1}.</b>{t.name}</span><span className="tabular-nums text-brand-ink/70">{fq(t.qty)} {t.unit} · <b className="text-brand-ink">{vnd(t.sum)}</b></span></div>
                 <div className="mt-1 h-2 rounded bg-slate-100"><div className="h-2 rounded bg-brand-deep" style={{ width: `${(t.sum / maxTop) * 100}%` }} /></div>
               </li>
             ))}
           </ul>
         </Panel>
         <Panel icon={AlertTriangle} title="Sắp hết hàng (dưới tối thiểu)" tone="text-red-600">
-          <p className="mb-2 text-xs text-brand-ink/60">Tính tồn của chi nhánh đang chọn, không tính lô hết hạn.</p>
-          {low.length === 0 && <p className="text-sm text-brand-ink/60">Không có.</p>}
+          <p className="mb-2 text-xs text-brand-ink/70">Tính tồn của chi nhánh đang chọn, không tính lô hết hạn.</p>
+          {low.length === 0 && <p className="text-sm text-brand-ink/70">Không có.</p>}
           <ul className="space-y-1.5 text-sm">
             {low.map((i) => <li key={i.id} className="flex justify-between gap-2"><span>{i.name}</span><span className="chip chip-red tabular-nums">{fq(i.have)}/{fq(i.minStock)} {i.unit}</span></li>)}
           </ul>
         </Panel>
         <Panel icon={CalendarClock} title="Hết hạn trong 30 ngày" tone="text-amber-600">
-          {expiring.length === 0 && <p className="text-sm text-brand-ink/60">Không có.</p>}
+          {expiring.length === 0 && <p className="text-sm text-brand-ink/70">Không có.</p>}
           <ul className="space-y-1.5 text-sm">
             {expiring.map((l, n) => (
               <li key={n} className="flex justify-between gap-2">

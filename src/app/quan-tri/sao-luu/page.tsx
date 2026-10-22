@@ -18,7 +18,7 @@ export default async function BackupPage() {
         <table>
           <thead><tr><th>Thời điểm</th><th>Người thực hiện</th><th>Trạng thái</th><th className="text-right">Dung lượng</th><th>Ghi chú</th></tr></thead>
           <tbody>
-            {logs.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-brand-ink/60">Chưa có lần sao lưu nào.</td></tr>}
+            {logs.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-brand-ink/70">Chưa có lần sao lưu nào.</td></tr>}
             {logs.map((l) => (
               <tr key={l.id}>
                 <td>{dateVN(l.at)} {timeVN(l.at)}</td>

@@ -102,7 +102,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
             </select>
             <button className="rounded-lg bg-brand-deep px-3 py-1.5 text-sm font-semibold text-white">Lọc</button>
           </form>
-          {visits.length === 0 ? <p className="p-5 text-brand-ink/60">Không có lượt khám nào.</p> : (
+          {visits.length === 0 ? <p className="p-5 text-brand-ink/70">Không có lượt khám nào.</p> : (
             <div className="overflow-x-auto">
               <table>
                 <thead><tr><th className="w-14">STT</th><th>Bệnh nhân</th><th>Mã BN</th><th>Giờ đến</th><th>Lý do khám</th><th>Bác sĩ</th><th>Trạng thái</th><th className="text-center">Thao tác</th></tr></thead>
@@ -116,7 +116,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
                           <Link href={`/benh-nhan/${v.patient.id}`} className="font-semibold hover:underline">{v.patient.fullName}</Link>
                           {v.priority && <span className="chip chip-red ml-1.5">Ưu tiên</span>}
                           {v.patient.allergies && <AlertTriangle className="inline h-4 w-4 ml-1 text-red-600" aria-label="Có dị ứng" />}
-                          <div className="text-xs text-brand-ink/55">{SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi</div>
+                          <div className="text-xs text-brand-ink/70">{SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi</div>
                         </td>
                         <td className="whitespace-nowrap text-brand-ink/70">{patientCode(v.patient.seq)}</td>
                         <td className="whitespace-nowrap">{timeVN(v.createdAt)}</td>
@@ -160,7 +160,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input name="q" defaultValue={q} placeholder="Nhập tên, SĐT hoặc mã BN…" className="w-full rounded-xl border border-slate-300 py-2.5 pl-9 pr-3" />
               </div>
-              <div className="text-xs text-brand-ink/60">hoặc quét CCCD / thẻ BHYT / mã BN (máy quét gõ vào ô bên dưới)</div>
+              <div className="text-xs text-brand-ink/70">hoặc quét CCCD / thẻ BHYT / mã BN (máy quét gõ vào ô bên dưới)</div>
               <div className="relative">
                 <QrCode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                 <input name="q" placeholder="Quét mã…" className="w-full rounded-xl border border-dashed border-slate-400 bg-slate-50 py-2.5 pl-9 pr-3" />
@@ -169,12 +169,12 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
             </form>
             {q && (
               <div className="mt-3 space-y-2">
-                {found.length === 0 ? <p className="text-sm text-brand-ink/60">Không thấy bệnh nhân “{q}”.</p> : found.map((p) => (
+                {found.length === 0 ? <p className="text-sm text-brand-ink/70">Không thấy bệnh nhân “{q}”.</p> : found.map((p) => (
                   <form key={p.id} action={createVisit} className="rounded-xl border border-slate-200 p-2.5 text-sm">
                     <input type="hidden" name="patientId" value={p.id} />
                     <input type="hidden" name="branchId" value={branch.id} />
                     <div className="font-semibold">{p.fullName}</div>
-                    <div className="text-xs text-brand-ink/60">{patientCode(p.seq)} · {SEX_LABEL[p.sex] ?? p.sex} · {ageOf(p.birthDate, p.birthYear)} tuổi · {p.phone}</div>
+                    <div className="text-xs text-brand-ink/70">{patientCode(p.seq)} · {SEX_LABEL[p.sex] ?? p.sex} · {ageOf(p.birthDate, p.birthYear)} tuổi · {p.phone}</div>
                     <input name="reason" placeholder="Lý do khám" className="mt-2 w-full rounded-lg border border-slate-300 px-2 py-1.5" />
                     <select name="doctorName" className="mt-2 w-full rounded-lg border border-slate-300 px-2 py-1.5">
                       <option value="">Bác sĩ: tự phân</option>
@@ -191,14 +191,14 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
             <Link href="/benh-nhan/moi" className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-slate-300 py-2.5 font-semibold hover:bg-slate-50"><UserPlus className="h-4 w-4" />Bệnh nhân mới</Link>
           </Panel>
           <Panel icon={Clock} title="Bệnh nhân đến trong ngày" tone="text-amber-600">
-            {allVisits.length === 0 ? <p className="text-sm text-brand-ink/60">Chưa có.</p> : (
+            {allVisits.length === 0 ? <p className="text-sm text-brand-ink/70">Chưa có.</p> : (
               <ul className="space-y-2.5">
                 {allVisits.slice(-8).map((v) => {
                   const [t, c] = chip[v.status] ?? [v.status, "chip-gray"];
                   return (
                     <li key={v.id} className="flex items-center gap-3 text-sm">
                       <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500" />
-                      <span className="w-11 text-brand-ink/60">{timeVN(v.createdAt)}</span>
+                      <span className="w-11 text-brand-ink/70">{timeVN(v.createdAt)}</span>
                       <span className="min-w-0 flex-1 truncate font-semibold">{v.patient.fullName}</span>
                       <span className={`chip ${c}`}>{t}</span>
                     </li>
@@ -217,7 +217,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
               <ul className="mt-3 space-y-2 border-t border-slate-100 pt-3">
                 {notes.map((n) => (
                   <li key={n.id} className="flex items-start gap-2 text-sm">
-                    <div className="min-w-0 flex-1"><div>{n.text}</div><div className="text-xs text-brand-ink/50">{n.staffName} · {timeVN(n.createdAt)}</div></div>
+                    <div className="min-w-0 flex-1"><div>{n.text}</div><div className="text-xs text-brand-ink/70">{n.staffName} · {timeVN(n.createdAt)}</div></div>
                     <form action={deleteQuickNote}><input type="hidden" name="id" value={n.id} /><input type="hidden" name="branchId" value={branch.id} /><button title="Xóa" className="text-slate-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button></form>
                   </li>
                 ))}

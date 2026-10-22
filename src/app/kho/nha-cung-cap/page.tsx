@@ -24,7 +24,7 @@ export default async function SuppliersPage({ searchParams }: { searchParams: { 
       <KhoTabs active="ncc" />
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
       <Panel pad={false} title={`Danh sách (${list.length})`}>
-        {list.length === 0 ? <p className="p-4 text-sm text-brand-ink/60">Chưa có nhà cung cấp.</p> : (
+        {list.length === 0 ? <p className="p-4 text-sm text-brand-ink/70">Chưa có nhà cung cấp.</p> : (
           <table>
             <thead><tr><th>Tên</th><th>Điện thoại</th><th>Địa chỉ</th><th className="text-right">Số lô</th><th>Nhập gần nhất</th><th /></tr></thead>
             <tbody>
@@ -32,7 +32,7 @@ export default async function SuppliersPage({ searchParams }: { searchParams: { 
                 const st = stat.get(s.id);
                 return (
                   <tr key={s.id} className={s.active ? "" : "opacity-50"}>
-                    <td className="font-semibold">{s.name}{s.note && <div className="text-xs font-normal text-brand-ink/55">{s.note}</div>}</td>
+                    <td className="font-semibold">{s.name}{s.note && <div className="text-xs font-normal text-brand-ink/70">{s.note}</div>}</td>
                     <td>{s.phone ?? "—"}</td><td>{s.address ?? "—"}</td>
                     <td className="text-right">{st?._count._all ?? 0}</td>
                     <td>{st?._max.receivedAt ? dateVN(st._max.receivedAt) : "—"}</td>
