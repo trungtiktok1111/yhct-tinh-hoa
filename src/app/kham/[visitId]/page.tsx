@@ -243,7 +243,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
       {/* 1. Hỏi bệnh và tứ chẩn */}
       <section className="card space-y-3" id="tu-chan">
         <h2 className="font-semibold text-brand-deep">Lý do khám, bệnh sử và tứ chẩn</h2>
-        <form action={saveFindings} className="space-y-3">
+        <form action={saveFindings} data-draft className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
             <label className="block text-sm">Lý do khám / triệu chứng chính
@@ -370,7 +370,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
 
       <section className="card space-y-3" id="kham-lam-sang">
         <h2 className="font-semibold text-brand-deep">Sinh hiệu và khám thực thể</h2>
-        <form action={saveClinical} className="space-y-3">
+        <form action={saveClinical} data-draft className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -390,7 +390,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
 
       <section className="card space-y-3" id="chan-doan">
         <h2 className="font-semibold text-brand-deep">Chẩn đoán</h2>
-        <form action={saveDiagnosis} className="space-y-3">
+        <form action={saveDiagnosis} data-draft className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
             <div className="grid gap-3 lg:grid-cols-2">
@@ -441,7 +441,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
 
       <section className="card space-y-3" id="phap-tri">
         <h2 className="font-semibold text-brand-deep">Pháp trị và bát pháp</h2>
-        <form action={savePrinciple} className="space-y-3">
+        <form action={savePrinciple} data-draft className="space-y-3">
           {hidden}
           <fieldset disabled={locked} className="space-y-3">
             <div className="grid gap-2 sm:grid-cols-2">
@@ -483,7 +483,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
           </div>
         )}
 
-        <form action={savePrescriptionMeta} className="flex flex-wrap items-end gap-3">
+        <form action={savePrescriptionMeta} data-draft className="flex flex-wrap items-end gap-3">
           {hidden}
           <fieldset disabled={locked} className="flex flex-wrap items-end gap-3 w-full">
             <label className="text-sm">Số thang
@@ -659,7 +659,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         )}
         {!locked && <SaveDraftButton />}
         <PrintButton label="In bệnh án" />
-        {!locked && <a href="#dan-do" className="rounded-xl bg-brand-deep px-5 py-2.5 font-semibold text-white hover:bg-brand-deeper">Hoàn tất khám ▸</a>}
+        {!locked && <a href="#hoan-tat" className="rounded-xl bg-brand-deep px-5 py-2.5 font-semibold text-white hover:bg-brand-deeper">Hoàn tất khám ▸</a>}
       </div>
       </div>
     </div>
