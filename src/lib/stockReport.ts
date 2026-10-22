@@ -6,8 +6,9 @@ import { prisma } from "@/lib/db";
 // Nhập = nhập kho + điều chỉnh tăng (kiểm kê thừa). Xuất = phát thuốc + điều chỉnh giảm (kiểm kê thiếu, hủy).
 
 const GREEN = "FF1B4332";
-const nfQ = "#,##0.##";
-const nfV = "#,##0";
+// Số 0 hiện "-" theo thông lệ kế toán; số lẻ chỉ hiện khi có phần lẻ (tránh "600." hay "600,00").
+const nfV = '#,##0;-#,##0;"-"';
+const nfQ = (v: number) => (Number.isInteger(v) ? '#,##0;-#,##0;"-"' : '#,##0.00;-#,##0.00;"-"');
 
 type Mv = { at: Date; itemId: string; type: string; qty: number; reason: string | null; invoiceId: string | null; cost: number; note: string | null };
 
@@ -30,33 +31,34 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
   const start = new Date(fromDay.getTime() - VN); // 00:00 giờ VN của ngày bắt đầu
   const end = new Date(toDay.getTime() + 86400_000 - VN); // hết ngày kết thúc
   const [items, moves, lots] = await Promise.all([
-    prisma.item.findMany({ where: { OR: [{ active: true }, { moves: { some: { branchId: branch.id } } }] }, orderBy: [{ type: "asc" }, { name: "asc" }], select: { id: true, code: true, name: true, unit: true, type: true } }),
+    prisma.item.findMany({ orderBy: [{ type: "asc" }, { name: "asc" }], select: { id: true, code: true, name: true, unit: true, type: true, active: true } }),
     prisma.stockMove.findMany({
-      where: { branchId: branch.id, at: { lt: end } }, orderBy: { at: "asc" },
+      where: { branchId: branch.id, at: { gte: start } }, orderBy: { at: "asc" },
       select: { at: true, itemId: true, lotId: true, type: true, qty: true, reason: true, invoiceId: true, lot: { select: { unitCost: true, note: true } } },
     }),
-    prisma.stockLot.findMany({ where: { branchId: branch.id }, select: { id: true, itemId: true, qtyRemaining: true, qtyReceived: true, unitCost: true, receivedAt: true, note: true } }),
+    prisma.stockLot.findMany({ where: { branchId: branch.id }, select: { id: true, itemId: true, qtyRemaining: true, qtyReceived: true, unitCost: true } }),
   ]);
-  const byItem = new Map<string, Mv[]>();
-  for (const m of moves) {
-    const arr = byItem.get(m.itemId) ?? [];
-    arr.push({ at: m.at, itemId: m.itemId, type: m.type, qty: m.qty, reason: m.reason, invoiceId: m.invoiceId, cost: m.lot?.unitCost ?? 0, note: m.lot?.note ?? null });
-    byItem.set(m.itemId, arr);
-  }
-  // Lô có từ trước khi app ghi sổ (không có biến động nhập): coi như nhập đầu tại ngày nhận lô, để tồn đầu kỳ đủ.
-  const hasReceipt = new Set(moves.filter((m) => m.type === "RECEIPT" && m.lotId).map((m) => m.lotId));
+  // Tồn cuối kỳ lấy từ tồn thực của các lô, lùi lại theo các biến động sau ngày kết thúc.
+  // Tồn đầu kỳ = tồn cuối − nhập + xuất. Nhờ vậy báo cáo luôn khớp tồn thực tế, kể cả khi sổ cũ thiếu chứng từ.
+  const cur = new Map<string, { q: number; v: number }>();
   for (const l of lots) {
-    if (hasReceipt.has(l.id) || l.receivedAt >= end) continue;
-    const arr = byItem.get(l.itemId) ?? [];
-    arr.push({ at: l.receivedAt, itemId: l.itemId, type: "RECEIPT", qty: l.qtyReceived, reason: "Tồn ghi nhận từ trước", invoiceId: null, cost: l.unitCost, note: l.note });
-    byItem.set(l.itemId, arr);
-  }
-  for (const arr of byItem.values()) arr.sort((a, b) => a.at.getTime() - b.at.getTime());
-  const actual = new Map<string, { q: number; v: number }>();
-  for (const l of lots) {
-    const a = actual.get(l.itemId) ?? { q: 0, v: 0 };
+    const a = cur.get(l.itemId) ?? { q: 0, v: 0 };
     a.q += l.qtyRemaining; a.v += l.qtyRemaining * l.unitCost;
-    actual.set(l.itemId, a);
+    cur.set(l.itemId, a);
+  }
+  const byItem = new Map<string, Mv[]>();
+  const after = new Map<string, { q: number; v: number }>();
+  for (const m of moves) {
+    const cost = m.lot?.unitCost ?? 0;
+    if (m.at >= end) {
+      const a = after.get(m.itemId) ?? { q: 0, v: 0 };
+      a.q += m.qty; a.v += m.qty * cost;
+      after.set(m.itemId, a);
+      continue;
+    }
+    const arr = byItem.get(m.itemId) ?? [];
+    arr.push({ at: m.at, itemId: m.itemId, type: m.type, qty: m.qty, reason: m.reason, invoiceId: m.invoiceId, cost, note: m.lot?.note ?? null });
+    byItem.set(m.itemId, arr);
   }
 
   const wb = new ExcelJS.Workbook();
@@ -64,15 +66,14 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
   const cost = opts.cost;
   const ws = wb.addWorksheet("Nhập xuất tồn", { views: [{ state: "frozen", ySplit: 7 }] });
   const stamp = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
-  // Cột: STT, Mã, Tên, ĐVT, [Tồn đầu SL, GT], [Nhập SL, GT], [Xuất SL, GT], [Tồn cuối SL, GT], Tồn hệ thống, Chênh lệch
   const G = cost ? 2 : 1;
-  const nCols = 4 + 4 * G + 2;
+  const nCols = 4 + 4 * G;
   ws.getCell("A1").value = "PHÒNG KHÁM ĐÔNG Y TINH HOA";
   ws.getCell("A1").font = { bold: true, size: 12 };
-  ws.getCell("A2").value = `Chi nhánh: ${branch.name}`;
+  ws.getCell("A2").value = `Chi nhánh / kho: ${branch.name}`;
   ws.mergeCells(3, 1, 3, nCols);
   const t = ws.getCell("A3");
-  t.value = "BÁO CÁO NHẬP – XUẤT – TỒN KHO";
+  t.value = "BÁO CÁO TỔNG HỢP NHẬP – XUẤT – TỒN KHO";
   t.font = { bold: true, size: 16, color: { argb: GREEN } };
   t.alignment = { horizontal: "center" };
   ws.mergeCells(4, 1, 4, nCols);
@@ -81,14 +82,13 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
   ws.getCell("A4").font = { italic: true };
   ws.mergeCells(5, 1, 5, nCols);
   ws.getCell("A5").value = cost
-    ? "Đơn vị tính: số lượng theo ĐVT của mặt hàng (dược liệu tính bằng gam), giá trị bằng đồng. Giá trị tính theo giá nhập của từng lô, xuất kho theo lô hết hạn sớm nhất trước."
-    : "Đơn vị tính: số lượng theo ĐVT của mặt hàng (dược liệu tính bằng gam).";
+    ? "Đơn vị tính tiền: đồng. Số lượng theo đơn vị tính (ĐVT) của từng mặt hàng; dược liệu tính bằng gam. Giá trị theo giá nhập của từng lô; xuất kho theo lô hết hạn sớm nhất trước."
+    : "Số lượng theo đơn vị tính (ĐVT) của từng mặt hàng; dược liệu tính bằng gam.";
   ws.getCell("A5").font = { italic: true, size: 9, color: { argb: "FF6B7280" } };
   ws.getCell("A5").alignment = { wrapText: true, vertical: "top" };
   ws.getRow(5).height = cost ? 26 : 14;
 
-  // Hai hàng tiêu đề: nhóm (hàng 6) và cột (hàng 7)
-  const heads: [string, number][] = [["STT", 6], ["Mã hàng", 10], ["Tên mặt hàng", 28], ["ĐVT", 8]];
+  const heads: [string, number][] = [["STT", 6], ["Mã hàng", 10], ["Tên mặt hàng", 30], ["ĐVT", 8]];
   const groups = ["Tồn đầu kỳ", "Nhập trong kỳ", "Xuất trong kỳ", "Tồn cuối kỳ"];
   const r6 = ws.getRow(6), r7 = ws.getRow(7);
   heads.forEach(([h, w], i) => {
@@ -101,16 +101,10 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
     if (cost) ws.mergeCells(6, col, 6, col + 1);
     r6.getCell(col).value = g;
     r7.getCell(col).value = "Số lượng";
-    ws.getColumn(col).width = 13;
-    if (cost) { r7.getCell(col + 1).value = "Giá trị (đ)"; ws.getColumn(col + 1).width = 15; }
+    ws.getColumn(col).width = 14;
+    if (cost) { r7.getCell(col + 1).value = "Thành tiền"; ws.getColumn(col + 1).width = 16; }
     col += G;
   });
-  ws.mergeCells(6, col, 6, col + 1);
-  r6.getCell(col).value = "Đối chiếu kho";
-  r7.getCell(col).value = "Tồn thực tế";
-  r7.getCell(col + 1).value = "Chênh lệch";
-  ws.getColumn(col).width = 13;
-  ws.getColumn(col + 1).width = 12;
   for (let c = 1; c <= nCols; c++) for (const r of [r6, r7]) {
     const cell = r.getCell(c);
     cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 10 };
@@ -120,21 +114,24 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
   }
   r6.height = 20; r7.height = 20;
 
-  const sum = new Array(nCols + 1).fill(0);
-  let row = 8, stt = 0, anyDiff = 0;
+  // Hàng cột số thứ tự cột (A, B, 1, 2, ...) như mẫu sổ kế toán
+  const L = (n: number) => ws.getColumn(n).letter;
+  let row = 8, stt = 0;
   const first = row;
+  const tot = { ov: 0, iv: 0, xv: 0 };
   for (const it of items) {
     const mv = byItem.get(it.id) ?? [];
-    let oq = 0, ov = 0, iq = 0, iv = 0, xq = 0, xv = 0;
+    const c0 = cur.get(it.id) ?? { q: 0, v: 0 };
+    const af = after.get(it.id) ?? { q: 0, v: 0 };
+    const cq = c0.q - af.q, cv = c0.v - af.v; // tồn cuối kỳ
+    let iq = 0, iv = 0, xq = 0, xv = 0;
     for (const m of mv) {
-      const v = m.qty * m.cost;
-      if (m.at < start) { oq += m.qty; ov += v; }
-      else if (m.qty >= 0) { iq += m.qty; iv += v; }
-      else { xq += -m.qty; xv += -v; }
+      if (m.qty >= 0) { iq += m.qty; iv += m.qty * m.cost; } else { xq += -m.qty; xv += -m.qty * m.cost; }
     }
-    const a = actual.get(it.id) ?? { q: 0, v: 0 };
-    if (!mv.length && a.q === 0) continue;
-    if (!oq && !iq && !xq && !a.q && !ov && !iv && !xv) continue;
+    const oq = cq - iq + xq, ov = cv - iv + xv; // tồn đầu kỳ
+    const E = (n: number) => Math.abs(n) < 0.005;
+    if (E(oq) && E(iq) && E(xq) && E(cq)) continue;
+    if (!it.active && E(cq) && E(iq) && E(xq)) continue;
     stt++;
     const r = ws.getRow(row);
     const R = row;
@@ -142,33 +139,30 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
     r.getCell(2).value = it.code ?? "";
     r.getCell(3).value = it.name;
     r.getCell(4).value = it.unit;
-    let c = 5;
-    r.getCell(c).value = round(oq); if (cost) r.getCell(c + 1).value = Math.round(ov);
-    const cOpen = c; c += G;
-    r.getCell(c).value = round(iq); if (cost) r.getCell(c + 1).value = Math.round(iv);
-    const cIn = c; c += G;
-    r.getCell(c).value = round(xq); if (cost) r.getCell(c + 1).value = Math.round(xv);
-    const cOut = c; c += G;
-    // Tồn cuối = đầu + nhập − xuất, là công thức Excel để kế toán kiểm tra được
-    const L = (n: number) => ws.getColumn(n).letter;
-    r.getCell(c).value = { formula: `${L(cOpen)}${R}+${L(cIn)}${R}-${L(cOut)}${R}`, result: round(oq + iq - xq) };
-    if (cost) r.getCell(c + 1).value = { formula: `${L(cOpen + 1)}${R}+${L(cIn + 1)}${R}-${L(cOut + 1)}${R}`, result: Math.round(ov + iv - xv) };
-    const cClose = c; c += G;
-    // Đối chiếu với tồn thực tế của hệ thống tại thời điểm xuất file (chỉ có nghĩa khi kỳ kết thúc là hôm nay hoặc sau)
-    r.getCell(c).value = round(a.q);
-    const diff = round(oq + iq - xq - a.q);
-    r.getCell(c + 1).value = { formula: `${L(cClose)}${R}-${L(c)}${R}`, result: diff };
+    const vals = [[oq, ov], [iq, iv], [xq, xv]];
+    vals.forEach(([q, v], gi) => {
+      const c = 5 + gi * G;
+      r.getCell(c).value = round(q);
+      if (cost) r.getCell(c + 1).value = Math.round(v);
+    });
+    // Tồn cuối = đầu + nhập − xuất (công thức Excel để kế toán kiểm tra)
+    const cc = 5 + 3 * G;
+    r.getCell(cc).value = { formula: `${L(5)}${R}+${L(5 + G)}${R}-${L(5 + 2 * G)}${R}`, result: round(cq) };
+    if (cost) r.getCell(cc + 1).value = { formula: `${L(6)}${R}+${L(6 + G)}${R}-${L(6 + 2 * G)}${R}`, result: Math.round(cv) };
     for (let k = 1; k <= nCols; k++) {
       const cell = r.getCell(k);
       cell.border = box;
-      if (k >= 5) { cell.alignment = { horizontal: "right" }; cell.numFmt = cost && (k - 5) % 2 === 1 && k < 5 + 4 * G ? nfV : nfQ; }
+      if (k >= 5) {
+        const isMoney = cost && (k - 5) % 2 === 1;
+        const val = typeof cell.value === "object" && cell.value && "result" in cell.value ? Number(cell.value.result) : Number(cell.value);
+        cell.numFmt = isMoney ? nfV : nfQ(val);
+        cell.alignment = { horizontal: "right" };
+      }
       if (stt % 2 === 0) fill(cell, "FFF7F9F8");
     }
-    if (cost) for (const k of [6, 8, 10, 12]) r.getCell(k).numFmt = nfV;
     r.getCell(1).alignment = { horizontal: "center" };
-    if (Math.abs(diff) > 0.005) { anyDiff++; const dc = r.getCell(c + 1); dc.font = { bold: true, color: { argb: "FF991B1B" } }; fill(dc, "FFFEE2E2"); }
-    sum[cOpen] += oq; sum[cIn] += iq; sum[cOut] += xq;
-    if (cost) { sum[cOpen + 1] += ov; sum[cIn + 1] += iv; sum[cOut + 1] += xv; }
+    r.getCell(4).alignment = { horizontal: "center" };
+    tot.ov += ov; tot.iv += iv; tot.xv += xv;
     row++;
   }
   const last = row - 1;
@@ -176,13 +170,12 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
   ws.mergeCells(row, 1, row, 4);
   tr.getCell(1).value = "TỔNG CỘNG";
   tr.getCell(1).alignment = { horizontal: "center" };
-  for (let k = 5; k <= nCols - 2; k++) {
-    // Số lượng cộng chung chỉ có nghĩa khi cùng đơn vị, nên chỉ cộng cột giá trị
-    const isVal = cost && (k - 5) % 2 === 1;
-    if (isVal) {
-      const colSum = k < 5 + 3 * G ? sum[k] : sum[5 + G + 1] + 0; // cột tồn cuối tính từ đầu + nhập − xuất
-      tr.getCell(k).value = { formula: `SUM(${ws.getColumn(k).letter}${first}:${ws.getColumn(k).letter}${last})`, result: k < 5 + 3 * G ? colSum : sum[6] + sum[8] - sum[10] };
-    }
+  if (cost) {
+    const tv = [tot.ov, tot.iv, tot.xv, tot.ov + tot.iv - tot.xv];
+    tv.forEach((v, gi) => {
+      const c = 6 + gi * G;
+      tr.getCell(c).value = { formula: `SUM(${L(c)}${first}:${L(c)}${last})`, result: Math.round(v) };
+    });
   }
   for (let k = 1; k <= nCols; k++) {
     const cell = tr.getCell(k);
@@ -192,69 +185,99 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
     fill(cell, "FFE4F1E8");
   }
   row += 2;
-  const note = (txt: string, color = "FF6B7280", bold = false) => { ws.mergeCells(row, 1, row, nCols); const c = ws.getCell(row, 1); c.value = txt; c.font = { italic: !bold, bold, size: 9, color: { argb: color } }; c.alignment = { wrapText: true, vertical: "top" }; row++; };
+  const note = (txt: string) => { ws.mergeCells(row, 1, row, nCols); const c = ws.getCell(row, 1); c.value = txt; c.font = { italic: true, size: 9, color: { argb: "FF6B7280" } }; c.alignment = { wrapText: true, vertical: "top" }; row++; };
   if (stt === 0) note("Không có phát sinh trong kỳ.");
-  note(`Cột “Tồn thực tế” là số tồn trên hệ thống lúc xuất file (${stamp}). “Chênh lệch” khác 0 nghĩa là sổ biến động chưa khớp tồn thực tế (thường do tồn nhập trước khi có sổ, hoặc xuất kỳ không kết thúc hôm nay).`);
-  if (anyDiff) note(`Có ${anyDiff} mặt hàng chênh lệch (tô đỏ), cần kiểm tra lại trước khi dùng số liệu.`, "FF991B1B", true);
-  if (cost) note("Giá trị chỉ cộng ở cột tiền. Số lượng không cộng chung vì khác đơn vị tính.");
+  note(cost ? "Số lượng không cộng chung vì khác đơn vị tính; chỉ cộng cột thành tiền." : "Số lượng không cộng chung vì khác đơn vị tính.");
   row += 1;
-  const sig = row;
-  const pos = [[2, "Người lập biểu"], [Math.round(nCols / 2), "Thủ kho"], [nCols - 3, "Kế toán trưởng"]] as const;
-  ws.getCell(sig, nCols - 4).value = `Ngày ${new Date(Date.now() + VN).getUTCDate()} tháng ${new Date(Date.now() + VN).getUTCMonth() + 1} năm ${new Date(Date.now() + VN).getUTCFullYear()}`;
-  ws.getCell(sig, nCols - 4).font = { italic: true };
-  for (const [c, label] of pos) { ws.getCell(sig + 1, c).value = label; ws.getCell(sig + 1, c).font = { bold: true }; ws.getCell(sig + 2, c).value = "(Ký, ghi rõ họ tên)"; ws.getCell(sig + 2, c).font = { italic: true, size: 9 }; }
-  ws.getCell(sig + 1, 2).alignment = { horizontal: "left" };
+  const now = new Date(Date.now() + VN);
+  ws.mergeCells(row, nCols - 3, row, nCols);
+  ws.getCell(row, nCols - 3).value = `Ngày ${now.getUTCDate()} tháng ${now.getUTCMonth() + 1} năm ${now.getUTCFullYear()}`;
+  ws.getCell(row, nCols - 3).font = { italic: true };
+  ws.getCell(row, nCols - 3).alignment = { horizontal: "center" };
+  row++;
+  const third = Math.floor(nCols / 3);
+  const pos: [number, number, string][] = [[1, third, "Người lập biểu"], [third + 1, 2 * third, "Thủ kho"], [2 * third + 1, nCols, "Kế toán trưởng"]];
+  for (const [a, b, label] of pos) {
+    ws.mergeCells(row, a, row, b); ws.mergeCells(row + 1, a, row + 1, b);
+    const c1 = ws.getCell(row, a), c2 = ws.getCell(row + 1, a);
+    c1.value = label; c1.font = { bold: true }; c1.alignment = { horizontal: "center" };
+    c2.value = "(Ký, ghi rõ họ tên)"; c2.font = { italic: true, size: 9 }; c2.alignment = { horizontal: "center" };
+  }
   ws.pageSetup = { orientation: "landscape", paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: "6:7", margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } };
   ws.headerFooter.oddFooter = `&LLập bởi ${opts.by}, ${stamp}&RTrang &P/&N`;
 
-  // ---- Thẻ kho: mỗi mặt hàng một khối, có tồn lũy kế sau từng giao dịch ----
-  const wc = wb.addWorksheet("Thẻ kho", { views: [{ state: "frozen", ySplit: 5 }] });
-  wc.getCell("A1").value = "THẺ KHO";
-  wc.getCell("A1").font = { bold: true, size: 16, color: { argb: GREEN } };
-  wc.getCell("A2").value = `Chi nhánh: ${branch.name} · Từ ngày ${dmy(fromDay)} đến ngày ${dmy(toDay)}`;
-  wc.getCell("A3").value = "Mỗi mặt hàng một khối: tồn đầu kỳ, các giao dịch trong kỳ theo thời gian, tồn cuối kỳ. Chứng từ là số phiếu nhập (PN-…) hoặc mã hóa đơn phát thuốc.";
-  wc.getCell("A3").font = { italic: true, size: 9, color: { argb: "FF6B7280" } };
-  const wcols: [string, number][] = [["Ngày", 12], ["Chứng từ", 22], ["Diễn giải", 38], ["Nhập", 13], ["Xuất", 13], ["Tồn", 13], ...(cost ? ([["Giá / ĐVT", 12], ["Giá trị giao dịch", 16]] as [string, number][]) : [])];
-  wcols.forEach(([h, w], i) => {
-    const c = wc.getRow(5).getCell(i + 1);
-    c.value = h; c.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 10 }; fill(c, GREEN); c.alignment = { horizontal: "center", vertical: "middle" }; c.border = box;
-    wc.getColumn(i + 1).width = w;
-  });
-  wc.getRow(5).height = 22;
+  // ---- Thẻ kho (theo mẫu S12-DN, TT 99/2025/TT-BTC): mỗi mặt hàng một thẻ, chỉ số lượng ----
+  const wc = wb.addWorksheet("Thẻ kho");
+  const W = [6, 12, 18, 18, 40, 13, 13, 13, 16];
+  W.forEach((w, i) => (wc.getColumn(i + 1).width = w));
+  wc.getCell("A1").value = "PHÒNG KHÁM ĐÔNG Y TINH HOA";
+  wc.getCell("A1").font = { bold: true, size: 12 };
+  wc.getCell("A2").value = `Chi nhánh / kho: ${branch.name}`;
+  wc.mergeCells("A3:I3");
+  wc.getCell("A3").value = "THẺ KHO";
+  wc.getCell("A3").font = { bold: true, size: 16, color: { argb: GREEN } };
+  wc.getCell("A3").alignment = { horizontal: "center" };
+  wc.mergeCells("A4:I4");
+  wc.getCell("A4").value = `Từ ngày ${dmy(fromDay)} đến ngày ${dmy(toDay)}`;
+  wc.getCell("A4").font = { italic: true };
+  wc.getCell("A4").alignment = { horizontal: "center" };
   let cr = 6;
-  const lbl = (t: string, ty: string) => ty === "RECEIPT" ? "Nhập kho" : ty === "DISPENSE" ? "Phát thuốc" : t;
+  const lbl = (m: Mv) => m.type === "RECEIPT" ? "Nhập kho" : m.type === "DISPENSE" ? "Xuất phát thuốc" : m.qty >= 0 ? `${m.reason ?? "Điều chỉnh"} (kiểm kê thừa)` : `${m.reason ?? "Điều chỉnh"} (kiểm kê thiếu / hủy)`;
   for (const it of items) {
     const mv = byItem.get(it.id) ?? [];
-    const inPeriod = mv.filter((m) => m.at >= start);
-    const open = mv.filter((m) => m.at < start).reduce((s, m) => s + m.qty, 0);
-    if (!mv.length) continue;
-    if (!inPeriod.length && Math.abs(open) < 1e-9) continue;
-    wc.mergeCells(cr, 1, cr, wcols.length);
-    const h = wc.getCell(cr, 1);
-    h.value = `${it.code ?? ""}  ${it.name}  (ĐVT: ${it.unit})`;
-    h.font = { bold: true, color: { argb: GREEN } };
-    fill(h, "FFE4F1E8");
-    cr++;
-    const put = (vals: (string | number | null)[], bold = false, italic = false) => {
+    const c0 = cur.get(it.id) ?? { q: 0, v: 0 };
+    const af = after.get(it.id) ?? { q: 0, v: 0 };
+    const cq = c0.q - af.q;
+    if (!mv.length && Math.abs(cq) < 0.005) continue;
+    const net = mv.reduce((s, m) => s + m.qty, 0);
+    const open = cq - net;
+    for (const [k, v] of [["Tên vật tư, hàng hóa", it.name], ["Mã số", it.code ?? ""], ["Đơn vị tính", it.unit]] as const) {
+      wc.mergeCells(cr, 1, cr, 3);
+      wc.getCell(cr, 1).value = `${k}:`;
+      wc.mergeCells(cr, 4, cr, 9);
+      wc.getCell(cr, 4).value = v;
+      wc.getCell(cr, 1).font = { bold: true };
+      wc.getCell(cr, 4).font = { bold: k === "Tên vật tư, hàng hóa" };
+      cr++;
+    }
+    const h1 = wc.getRow(cr), h2 = wc.getRow(cr + 1);
+    const spans: [number, number, string][] = [[1, 1, "STT"], [2, 2, "Ngày chứng từ"], [3, 4, "Số hiệu chứng từ"], [5, 5, "Diễn giải"], [6, 8, "Số lượng"], [9, 9, "Xác nhận của kế toán"]];
+    for (const [a, b, label] of spans) {
+      if (a === b) wc.mergeCells(cr, a, cr + 1, a); else wc.mergeCells(cr, a, cr, b);
+      h1.getCell(a).value = label;
+    }
+    h2.getCell(3).value = "Nhập"; h2.getCell(4).value = "Xuất"; h2.getCell(6).value = "Nhập"; h2.getCell(7).value = "Xuất"; h2.getCell(8).value = "Tồn";
+    for (let c = 1; c <= 9; c++) for (const r of [h1, h2]) {
+      const cell = r.getCell(c);
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 10 };
+      fill(cell, GREEN); cell.border = box;
+      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    }
+    cr += 2;
+    const put = (vals: (string | number | null)[], bold = false) => {
       vals.forEach((v, i) => {
         const c = wc.getCell(cr, i + 1);
-        c.value = v; c.border = box; c.font = { bold, italic };
-        if (i >= 3) { c.alignment = { horizontal: "right" }; c.numFmt = cost && i >= 6 ? nfV : nfQ; }
+        c.value = v; c.border = box; c.font = { bold };
+        if (i >= 5 && i <= 7) { c.alignment = { horizontal: "right" }; c.numFmt = nfQ(Number(v ?? 0)); }
+        else if (i === 0 || i === 1) c.alignment = { horizontal: "center" };
       });
       cr++;
     };
-    let run = open;
-    put([dmyVN(start), "", "Tồn đầu kỳ", null, null, round(open), ...(cost ? [null, null] : [])], true);
-    for (const m of inPeriod) {
+    let run = open, n = 0;
+    put(["", "", "", "", "Số dư đầu kỳ", null, null, round(open), ""], true);
+    for (const m of mv) {
       run += m.qty;
       const pn = m.note?.match(/PN-[0-9]{8}-[0-9A-F]{4}/)?.[0] ?? "";
-      const doc = m.type === "DISPENSE" ? (m.reason?.replace("Phát thuốc ", "") ?? "") : pn;
-      put([dmyVN(m.at), doc, lbl(m.reason ?? "Điều chỉnh", m.type) + (m.type === "ADJUST" ? " (điều chỉnh)" : ""), m.qty > 0 ? round(m.qty) : null, m.qty < 0 ? round(-m.qty) : null, round(run), ...(cost ? [m.cost, Math.round(Math.abs(m.qty) * m.cost)] : [])]);
+      const code = m.type === "DISPENSE" ? (m.reason?.replace("Phát thuốc ", "") ?? "") : pn;
+      put([++n, dmyVN(m.at), m.qty > 0 ? code : "", m.qty < 0 ? code : "", lbl(m), m.qty > 0 ? round(m.qty) : null, m.qty < 0 ? round(-m.qty) : null, round(run), ""]);
     }
-    put([dmyVN(new Date(end.getTime() - 1)), "", "Tồn cuối kỳ", null, null, round(run), ...(cost ? [null, null] : [])], true);
-    cr++;
+    const iq = mv.filter((m) => m.qty > 0).reduce((s, m) => s + m.qty, 0), xq = mv.filter((m) => m.qty < 0).reduce((s, m) => s - m.qty, 0);
+    put(["", "", "", "", "Cộng phát sinh trong kỳ", round(iq), round(xq), null, ""], true);
+    put(["", "", "", "", "Số dư cuối kỳ", null, null, round(run), ""], true);
+    cr += 2;
   }
-  wc.pageSetup = { orientation: "portrait", paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: "5:5" };
+  wc.pageSetup = { orientation: "portrait", paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+  wc.headerFooter.oddFooter = `&LLập bởi ${opts.by}, ${stamp}&RTrang &P/&N`;
   return Buffer.from(await wb.xlsx.writeBuffer());
 }
 
