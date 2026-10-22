@@ -53,7 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         ) : (
           <div className="min-h-screen md:flex">
             {/* Sidebar PC */}
-            <aside className="hidden md:flex md:w-64 md:shrink-0 flex-col bg-gradient-to-b from-brand-deep to-brand-deeper text-white sticky top-0 h-screen">
+            <aside className="hidden md:flex md:w-64 md:shrink-0 flex-col bg-[#133b2d] text-white sticky top-0 h-screen">
               <Link href="/" className="flex shrink-0 items-center gap-3 px-4 py-3 border-b border-white/10">
                 <span className="relative h-12 w-12 shrink-0 rounded-full ring-2 ring-brand-goldLight/70 overflow-hidden">
                   <Image src="/images/logo-badge.png" alt="" width={160} height={160} className="h-full w-full object-cover" />
@@ -65,20 +65,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
               <div className="min-h-0 flex-1 overflow-y-auto p-3 ink-scrollbar">
                 <SideNav clinic={clinic} knowledge={knowledge} admin={admin} adminSub={adminSub} />
-                <div className="relative mt-4 h-28 overflow-hidden rounded-xl border border-white/10">
-                  <Image src="/images/art/tall.jpg" alt="" fill className="object-cover opacity-40" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-brand-deeper via-brand-deeper/60 to-transparent" />
-                  <div className="absolute bottom-2.5 left-3 right-3 text-brand-goldLight">
-                    <div className="text-[11px] font-semibold tracking-[0.12em] uppercase">Y học cổ truyền</div>
-                    <div className="text-[11px] tracking-[0.12em] uppercase text-white/70">Tinh hoa dân tộc</div>
-                  </div>
-                </div>
               </div>
             </aside>
 
             <div className="flex-1 min-w-0 flex flex-col">
               {/* Thanh trên */}
-              <header className="sticky top-0 z-20 flex items-center gap-3 bg-white/95 backdrop-blur border-b border-slate-200 px-4 md:px-8 h-14">
+              <header className="sticky top-0 z-20 flex items-center gap-3 bg-white border-b border-[var(--line)] px-4 md:px-6 h-14">
                 <Link href="/" className="md:hidden font-display font-bold text-brand-deep">YHCT Tinh Hoa</Link>
                 <Suspense fallback={null}><BranchSwitch branches={branches} /></Suspense>
                 <form action="/benh-nhan" className="relative min-w-0 flex-1 max-w-xl hidden sm:block">
@@ -95,7 +87,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <summary className="flex cursor-pointer list-none items-center gap-3 rounded-full py-1 pl-1 pr-3 hover:bg-slate-100">
                     <span className="h-9 w-9 rounded-full bg-brand-deep text-brand-goldLight grid place-items-center text-sm font-bold">{initials}</span>
                     <span className="hidden sm:block text-left leading-tight">
-                      <span className="block text-sm font-bold uppercase">{staff.fullName}</span>
+                      <span className="block text-sm font-semibold">{staff.fullName}</span>
                       <span className="block text-[11px] text-brand-ink/70">{rolesLabel(staff.role)}</span>
                     </span>
                     <ChevronDown className="hidden sm:block h-4 w-4 text-slate-500" />
@@ -110,7 +102,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </div>
               </header>
 
-              <main className="flex-1 p-4 md:px-5 md:py-4 pb-24 md:pb-4 w-full">
+              <main className="flex-1 p-4 md:px-6 md:py-5 pb-24 md:pb-5 w-full">
                 {children}
                 <footer className="mt-4 pt-3 border-t border-slate-200 text-center text-xs text-brand-ink/70">
                   YHCT Tinh Hoa — bản demo kỹ thuật, dữ liệu minh họa, không dùng chẩn đoán hoặc điều trị thật.

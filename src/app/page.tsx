@@ -24,13 +24,13 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
   const hello = hour < 11 ? "Chào buổi sáng" : hour < 14 ? "Chào buổi trưa" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
 
   const header = (
-    <section className="relative overflow-hidden rounded-2xl bg-brand-deeper text-white min-h-[9rem]">
+    <section className="relative overflow-hidden rounded-2xl bg-brand-deeper text-white min-h-[7.5rem]">
       <Image src="/images/art/panorama.jpg" alt="" width={1800} height={600} priority className="absolute inset-0 h-full w-full object-cover object-right" />
       <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper via-brand-deeper/85 to-brand-deeper/10" />
       <div className="relative p-5 md:px-8 md:py-5">
         <div className="text-sm text-brand-goldLight capitalize">{dateText}</div>
-        <h1 className="brand-serif text-2xl md:text-3xl font-bold mt-0.5 uppercase leading-tight">{hello},<br />{staff.fullName}</h1>
-        <p className="mt-2 font-semibold">{branch ? branch.name : "Chưa có chi nhánh"}</p>
+        <h1 className="brand-serif text-2xl md:text-[1.75rem] font-bold mt-0.5 leading-tight">{hello}, {staff.fullName}</h1>
+        <p className="mt-1.5 font-semibold">{branch ? branch.name : "Chưa có chi nhánh"}</p>
         <p className="text-white/70 text-sm">Kế thừa tinh hoa · Phụng sự sức khỏe cộng đồng</p>
       </div>
       <div className="absolute right-6 bottom-4 hidden md:block text-right brand-serif italic text-brand-goldLight/90 leading-snug">Thiện tâm<br />Dưỡng sinh<br />Trị bệnh</div>
@@ -108,10 +108,10 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
     amber: "bg-amber-50 border-amber-200", blue: "bg-sky-50 border-sky-200", red: "bg-rose-50 border-rose-200", purple: "bg-violet-50 border-violet-200",
   } as const;
   const cards = [
-    { label: "Chờ khám", n: waiting, Icon: Users, ic: "bg-amber-100 text-amber-600", cls: "text-amber-600", t: tint.amber, href: can("/kham") ? "/kham" + cn : can("/tiep-don") ? "/tiep-don" + cn : null },
-    { label: "Đang khám", n: inExam, Icon: Stethoscope, ic: "bg-sky-100 text-sky-700", cls: "text-sky-700", t: tint.blue, href: can("/kham") ? "/kham" + cn : null },
-    { label: "Chờ thu", n: toInvoice + unpaid, Icon: FileText, ic: "bg-rose-100 text-rose-600", cls: "text-rose-600", t: tint.red, href: can("/thu-ngan") ? "/thu-ngan" + cn : null },
-    { label: "Chờ phát thuốc", n: toDispense, Icon: Pill, ic: "bg-violet-100 text-violet-700", cls: "text-violet-700", t: tint.purple, href: can("/duoc") ? "/duoc" + cn : null },
+    { label: "Chờ khám", n: waiting, Icon: Users, dot: "bg-amber-500", cls: "text-amber-700", t: tint.amber, href: can("/kham") ? "/kham" + cn : can("/tiep-don") ? "/tiep-don" + cn : null },
+    { label: "Đang khám", n: inExam, Icon: Stethoscope, dot: "bg-sky-500", cls: "text-sky-700", t: tint.blue, href: can("/kham") ? "/kham" + cn : null },
+    { label: "Chờ thu", n: toInvoice + unpaid, Icon: FileText, dot: "bg-rose-500", cls: "text-rose-700", t: tint.red, href: can("/thu-ngan") ? "/thu-ngan" + cn : null },
+    { label: "Chờ phát thuốc", n: toDispense, Icon: Pill, dot: "bg-violet-500", cls: "text-violet-700", t: tint.purple, href: can("/duoc") ? "/duoc" + cn : null },
   ];
   const actions = [
     { href: "/tiep-don" + cn, label: "Tiếp đón bệnh nhân", Icon: UserPlus, ok: can("/tiep-don") },
@@ -128,23 +128,20 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
           <div className={`grid grid-cols-2 ${revenue ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-3`}>
             {cards.map((c) => {
               const body = (
-                <div className="relative flex items-center gap-3 overflow-hidden">
-                  <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${c.ic}`}><c.Icon className="h-5 w-5" /></span>
-                  <div>
-                    <div className="font-bold leading-tight">{c.label}</div>
-                    <div className={`text-3xl font-bold leading-tight ${c.cls}`}>{c.n}</div>
-                    <div className="text-xs text-brand-ink/70">bệnh nhân</div>
-                  </div>
-                  <c.Icon className={`absolute -bottom-3 -right-2 h-16 w-16 opacity-[0.12] ${c.cls}`} />
-                </div>
+                <>
+                  <div className="flex items-center gap-2 text-sm font-medium text-brand-ink/75"><span className={`h-2 w-2 rounded-full ${c.dot}`} aria-hidden />{c.label}</div>
+                  <div className={`mt-1.5 text-[1.75rem] font-semibold leading-none tabular-nums ${c.cls}`}>{c.n}</div>
+                  <div className="mt-1.5 text-xs text-brand-ink/70">bệnh nhân</div>
+                </>
               );
-              return c.href ? <Link key={c.label} href={c.href} className={`rounded-2xl border p-4 hover:shadow-md transition ${c.t}`}>{body}</Link> : <div key={c.label} className={`rounded-2xl border p-4 ${c.t}`}>{body}</div>;
+              const k = "block rounded-2xl border border-[var(--line)] bg-white px-4 py-3.5";
+              return c.href ? <Link key={c.label} href={c.href} className={`${k} transition-colors hover:border-brand-deep`}>{body}</Link> : <div key={c.label} className={k}>{body}</div>;
             })}
             {revenue && (
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 col-span-2 lg:col-span-1">
-                <div className="flex items-center gap-2 font-bold text-sm"><span className="grid h-8 w-8 place-items-center rounded-full bg-emerald-100 text-emerald-700"><Banknote className="h-4 w-4" /></span>Doanh thu hôm nay</div>
-                <div className="mt-1 text-2xl font-bold text-emerald-800">{vnd(revenue._sum.total ?? 0)}</div>
-                <div className="text-xs text-brand-ink/70">Tổng thu</div>
+              <div className="col-span-2 rounded-2xl border border-[var(--line)] bg-white px-4 py-3.5 lg:col-span-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-brand-ink/75"><span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />Doanh thu hôm nay</div>
+                <div className="mt-1.5 text-[1.75rem] font-semibold leading-none tabular-nums text-emerald-800">{vnd(revenue._sum.total ?? 0)}</div>
+                <div className="mt-1.5 text-xs text-brand-ink/70">Tổng thu</div>
               </div>
             )}
           </div>
@@ -158,13 +155,13 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
           )}
 
           <section className="card !p-0 overflow-hidden">
-            <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-200 font-bold text-lg"><span className="grid h-9 w-9 place-items-center rounded-lg bg-amber-100 text-amber-600"><Users className="h-5 w-5" /></span>Hàng chờ hôm nay <span className="text-brand-ink/50 font-medium">({visits.length})</span><Link href={can("/tiep-don") ? "/tiep-don" + cn : "/benh-nhan"} className="ml-auto flex items-center gap-1 text-sm font-medium text-sky-700 hover:underline">Xem tất cả <ArrowRight className="h-4 w-4" /></Link></div>
+            <div className="flex items-center gap-2.5 px-5 py-3 border-b border-[var(--line)] font-semibold text-base"><Users className="h-[1.125rem] w-[1.125rem] text-amber-600" aria-hidden />Hàng chờ hôm nay <span className="text-brand-ink/50 font-medium">({visits.length})</span><Link href={can("/tiep-don") ? "/tiep-don" + cn : "/benh-nhan"} className="ml-auto flex items-center gap-1 text-sm font-medium text-sky-700 hover:underline">Xem tất cả <ArrowRight className="h-4 w-4" /></Link></div>
             {visits.length === 0 ? (
               <p className="p-6 text-brand-ink/70">Chưa có bệnh nhân nào hôm nay.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-[15px]">
-                  <thead className="text-left text-xs uppercase tracking-wide text-brand-ink/70 border-b border-slate-100">
+                  <thead className="text-left">
                     <tr>
                       <th className="px-5 py-2.5 w-14">STT</th>
                       <th className="px-3 py-2.5">Bệnh nhân</th>
@@ -255,7 +252,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
             <div className="flex items-center gap-2 font-bold mb-3"><ClipboardList className="h-5 w-5 text-emerald-700" />Thống kê hôm nay</div>
             <dl className="space-y-2.5 text-[15px]">
               {([["Lượt khám", visits.length, FileText, "bg-emerald-100 text-emerald-700", ""], ["Đơn thuốc", withMeds, Pill, "bg-sky-100 text-sky-700", ""], ["Hóa đơn đã thu", paidToday, FileCheck, "bg-amber-100 text-amber-600", ""], ["Hóa đơn đã hủy", voided, FileX, "bg-rose-100 text-rose-600", "text-rose-600"]] as [string, number, LucideIcon, string, string][]).map(([l, n, I, ic, tc]) => (
-                <div key={l} className="flex items-center gap-3"><span className={`grid h-8 w-8 place-items-center rounded-lg ${ic}`}><I className="h-4 w-4" /></span><dt className="flex-1 text-brand-ink/75">{l}</dt><dd className={`font-bold text-lg ${tc}`}>{n}</dd></div>
+                <div key={l} className="flex items-center gap-3"><I className={`h-[1.125rem] w-[1.125rem] shrink-0 ${ic.split(" ").find((c) => c.startsWith("text-"))}`} aria-hidden /><dt className="flex-1 text-brand-ink/75">{l}</dt><dd className={`text-lg font-semibold tabular-nums ${tc}`}>{n}</dd></div>
               ))}
             </dl>
           </section>
