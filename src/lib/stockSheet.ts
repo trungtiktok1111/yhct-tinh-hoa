@@ -22,9 +22,9 @@ const COLS = [
   { key: "type", header: "Loại", width: 12, ref: true },
   { key: "unit", header: "ĐV gốc", width: 8, ref: true },
   { key: "stock", header: "Tồn hiện tại", width: 11, ref: true },
-  { key: "qty", header: "Số lượng nhập", width: 12, ref: false },
+  { key: "qty", header: "Số lượng nhập\n(theo ĐV gốc)", width: 14, ref: false },
   { key: "inUnit", header: "ĐV nhập", width: 9, ref: false },
-  { key: "cost", header: "Giá nhập\n(đ / ĐV nhập)", width: 14, ref: false },
+  { key: "cost", header: "Giá nhập\n(đ / ĐV gốc)", width: 14, ref: false },
   { key: "expiry", header: "Hạn dùng\n(dd/mm/yyyy)", width: 13, ref: false },
   { key: "supplier", header: "Nhà cung cấp", width: 20, ref: false },
   { key: "note", header: "Số hóa đơn / ghi chú", width: 20, ref: false },
@@ -91,8 +91,8 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
       cell.protection = { locked: false };
     }
-    r.getCell(6).numFmt = "General";
-    r.getCell(8).numFmt = "General";
+    r.getCell(6).numFmt = "#,##0.##";
+    r.getCell(8).numFmt = "#,##0.##";
     r.getCell(9).numFmt = "dd/mm/yyyy";
     r.getCell(6).dataValidation = { type: "decimal", operator: "greaterThan", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Số lượng", error: "Nhập số lớn hơn 0." };
     r.getCell(8).dataValidation = { type: "decimal", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Giá nhập", error: "Nhập số đồng, không âm." };
@@ -122,7 +122,8 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
     r.getCell(12).numFmt = r.getCell(13).numFmt = "#,##0";
     r.getCell(5).alignment = r.getCell(12).alignment = r.getCell(13).alignment = { horizontal: "right" };
     inputStyle(r, YELLOW);
-    r.getCell(7).dataValidation = { type: "list", allowBlank: true, formulae: [herb ? '"g,kg"' : `"${it.unit}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: herb ? "Chọn g hoặc kg." : `Chỉ nhập theo ${it.unit}.` };
+    r.getCell(7).dataValidation = { type: "list", allowBlank: true, formulae: [`"${it.unit}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: `Chỉ nhập theo ${it.unit}.` };
+    r.getCell(7).value = it.unit;
     r.getCell(10).alignment = { wrapText: false };
   });
 
@@ -142,7 +143,7 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
     r.getCell(13).numFmt = "#,##0";
     r.getCell(13).dataValidation = { type: "whole", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Giá bán", error: "Nhập số đồng nguyên, không âm." };
     inputStyle(r, "FFE4F1E8");
-    r.getCell(7).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,kg,${UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Chọn trong danh sách." };
+    r.getCell(7).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,${UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Chọn trong danh sách." };
     if (k === 0) for (let c = 1; c <= LAST_COL; c++) r.getCell(c).border = { top: { style: "medium", color: { argb: "FF1B4332" } } };
   }
 
@@ -158,7 +159,7 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
     "",
     "1. Một file dùng cho cả hai việc: trang Tồn kho để xem báo cáo, trang Nhập kho để nhập hàng. Chỉ điền các ô nền vàng (cột F đến K). Các ô xám là thông tin của hệ thống, không sửa được.",
     "2. Dòng nào có Số lượng nhập thì được nhập; dòng để trống bị bỏ qua. Một mặt hàng nhập nhiều lô thì dùng một file khác hoặc lần sau.",
-    "3. Dược liệu: chọn ĐV nhập là g hoặc kg. Giá nhập tính theo ĐV nhập đã chọn (5 kg giá 120.000 đ/kg thì ghi 5, kg, 120000). Hệ thống tự đổi sang gam.",
+    "3. Dược liệu chỉ dùng MỘT đơn vị là gam (g) ở mọi cột: tồn, số lượng nhập, giá nhập, giá bán. Nhập 5 kg giá 120.000 đ/kg thì ghi 5.000 g, giá nhập 120 đ/g.",
     "4. Thành phẩm: ĐV nhập là đơn vị của mặt hàng (viên, hộp...).",
     "5. Hạn dùng: nên ghi theo dd/mm/yyyy. Dược liệu thiếu hạn dùng sẽ bị cảnh báo.",
     "6. Mặt hàng mới: dùng các dòng nền xanh nhạt ở cuối bảng (Mã hàng ghi (mới)). Điền Tên, Loại, ĐV gốc (g cho vị thuốc), Giá bán, rồi Số lượng, ĐV nhập, Giá nhập. App tự cấp mã hàng. Chỉ quản lý mới được tạo mặt hàng mới.",
@@ -357,8 +358,7 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
     if (itType && itUnit) {
       if (herb) {
         if (!inUnit) inUnit = "g";
-        if (inUnit.toLowerCase() === "kg") factor = 1000;
-        else if (inUnit.toLowerCase() !== "g") errors.push("ĐV nhập của dược liệu chỉ là g hoặc kg.");
+        if (inUnit.toLowerCase() !== "g") errors.push("Dược liệu chỉ nhập theo gam (g). Số lượng và giá nhập đều tính theo g.");
         else inUnit = "g";
       } else if (inUnit && inUnit !== itUnit) errors.push(`ĐV nhập phải là ${itUnit}.`);
       else inUnit = itUnit;
