@@ -274,6 +274,12 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
       </section>
 
       {/* 1b. Tổng hợp tứ chẩn */}
+      {tc.count === 0 && (
+        <section className="card space-y-2" id="tong-hop">
+          <h2 className="font-semibold text-brand-deep">Tổng hợp tứ chẩn (0 dữ kiện)</h2>
+          <p className="warn-box text-sm">Chưa có dữ kiện tứ chẩn nào được lưu. Hãy mở các nhóm Vọng, Văn, Vấn, Thiết ở trên, tích những gì quan sát được (hoặc gõ vào ô “Bổ sung ghi tay”), rồi bấm “Lưu tứ chẩn và xem tổng hợp”. Muốn xem thử, bấm “Điền ví dụ mẫu” trong phần Hướng dẫn nhanh.</p>
+        </section>
+      )}
       {tc.count > 0 && (
         <section className="card space-y-3" id="tong-hop">
           <h2 className="font-semibold text-brand-deep">Tổng hợp tứ chẩn ({tc.count} dữ kiện)</h2>
