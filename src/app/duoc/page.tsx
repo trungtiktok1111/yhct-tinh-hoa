@@ -101,7 +101,7 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
         <Stat icon={CalendarClock} label="Lô thuốc sắp hết hạn" value={soonLots} unit="lô, ≤ 30 ngày" tone="purple" />
       </div>
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_28rem]">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_25rem]">
         <div className="space-y-4">
           <Panel icon={Hourglass} title={`Danh sách đơn ${tab === "cho" ? "chờ phát thuốc" : tab === "da" ? "đã phát" : "bán lẻ"} (${shown.length})`} pad={false} tone="text-amber-600">
             <form className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-2.5">
@@ -118,7 +118,7 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
             {shown.length === 0 ? <p className="p-4 text-sm text-brand-ink/70">Không có đơn nào.</p> : (
               <div className="overflow-x-auto">
                 <table>
-                  <thead><tr><th className="w-10">STT</th><th>Bệnh nhân</th><th>Mã đơn</th><th>Bác sĩ kê đơn</th><th className="text-right">Số thang</th><th>Thanh toán</th><th>Ưu tiên</th><th></th></tr></thead>
+                  <thead><tr><th className="w-10">STT</th><th>Bệnh nhân</th><th>Mã đơn</th><th className="hidden min-[1800px]:table-cell">Bác sĩ kê đơn</th><th className="text-right">Số thang</th><th>Thanh toán</th><th>Ưu tiên</th><th></th></tr></thead>
                   <tbody>
                     {shown.map((i, k) => (
                       <tr key={i.id} className={sel?.id === i.id ? "bg-amber-50" : ""}>
@@ -129,7 +129,7 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
                           {i.patient?.allergies && <span className="chip chip-red mt-0.5">Dị ứng: {i.patient.allergies}</span>}
                         </td>
                         <td className="whitespace-nowrap font-mono text-xs">{code(i)}<div className="text-brand-ink/70">{i.paidAt ? timeVN(i.paidAt) : ""}</div></td>
-                        <td className="max-w-[9rem] truncate whitespace-nowrap text-sm" title={doctorOf(i) || ""}>{doctorOf(i) || (i.kind === "RETAIL" ? "Bán lẻ" : "—")}</td>
+                        <td className="hidden max-w-[9rem] truncate whitespace-nowrap text-sm min-[1800px]:table-cell" title={doctorOf(i) || ""}>{doctorOf(i) || (i.kind === "RETAIL" ? "Bán lẻ" : "—")}</td>
                         <td className="text-right">{i.visit?.exam?.prescription?.thangCount || "—"}</td>
                         <td className="whitespace-nowrap"><span className="chip chip-green">Đã thanh toán</span></td>
                         <td className="whitespace-nowrap">{i.visit?.priority ? <span className="chip chip-red">Ưu tiên</span> : <span className="chip chip-gray">Bình thường</span>}</td>
@@ -171,9 +171,9 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
                 <div className="text-right text-xs text-brand-ink/70">{code(sel)}<br />{dateVN(sel.visit?.createdAt ?? sel.createdAt)}</div>
               </div>
               {sel.patient?.allergies && <div className="warn-box text-sm"><b>Dị ứng:</b> {sel.patient.allergies}</div>}
-              <div className="flex gap-1 text-sm font-semibold">
-                {[["ds", `Danh sách vị thuốc (${drugLines.length})`], ["tt", "Thông tin đơn thuốc"], ["gc", "Ghi chú"]].map(([k, l]) => (
-                  <Link key={k} href={href({ sel: sel.id, dt: k })} className={`rounded-full px-3 py-1.5 ${dt === k ? "bg-brand-deep text-white" : "border border-slate-200 hover:bg-slate-50"}`}>{l}</Link>
+              <div className="flex flex-wrap gap-1 text-sm font-semibold">
+                {[["ds", `Vị thuốc (${drugLines.length})`], ["tt", "Thông tin đơn"], ["gc", "Ghi chú"]].map(([k, l]) => (
+                  <Link key={k} href={href({ sel: sel.id, dt: k })} className={`whitespace-nowrap rounded-full px-3 py-1.5 ${dt === k ? "bg-brand-deep text-white" : "border border-slate-200 hover:bg-slate-50"}`}>{l}</Link>
                 ))}
               </div>
               {dt === "ds" && (
