@@ -9,7 +9,7 @@ export async function branchesFor(staff: CurrentStaff) {
   });
 }
 
-export const UNITS = ["viên", "hộp", "chai", "lọ", "gói", "túi", "tuýp"];
+export { UNITS } from "@/lib/constants";
 export const input = "w-full rounded-lg border border-brand-gold/40 bg-white px-3 py-2.5 text-base";
 export const btn = "bg-brand-deep hover:bg-brand-deeper text-brand-cream rounded-lg px-4 py-2.5 font-semibold";
 

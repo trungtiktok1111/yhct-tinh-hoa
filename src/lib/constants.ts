@@ -67,3 +67,6 @@ export const ADMIN_SUB: NavLink[] = [
   { href: "/quan-tri/sao-luu", label: "Sao lưu dữ liệu", icon: "DatabaseBackup" },
   { href: "/quan-tri/cau-hinh", label: "Cấu hình hệ thống", icon: "Settings" },
 ];
+
+// Đơn vị của thành phẩm trong kho (dược liệu luôn tính bằng g).
+export const UNITS = ["viên", "hộp", "chai", "lọ", "gói", "túi", "tuýp"];

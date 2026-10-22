@@ -82,7 +82,7 @@ export function ExcelImport({
                 {prev.rows.map((r) => (
                   <tr key={r.row} className={r.errors.length ? "bg-red-50" : r.warnings.length ? "bg-amber-50/70" : ""}>
                     <td className="text-brand-ink/70">{r.row}</td>
-                    <td><div className="font-semibold">{r.name}</div><div className="text-xs text-brand-ink/70">{r.code}</div></td>
+                    <td><div className="font-semibold">{r.name}</div><div className="text-xs text-brand-ink/70">{r.code === "(mới)" ? <span className="font-semibold text-emerald-700">Mặt hàng mới, app tự cấp mã</span> : r.code}</div></td>
                     <td className="whitespace-nowrap text-sm">{r.inText || "—"}</td>
                     <td className="whitespace-nowrap text-right text-sm">{r.total ? vnd(r.total) : "—"}</td>
                     <td className="whitespace-nowrap text-sm">{r.expiry ? r.expiry.split("-").reverse().join("/") : "—"}</td>

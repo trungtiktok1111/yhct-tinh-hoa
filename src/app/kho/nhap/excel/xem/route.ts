@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentStaff } from "@/lib/auth";
-import { STOCK_WRITE_ROLES, hasAny } from "@/lib/permissions";
+import { STOCK_WRITE_ROLES, ITEM_MANAGER_ROLES, hasAny } from "@/lib/permissions";
 import { branchesFor } from "@/lib/stock";
 import { analyzeSheet, MAX_BYTES } from "@/lib/stockSheet";
 import { prisma } from "@/lib/db";
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const branches = await branchesFor(staff);
   const branch = branches.find((b) => b.id === fd.get("cn"));
   if (!branch) return NextResponse.json({ error: "Chọn chi nhánh hợp lệ." }, { status: 400 });
-  const res = await analyzeSheet(Buffer.from(await f.arrayBuffer()), branch);
+  const res = await analyzeSheet(Buffer.from(await f.arrayBuffer()), branch, { canCreate: hasAny(staff.roles, ITEM_MANAGER_ROLES) });
   const dup = await prisma.auditLog.findFirst({
     where: { action: "IMPORT_RECEIPT", branchId: branch.id, detail: { contains: `#${res.hash}` } },
     orderBy: { at: "desc" }, select: { at: true },

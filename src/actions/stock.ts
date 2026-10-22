@@ -7,7 +7,7 @@ import { nextItemCode } from "@/lib/stock";
 import { analyzeSheet, MAX_BYTES } from "@/lib/stockSheet";
 import { randomUUID } from "crypto";
 import { logAudit, requireRole, type CurrentStaff } from "@/lib/auth";
-import { ITEM_MANAGER_ROLES, STOCK_WRITE_ROLES } from "@/lib/permissions";
+import { ITEM_MANAGER_ROLES, STOCK_WRITE_ROLES, hasAny } from "@/lib/permissions";
 
 function str(fd: FormData, key: string): string | undefined {
   const v = fd.get(key);
@@ -283,7 +283,7 @@ export async function importStockExcel(formData: FormData) {
   const f = formData.get("file");
   if (!(f instanceof File) || f.size === 0) back(P, "Chưa chọn file.");
   if (f.size > MAX_BYTES) back(P, "File quá lớn (tối đa 2MB).");
-  const res = await analyzeSheet(Buffer.from(await f.arrayBuffer()), branch);
+  const res = await analyzeSheet(Buffer.from(await f.arrayBuffer()), branch, { canCreate: hasAny(staff.roles, ITEM_MANAGER_ROLES) });
   if (res.fileErrors.length) back(P, res.fileErrors[0]);
   const bad = res.rows.filter((r) => r.errors.length);
   if (bad.length) back(P, `Còn ${bad.length} dòng lỗi (dòng ${bad.slice(0, 5).map((r) => r.row).join(", ")}...). Sửa file rồi tải lại.`);
@@ -295,20 +295,48 @@ export async function importStockExcel(formData: FormData) {
   if (dup) back(P, "File này đã được nhập trước đó. Để tránh nhập trùng, hãy xuất phiếu mới.");
 
   const label = `Excel ${f.name}`.slice(0, 60);
+  // Mặt hàng mới: cấp mã liên tiếp theo loại, liên kết vị thuốc tri thức nếu trùng tên.
+  const newRows = res.rows.filter((r) => r.newItem);
+  const nextCode: Record<string, number> = {};
+  for (const t of ["HERB", "PRODUCT"]) {
+    if (!newRows.some((r) => r.newItem?.type === t)) continue;
+    const prefix = t === "HERB" ? "VT" : "TP";
+    const codes = await prisma.item.findMany({ where: { code: { startsWith: prefix } }, select: { code: true } });
+    nextCode[t] = codes.reduce((m, c) => Math.max(m, parseInt((c.code ?? "").slice(prefix.length), 10) || 0), 0) + 1;
+  }
+  const newItems: { id: string; code: string; name: string; type: string; unit: string; herbId: string | null; price: number }[] = [];
+  for (const r of newRows) {
+    const n = r.newItem!;
+    const herb = n.type === "HERB"
+      ? await prisma.herb.findFirst({ where: { standardName: { equals: n.name, mode: "insensitive" } }, select: { id: true } })
+      : null;
+    const id = randomUUID();
+    r.itemId = id;
+    newItems.push({ id, code: `${n.type === "HERB" ? "VT" : "TP"}${String(nextCode[n.type]++).padStart(3, "0")}`, name: n.name, type: n.type, unit: n.unit, herbId: herb?.id ?? null, price: n.price });
+  }
   const lots = res.rows.map((r) => ({
     id: randomUUID(), itemId: r.itemId as string, branchId, unitCost: r.unitCostBase,
     expiryDate: r.expiry ? new Date(r.expiry + "T00:00:00Z") : null, supplier: r.supplier,
     note: [label, r.note].filter(Boolean).join(" · "), qtyReceived: r.qtyBase, qtyRemaining: r.qtyBase, staffName: staff.fullName,
   }));
-  await prisma.$transaction([
-    prisma.stockLot.createMany({ data: lots }),
-    prisma.stockMove.createMany({
-      data: lots.map((l) => ({ itemId: l.itemId, branchId, lotId: l.id, type: "RECEIPT", qty: l.qtyReceived, reason: l.supplier ?? label, staffName: staff.fullName })),
-    }),
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.item.createMany({ data: newItems.map(({ price, ...it }) => it) }),
+      prisma.itemPrice.createMany({ data: newItems.map((it) => ({ itemId: it.id, price: it.price, staffName: staff.fullName })) }),
+      prisma.stockLot.createMany({ data: lots }),
+      prisma.stockMove.createMany({
+        data: lots.map((l) => ({ itemId: l.itemId, branchId, lotId: l.id, type: "RECEIPT", qty: l.qtyReceived, reason: l.supplier ?? label, staffName: staff.fullName })),
+      }),
+    ]);
+  } catch {
+    back(P, "Không lưu được (có thể mã hàng vừa bị trùng). Chưa có gì được ghi, hãy thử lại.");
+  }
+  for (const it of newItems) {
+    await logAudit({ staffId: staff.id, staffName: staff.fullName, action: "CREATE", entity: "Item", entityId: it.id, detail: `${it.name} · ${it.price}đ/${it.unit} (nhập Excel)` });
+  }
   await logAudit({
     staffId: staff.id, staffName: staff.fullName, branchId, action: "IMPORT_RECEIPT", entity: "StockLot",
-    detail: `Nhập Excel ${lots.length} dòng, tổng ${res.total}đ #${res.hash}`,
+    detail: `Nhập Excel ${lots.length} dòng (${newItems.length} mặt hàng mới), tổng ${res.total}đ #${res.hash}`,
   });
   revalidatePath("/kho");
   revalidatePath("/kho/nhap");
