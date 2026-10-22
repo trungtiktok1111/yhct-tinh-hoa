@@ -27,7 +27,7 @@ h1 { font-weight: 700; }
 .font-display { font-family: var(--font-body), sans-serif; }
 .brand-serif { font-family: var(--font-display), serif; }
 
-.status-pill {
+.status-pill { white-space:nowrap; flex-shrink:0;
   display: inline-flex;
   align-items: center;
   border-radius: 9999px;

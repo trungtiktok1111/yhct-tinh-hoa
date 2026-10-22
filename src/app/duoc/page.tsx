@@ -179,7 +179,7 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
               {dt === "ds" && (
                 <div className="overflow-x-auto">
                   <table>
-                    <thead><tr><th>STT</th><th>Tên vị thuốc</th><th className="text-right">SL tổng</th><th className="text-right">Tồn kho</th><th>Hạn dùng</th><th></th></tr></thead>
+                    <thead><tr><th>Tên vị thuốc</th><th className="text-right">SL tổng</th><th className="text-right">Tồn kho</th><th>Hạn dùng</th><th></th></tr></thead>
                     <tbody>
                       {drugLines.map((l, k) => {
                         const h = l.itemId ? have.get(l.itemId) ?? 0 : 0;
@@ -188,7 +188,6 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
                         const w = l.itemId ? checks.weighed.includes(l.itemId) : false;
                         return (
                           <tr key={l.id} className={w ? "bg-emerald-50/60" : ""}>
-                            <td>{k + 1}</td>
                             <td className="text-sm">{l.name}</td>
                             <td className="text-right text-sm">{fq(l.qty)} {l.unit}</td>
                             <td className="text-right text-sm">{fq(h)}</td>
