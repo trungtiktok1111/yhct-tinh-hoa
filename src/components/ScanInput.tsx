@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, QrCode, X } from "lucide-react";
+import { Camera, ImageUp, QrCode, X } from "lucide-react";
 
 // Ô quét mã: nhận từ máy quét USB/Bluetooth (gõ vào ô) hoặc quét bằng camera điện thoại/máy tính.
 // Quét được mã QR trên CCCD gắn chip, thẻ BHYT, mã BN. Quét xong tự gửi form tìm kiếm.
@@ -9,6 +9,26 @@ export function ScanInput({ name }: { name: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  // Chụp ảnh thẻ bằng camera gốc của điện thoại (nét hơn video trực tiếp) rồi đọc mã QR trong ảnh.
+  async function fromPhoto(f: File | undefined) {
+    if (!f) return;
+    setErr(""); setBusy(true);
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      const holder = document.createElement("div");
+      holder.id = "scan-file-tmp"; holder.style.display = "none"; document.body.appendChild(holder);
+      try {
+        const sc = new Html5Qrcode("scan-file-tmp");
+        const text = await sc.scanFile(f, false);
+        if (inputRef.current) inputRef.current.value = text;
+        inputRef.current?.form?.requestSubmit();
+      } finally { holder.remove(); }
+    } catch {
+      setErr("Không đọc được mã QR trong ảnh. Chụp lại gần hơn, đủ sáng, không chói, mã QR nằm trọn trong ảnh.");
+    } finally { setBusy(false); }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -19,8 +39,8 @@ export function ScanInput({ name }: { name: string }) {
         const { Html5Qrcode } = await import("html5-qrcode");
         const sc = new Html5Qrcode("scan-view");
         await sc.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 260, height: 260 } },
+          { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+          { fps: 12, qrbox: (w: number, h: number) => { const m = Math.floor(Math.min(w, h) * 0.85); return { width: m, height: m }; }, aspectRatio: 1 },
           (text: string) => {
             if (dead) return;
             dead = true;
@@ -51,6 +71,10 @@ export function ScanInput({ name }: { name: string }) {
         <button type="button" onClick={() => { setErr(""); setOpen(true); }} className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold hover:border-brand-deep">
           <Camera className="h-4 w-4" />Camera
         </button>
+        <label className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold hover:border-brand-deep">
+          <ImageUp className="h-4 w-4" />{busy ? "Đang đọc…" : "Chụp ảnh"}
+          <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { void fromPhoto(e.target.files?.[0]); e.target.value = ""; }} />
+        </label>
       </div>
       {open && (
         <div className="rounded-xl border border-slate-300 bg-black/90 p-2">
