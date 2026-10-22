@@ -63,7 +63,7 @@ export function GenericImport({ id, name, branches, needsBranch, columns, hint }
                 {bad === 0 && warn === 0 && <span className="font-medium text-emerald-700">Tất cả hợp lệ</span>}
               </div>
               <div className="max-h-[28rem] overflow-auto">
-                <table className="w-full text-sm">
+                <table data-nosticky className="w-full text-sm">
                   <thead className="sticky top-0 bg-slate-50 text-left text-xs text-brand-ink/70"><tr><th className="px-3 py-2">Dòng</th><th className="px-3 py-2">{columns[0]}</th><th className="px-3 py-2">{columns[1]}</th><th className="px-3 py-2">Kiểm tra</th></tr></thead>
                   <tbody>
                     {prev.rows.map((r) => (

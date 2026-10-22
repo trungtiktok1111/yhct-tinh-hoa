@@ -24,16 +24,13 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
   const hello = hour < 11 ? "Chào buổi sáng" : hour < 14 ? "Chào buổi trưa" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
 
   const header = (
-    <section className="relative overflow-hidden rounded-2xl bg-brand-deeper text-white min-h-[7.5rem]">
+    <section className="relative overflow-hidden rounded-xl bg-brand-deeper text-white">
       <Image src="/images/art/panorama.jpg" alt="" width={1800} height={600} priority className="absolute inset-0 h-full w-full object-cover object-right" />
       <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper via-brand-deeper/85 to-brand-deeper/10" />
-      <div className="relative p-5 md:px-8 md:py-5">
-        <div className="text-sm text-brand-goldLight capitalize">{dateText}</div>
-        <h1 className="brand-serif text-2xl md:text-[1.75rem] font-bold mt-0.5 leading-tight">{hello}, {staff.fullName}</h1>
-        <p className="mt-1.5 font-semibold">{branch ? branch.name : "Chưa có chi nhánh"}</p>
-        <p className="text-white/70 text-sm">Kế thừa tinh hoa · Phụng sự sức khỏe cộng đồng</p>
+      <div className="relative px-4 py-2.5 md:px-6">
+        <h1 className="brand-serif text-lg md:text-xl font-bold leading-tight">{hello}, {staff.fullName}</h1>
+        <p className="text-sm text-white/80"><span className="capitalize text-brand-goldLight">{dateText}</span> · {branch ? branch.name : "Chưa có chi nhánh"}</p>
       </div>
-      <div className="absolute right-6 bottom-4 hidden md:block text-right brand-serif italic text-brand-goldLight/90 leading-snug">Thiện tâm<br />Dưỡng sinh<br />Trị bệnh</div>
     </section>
   );
 

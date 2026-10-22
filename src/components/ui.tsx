@@ -7,11 +7,11 @@ export function PageHead({
   icon: Icon, title, sub, children,
 }: { icon: LucideIcon; title: string; sub?: string; img?: string; children?: React.ReactNode }) {
   return (
-    <header className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-[var(--line)] bg-white px-5 py-4">
-      <Icon className="h-6 w-6 shrink-0 text-brand-deep" aria-hidden />
+    <header className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border border-[var(--line)] bg-white px-4 py-2.5">
+      <Icon className="h-5 w-5 shrink-0 text-brand-deep" aria-hidden />
       <div className="min-w-0">
-        <h1 className="text-[1.375rem] font-semibold leading-tight">{title}</h1>
-        {sub && <p className="mt-0.5 text-sm text-brand-ink/70">{sub}</p>}
+        <h1 className="text-lg font-semibold leading-tight">{title}</h1>
+        {sub && <p className="text-xs text-brand-ink/70">{sub}</p>}
       </div>
       {children && <div className="ml-auto flex flex-wrap items-center gap-2">{children}</div>}
     </header>
