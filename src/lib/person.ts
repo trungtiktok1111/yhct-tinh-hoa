@@ -69,7 +69,9 @@ export function parseCommon(fd: FormData, opts: { phoneRequired: boolean }): { e
 
 // Điều kiện tìm bệnh nhân: tên, SĐT, CCCD, số thẻ BHYT, mã BN-000123. Dùng cho ô tìm và ô quét mã.
 export function patientSearchWhere(q: string | undefined) {
-  const t = q?.trim();
+  let t = q?.trim();
+  // Mã QR trên CCCD gắn chip: "số CCCD|số CMND cũ|họ tên|ngày sinh|..." — lấy số CCCD ở đầu.
+  if (t && t.includes("|")) t = t.split("|")[0].trim();
   if (!t) return undefined;
   const digits = t.replace(/\D/g, "");
   const seq = /^(bn-?)?0*\d+$/i.test(t) ? parseInt(digits, 10) : undefined;

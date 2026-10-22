@@ -17,7 +17,7 @@ import { canAccessPath } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
-export default async function ReceptionPage({ searchParams }: { searchParams: { cn?: string; loi?: string; ok?: string; ngay?: string; tt?: string; bs?: string; k?: string; q?: string; trang?: string } }) {
+export default async function ReceptionPage({ searchParams }: { searchParams: { cn?: string; loi?: string; ok?: string; ngay?: string; tt?: string; bs?: string; k?: string; q?: string | string[]; ma?: string | string[]; trang?: string } }) {
   const staff = await requireRole(...PATIENT_ROLES);
   const branches = await branchesFor(staff);
   const branch = branches.find((b) => b.id === searchParams.cn) ?? branches[0];
@@ -52,7 +52,9 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
     where: { active: true, role: { in: ["DOCTOR", "OWNER"] }, ...(staff.isOwner ? {} : { branches: { some: { branchId: branch.id } } }) },
     select: { fullName: true }, orderBy: { fullName: "asc" },
   });
-  const q = searchParams.q?.trim();
+  // Hai ô (gõ tay / quét mã) cùng gửi lên: lấy ô nào có chữ, ưu tiên ô quét.
+  const firstText = (v?: string | string[]) => [v ?? []].flat().map((x) => x.trim()).find(Boolean);
+  const q = firstText(searchParams.ma) ?? firstText(searchParams.q);
   const found = q ? await prisma.patient.findMany({ where: patientSearchWhere(q), take: 6, orderBy: { createdAt: "desc" } }) : [];
   const notes = await prisma.quickNote.findMany({ where: { OR: [{ branchId: branch.id }, { branchId: null }] }, orderBy: { createdAt: "desc" }, take: 4 });
   const waiting = allVisits.filter((v) => v.status === "WAITING").length;
@@ -162,7 +164,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
               <div className="text-xs text-brand-ink/70">hoặc quét CCCD / thẻ BHYT / mã BN (máy quét gõ vào ô bên dưới)</div>
               <div className="relative">
                 <QrCode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                <input name="q" placeholder="Quét mã…" className="w-full rounded-xl border border-dashed border-slate-400 bg-slate-50 py-2.5 pl-9 pr-3" />
+                <input name="ma" placeholder="Quét mã…" className="w-full rounded-xl border border-dashed border-slate-400 bg-slate-50 py-2.5 pl-9 pr-3" />
               </div>
               <button className="w-full rounded-xl bg-brand-deep py-2.5 font-semibold text-white hover:bg-brand-deeper">Tìm bệnh nhân để tiếp đón</button>
             </form>
