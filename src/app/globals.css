@@ -145,7 +145,7 @@ main tbody td { padding: .65rem .75rem; }
    Chỉ máy tính/máy tính bảng (>= 768px); điện thoại giữ cuộn ngang. Bảng nằm trong khung cuộn riêng dùng data-nosticky. */
 @media (min-width: 768px) {
   main :is(.overflow-x-auto, .overflow-hidden):has(table) { overflow: clip; }
-  main table:not([data-nosticky]) thead th { position: sticky; top: 3.5rem; z-index: 5; box-shadow: 0 1px 0 var(--line); }
+  main table:not([data-nosticky]) thead th { position: sticky; top: var(--th-top, 3.5rem); z-index: 5; box-shadow: 0 1px 0 var(--line); }
 }
 main tbody tr { border-bottom: 1px solid #eef2ef; transition: background-color .12s var(--ease-out); }
 main tbody tr:hover { background: #f8faf9; }

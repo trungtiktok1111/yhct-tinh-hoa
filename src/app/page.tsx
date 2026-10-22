@@ -122,34 +122,35 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
       {header}
       <div className="grid xl:grid-cols-[1fr_22rem] gap-5 items-start">
         <div className="space-y-4 min-w-0">
-          <div className={`grid grid-cols-2 ${revenue ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-3`}>
-            {cards.map((c) => {
-              const body = (
-                <>
-                  <div className="flex items-center gap-2 text-sm font-medium text-brand-ink/75"><span className={`h-2 w-2 rounded-full ${c.dot}`} aria-hidden />{c.label}</div>
-                  <div className={`mt-1.5 text-[1.75rem] font-semibold leading-none tabular-nums ${c.cls}`}>{c.n}</div>
-                  <div className="mt-1.5 text-xs text-brand-ink/70">bệnh nhân</div>
-                </>
-              );
-              const k = "block rounded-2xl border border-[var(--line)] bg-white px-4 py-3.5";
-              return c.href ? <Link key={c.label} href={c.href} className={`${k} transition-colors hover:border-brand-deep`}>{body}</Link> : <div key={c.label} className={k}>{body}</div>;
-            })}
-            {revenue && (
-              <div className="col-span-2 rounded-2xl border border-[var(--line)] bg-white px-4 py-3.5 lg:col-span-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-brand-ink/75"><span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />Doanh thu hôm nay</div>
-                <div className="mt-1.5 text-[1.75rem] font-semibold leading-none tabular-nums text-emerald-800">{vnd(revenue._sum.total ?? 0)}</div>
-                <div className="mt-1.5 text-xs text-brand-ink/70">Tổng thu</div>
+          {/* Dải chỉ số + nút thao tác: dính dưới thanh trên cùng khi cuộn (màn lớn), chiều cao cố định 7.25rem. */}
+          <div className="space-y-2 bg-[#f3f6f4] pb-2 pt-1 lg:sticky lg:top-14 lg:z-10">
+            <div className={`grid grid-cols-2 ${revenue ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-2`}>
+              {cards.map((c) => {
+                const body = (
+                  <>
+                    <div className="flex items-center gap-1.5 truncate text-xs font-medium text-brand-ink/75"><span className={`h-2 w-2 shrink-0 rounded-full ${c.dot}`} aria-hidden />{c.label}</div>
+                    <div className={`mt-1 text-xl font-semibold leading-none tabular-nums ${c.cls}`}>{c.n}<span className="ml-1 text-xs font-normal text-brand-ink/60">BN</span></div>
+                  </>
+                );
+                const k = "flex h-14 flex-col justify-center rounded-xl border border-[var(--line)] bg-white px-3";
+                return c.href ? <Link key={c.label} href={c.href} className={`${k} transition-colors hover:border-brand-deep`}>{body}</Link> : <div key={c.label} className={k}>{body}</div>;
+              })}
+              {revenue && (
+                <div className="col-span-2 flex h-14 flex-col justify-center rounded-xl border border-[var(--line)] bg-white px-3 lg:col-span-1">
+                  <div className="flex items-center gap-1.5 truncate text-xs font-medium text-brand-ink/75"><span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden />Doanh thu hôm nay</div>
+                  <div className="mt-1 text-xl font-semibold leading-none tabular-nums text-emerald-800">{vnd(revenue._sum.total ?? 0)}</div>
+                </div>
+              )}
+            </div>
+
+            {actions.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                {actions.map((a, i) => (
+                  <Link key={a.href} href={a.href} className={`flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-center text-sm font-semibold ${i === 0 ? "bg-brand-deep text-white hover:bg-brand-deeper" : "bg-white border border-slate-200 hover:border-brand-deep"}`}><a.Icon className={`h-4 w-4 ${i === 0 ? "" : "text-brand-deep"}`} />{a.label}</Link>
+                ))}
               </div>
             )}
           </div>
-
-          {actions.length > 0 && (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {actions.map((a, i) => (
-                <Link key={a.href} href={a.href} className={`flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-center font-semibold ${i === 0 ? "bg-brand-deep text-white hover:bg-brand-deeper" : "bg-white border border-slate-200 hover:border-brand-deep"}`}><a.Icon className={`h-5 w-5 ${i === 0 ? "" : "text-brand-deep"}`} />{a.label}</Link>
-              ))}
-            </div>
-          )}
 
           <section className="card !p-0 overflow-hidden">
             <div className="flex items-center gap-2.5 px-5 py-3 border-b border-[var(--line)] font-semibold text-base"><Users className="h-[1.125rem] w-[1.125rem] text-amber-600" aria-hidden />Hàng chờ hôm nay <span className="text-brand-ink/50 font-medium">({visits.length})</span><Link href={can("/tiep-don") ? "/tiep-don" + cn : "/benh-nhan"} className="ml-auto flex items-center gap-1 text-sm font-medium text-sky-700 hover:underline">Xem tất cả <ArrowRight className="h-4 w-4" /></Link></div>
@@ -157,7 +158,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { cn?:
               <p className="p-6 text-brand-ink/70">Chưa có bệnh nhân nào hôm nay.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-[15px]">
+                <table className="w-full text-[15px] [--th-top:3.5rem] lg:[--th-top:10.75rem]">
                   <thead className="text-left">
                     <tr>
                       <th className="px-5 py-2.5 w-14">STT</th>
