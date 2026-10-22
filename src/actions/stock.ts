@@ -272,6 +272,28 @@ export async function cancelLot(formData: FormData) {
   back(P);
 }
 
+// Sửa giá nhập của một lô (nhập sai / thiếu giá). Chỉ quản lý; giá phải > 0; ghi nhật ký giá cũ → mới.
+export async function fixLotCost(formData: FormData) {
+  const staff = await requireRole(...ITEM_MANAGER_ROLES);
+  const P = "/kho/lo";
+  const id = str(formData, "id");
+  const cost = money(formData, "unitCost");
+  if (!id) back(P);
+  if (cost === undefined || cost <= 0) back(P, "Giá nhập phải là số nguyên lớn hơn 0 (đồng / đơn vị).");
+  const lot = await prisma.stockLot.findUnique({ where: { id }, include: { item: true } });
+  if (!lot) back(P);
+  assertBranch(staff, lot.branchId, P);
+  if (lot.unitCost === cost) back(P);
+  await prisma.stockLot.update({ where: { id }, data: { unitCost: cost } });
+  await logAudit({
+    staffId: staff.id, staffName: staff.fullName, branchId: lot.branchId, action: "UPDATE", entity: "StockLot",
+    entityId: id, detail: `Sửa giá nhập lô ${lot.item.name}: ${lot.unitCost} → ${cost} đ/${lot.item.unit}`,
+  });
+  revalidatePath("/kho");
+  revalidatePath("/kho/lo");
+  back(P);
+}
+
 // Số phiếu nhập: PN-yyyymmdd-XXXX (giờ Việt Nam), ghi trong ghi chú lô để truy vết trên thẻ kho.
 function receiptNo() {
   const d = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10).replace(/-/g, "");
