@@ -43,6 +43,7 @@ export const CLINIC_NAV: NavLink[] = [
   { href: "/duoc", label: "Phát thuốc", icon: "Pill" },
   { href: "/kho", label: "Kho và giá", icon: "Package" },
   { href: "/bao-cao", label: "Báo cáo", icon: "BarChart3" },
+  { href: "/bieu-mau", label: "Biểu mẫu", icon: "FileSpreadsheet" },
 ];
 export const KNOWLEDGE_NAV: NavLink[] = [
   { href: "/ly-luan", label: "Lý luận cơ bản", icon: "ScrollText" },

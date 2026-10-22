@@ -23,6 +23,7 @@ import {
   UserCog,
   DatabaseBackup,
   Settings,
+  FileSpreadsheet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,6 +52,7 @@ const ICONS: Record<string, LucideIcon> = {
   UserCog,
   DatabaseBackup,
   Settings,
+  FileSpreadsheet,
 };
 
 export function NavIcon({ name, className }: { name: string; className?: string }) {

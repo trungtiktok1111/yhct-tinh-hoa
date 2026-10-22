@@ -1,0 +1,92 @@
+import { requireStaff } from "@/lib/auth";
+import { branchesFor } from "@/lib/stock";
+import { hasAny } from "@/lib/permissions";
+import { FORMS, GROUPS, type FormDef } from "@/lib/forms";
+import { PageHead } from "@/components/ui";
+import { FileSpreadsheet, Download, Upload } from "lucide-react";
+
+export const dynamic = "force-dynamic";
+
+const okDay = (v?: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v)) ? v : undefined);
+const nowVN = () => new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+
+const ROADMAP = [
+  "Phiếu kiểm kê kho (mẫu điền số đếm thực tế, app tự tính chênh lệch và lập phiếu điều chỉnh)",
+  "Mẫu nhập danh mục mặt hàng và bảng giá hàng loạt",
+  "Mẫu nhập hồ sơ bệnh nhân hàng loạt",
+  "Phiếu xuất hủy hàng hết hạn",
+];
+
+export default async function FormsPage({ searchParams }: { searchParams: { cn?: string; tu?: string; den?: string } }) {
+  const staff = await requireStaff();
+  const branches = await branchesFor(staff);
+  const today = nowVN();
+  const tu = okDay(searchParams.tu) ?? today.slice(0, 8) + "01";
+  const den = okDay(searchParams.den) ?? today;
+  const cn = branches.find((b) => b.id === searchParams.cn)?.id ?? (branches.length === 1 ? branches[0].id : "");
+  const mine = FORMS.filter((f) => hasAny(staff.roles, f.roles));
+
+  const link = (f: FormDef) => {
+    const q = new URLSearchParams();
+    if (f.branch && (cn || branches[0])) q.set("cn", cn || (f.group === "Kho" ? branches[0].id : ""));
+    if (f.period) { q.set("tu", tu); q.set("den", den); }
+    for (const [k, v] of [...q]) if (!v) q.delete(k);
+    return `${f.href}${q.toString() ? `?${q}` : ""}`;
+  };
+  const cls = "mt-0.5 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-brand-ink";
+
+  return (
+    <div className="space-y-4">
+      <PageHead icon={FileSpreadsheet} title="Biểu mẫu và báo cáo" sub="Mọi file Excel của app nằm ở đây. Chỉ tải từ đây để file luôn đúng mẫu chuẩn, không tự tạo file riêng." />
+
+      <form method="get" className="card !p-3 flex flex-wrap items-end gap-3">
+        <label className="text-xs text-brand-ink/65">Chi nhánh
+          <select name="cn" defaultValue={cn} className={cls}>
+            {branches.length > 1 && <option value="">Tất cả (báo cáo doanh thu, khám)</option>}
+            {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+        </label>
+        <label className="text-xs text-brand-ink/65">Từ ngày<input type="date" name="tu" defaultValue={tu} className={cls} /></label>
+        <label className="text-xs text-brand-ink/65">Đến ngày<input type="date" name="den" defaultValue={den} className={cls} /></label>
+        <button type="submit" className="rounded-xl bg-brand-deep px-5 py-2.5 text-sm font-semibold text-white">Áp dụng</button>
+        <p className="ml-auto max-w-sm text-xs text-brand-ink/60">Chi nhánh và kỳ áp dụng cho các file có chọn kỳ hoặc chi nhánh. Báo cáo kho luôn theo một chi nhánh.</p>
+      </form>
+
+      {GROUPS.map((g) => {
+        const list = mine.filter((f) => f.group === g);
+        if (!list.length) return null;
+        return (
+          <section key={g} className="space-y-2">
+            <h2 className="px-1 text-sm font-semibold text-brand-ink/75">{g}</h2>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {list.map((f) => (
+                <article key={f.id} className="card flex flex-col gap-2 !p-4">
+                  <div className="flex items-start gap-2">
+                    <h3 className="font-semibold leading-snug">{f.name}</h3>
+                    <span className={`ml-auto shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${f.kind === "mau" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>{f.kind === "mau" ? "Mẫu điền" : "Báo cáo"}</span>
+                  </div>
+                  <p className="text-sm text-brand-ink/75">{f.desc}</p>
+                  <p className="text-xs text-brand-ink/60"><span className="font-medium">Cột chính:</span> {f.cols}</p>
+                  <p className="text-xs text-brand-ink/60">
+                    {f.period ? "Theo kỳ" : "Tại thời điểm tải"}{f.branch ? " · theo chi nhánh" : ""}{f.extra ? ` · ${f.extra}` : ""}
+                  </p>
+                  <div className="mt-auto flex flex-wrap gap-2 pt-1">
+                    <a href={link(f)} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-deep px-4 py-2 text-sm font-semibold text-white"><Download className="h-4 w-4" />Tải {f.kind === "mau" ? "mẫu" : "báo cáo"}</a>
+                    {f.upload && <a href={f.upload.href} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:border-brand-deep"><Upload className="h-4 w-4" />{f.upload.label}</a>}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+
+      <section className="card !p-4">
+        <h2 className="text-sm font-semibold">Đề xuất làm tiếp</h2>
+        <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-brand-ink/75">
+          {ROADMAP.map((r) => <li key={r}>{r}</li>)}
+        </ul>
+      </section>
+    </div>
+  );
+}
