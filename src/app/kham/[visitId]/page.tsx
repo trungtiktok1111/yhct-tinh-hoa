@@ -231,7 +231,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         <Link href={`/benh-nhan/${p.id}/sua`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-deep underline"><Pencil className="h-4 w-4" />Sửa hồ sơ bệnh nhân</Link>
       </section>
 </>) },
-        { key: "hoi-benh", label: "Hỏi bệnh", ids: ["hoi-benh", "tu-chan", "tong-hop", "de-xuat"], content: (<>
+        { key: "kham-benh", label: "Khám bệnh", ids: ["kham-benh", "hoi-benh", "tu-chan", "tong-hop", "de-xuat", "kham-lam-sang", "chan-doan", "phap-tri", "phuong-thuoc", "don-thuoc", "bai-thuoc", "cham-cuu", "dan-do", "hoan-tat"], content: (<div className="space-y-4">
             {(p.pastHistory || p.chronicConditions || p.familyHistory) && (
         <div className="card text-sm space-y-1" id="hoi-benh">
           {p.chronicConditions && <div><b>Bệnh mạn tính:</b> {p.chronicConditions}</div>}
@@ -367,8 +367,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         </section>
       )}
 
-</>) },
-        { key: "kham-lam-sang", label: "Khám lâm sàng", ids: ["kham-lam-sang"], content: (<>
+
       <section className="card space-y-3" id="kham-lam-sang">
         <h2 className="font-semibold text-brand-deep">Sinh hiệu và khám thực thể</h2>
         <form action={saveClinical} className="space-y-3">
@@ -388,8 +387,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
           {!locked && <button className={btnMain}>Lưu khám lâm sàng</button>}
         </form>
       </section>
-</>) },
-        { key: "chan-doan", label: "Chẩn đoán", ids: ["chan-doan"], content: (<>
+
       <section className="card space-y-3" id="chan-doan">
         <h2 className="font-semibold text-brand-deep">Chẩn đoán</h2>
         <form action={saveDiagnosis} className="space-y-3">
@@ -440,8 +438,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
           {!locked && <button className={btnMain}>Lưu chẩn đoán</button>}
         </form>
       </section>
-</>) },
-        { key: "phap-tri", label: "Pháp trị", ids: ["phap-tri"], content: (<>
+
       <section className="card space-y-3" id="phap-tri">
         <h2 className="font-semibold text-brand-deep">Pháp trị và bát pháp</h2>
         <form action={savePrinciple} className="space-y-3">
@@ -468,8 +465,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
           {!locked && <button className={btnMain}>Lưu pháp trị</button>}
         </form>
       </section>
-</>) },
-        { key: "phuong-thuoc", label: "Phương thuốc", ids: ["phuong-thuoc", "don-thuoc", "bai-thuoc"], content: (<>
+
       {/* 4. Đơn thuốc */}
       <section className="card space-y-3" id="don-thuoc">
         <h2 className="font-semibold text-brand-deep" id="phuong-thuoc">Phương thuốc (thang thuốc)</h2>
@@ -580,8 +576,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         )}
       </section>
 
-</>) },
-        { key: "cham-cuu", label: "Châm cứu", ids: ["cham-cuu"], content: (<>
+
       {/* 5. Châm cứu, xoa bóp */}
       <section className="card space-y-3" id="cham-cuu">
         <h2 className="font-semibold text-brand-deep">Châm cứu và xoa bóp</h2>
@@ -626,8 +621,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         )}
       </section>
 
-</>) },
-        { key: "dan-do", label: "Dặn dò", ids: ["dan-do", "hoan-tat"], content: (<>
+
       {/* 6. Hoàn tất */}
       <section className="card space-y-3" id="hoan-tat">
         <h2 className="font-semibold text-brand-deep">Dặn dò và hoàn tất</h2>
@@ -649,7 +643,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         </form>
       </section>
 
-</>) },
+</div>) },
       ]} />
 
       <p className="text-xs text-gray-500">
