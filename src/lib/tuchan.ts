@@ -790,6 +790,48 @@ const THIET: Group = {
 
 export const GROUPS: Group[] = [VONG, VAN, VANHOI, THIET];
 
+// Mỗi mục khám phải có lựa chọn "bình thường" đứng đầu: người bệnh không phải mục nào cũng bất thường.
+// Chọn "bình thường" là bác sĩ đã khám mục đó và không thấy gì lạ (khác với để trống = chưa khám).
+export const NORMAL_V = "binh_thuong";
+const NORMAL: Record<string, string> = {
+  hinh_tuthe: "Bình thường (tư thế, vận động tự nhiên)",
+  dau: "Bình thường (đầu, tóc không bất thường)",
+  mat: "Bình thường (mặt cân đối, không phù)",
+  mat_khieu: "Bình thường (mắt sáng, không đỏ, không sưng)",
+  mui: "Bình thường (không nghẹt, không chảy dịch)",
+  moi: "Bình thường (môi hồng nhuận)",
+  chi: "Bình thường (tứ chi không sưng, không biến dạng)",
+  mong: "Bình thường (móng hồng nhuận)",
+  nguteh: "Bình thường",
+  da: "Bình thường (da nhuận, không phát ban, không phù)",
+  ho: "Không ho",
+  khi_nghich: "Không có",
+  mo_hoi: "Mồ hôi bình thường",
+  han_nhiet: "Bình thường (không sợ lạnh, không sợ nóng)",
+  vi_giac: "Vị giác bình thường",
+  khat: "Bình thường (khát vừa, uống nước vừa phải)",
+  kieu_dau: "Không đau",
+  dau_dau: "Không đau đầu",
+  dau_than: "Bình thường (mặt và thân mình không đau, không bất thường)",
+  nguc: "Bình thường (ngực không đau, không tức)",
+  bung: "Bình thường (bụng không đau, không chướng)",
+  hoi_chi: "Bình thường (tay chân không tê, không đau, không yếu)",
+  met_moi: "Không mệt mỏi bất thường",
+  hoi_tai_mat: "Tai mắt bình thường",
+  cam_xuc: "Cảm xúc bình thường",
+  tinh_duc: "Bình thường",
+  kinh_tinh: "Bình thường",
+  xuc_da: "Bình thường (da ấm vừa, không nóng, không lạnh)",
+  xuc_chi: "Bình thường (tay chân ấm)",
+  xuc_bung: "Bình thường (bụng mềm, không đau khi ấn)",
+  xuc_huyet: "Không có điểm đau",
+  mach_tong: "Bình mạch (hòa hoãn, có Vị khí, có thần, có căn)",
+};
+for (const g of GROUPS) for (const sec of g.sections) for (const f of sec.fields) {
+  const label = NORMAL[f.key];
+  if (label && !f.opts.some((x) => x.v === NORMAL_V)) f.opts.unshift({ v: NORMAL_V, label });
+}
+
 // ---------- Lưu và đọc ----------
 export type TuChanData = Record<string, { v: string[]; n?: string }>;
 

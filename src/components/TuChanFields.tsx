@@ -1,21 +1,13 @@
+import { TuChanGrid } from "@/components/TuChanGrid";
 import { GROUPS, fieldName, noteName, type TuChanData, type Opt } from "@/lib/tuchan";
 
 const selCls = "w-full rounded-lg border border-brand-gold/40 bg-white px-3 py-2 text-sm";
 
 // Các ô tứ chẩn có cấu trúc: mỗi nhóm là một khối gập, tích chọn nhiều hoặc chọn một.
-const COMMON = ["phu", "tram", "tri", "sac", "hu", "thuc", "hoat", "sap", "te", "huyen", "hoan", "nhuoc"];
+const COMMON = ["binh_thuong", "phu", "tram", "tri", "sac", "hu", "thuc", "hoat", "sap", "te", "huyen", "hoan", "nhuoc"];
 
 function Grid({ opts, f, cur }: { opts: Opt[]; f: string; cur: Set<string> }) {
-  return (
-    <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
-      {opts.map((o) => (
-        <label key={o.v} title={o.hint} className="flex items-start gap-2 text-sm leading-snug">
-          <input type="checkbox" name={fieldName(f)} value={o.v} defaultChecked={cur.has(o.v)} className="mt-1" />
-          <span>{o.label}</span>
-        </label>
-      ))}
-    </div>
-  );
+  return <TuChanGrid opts={opts} name={fieldName(f)} cur={[...cur]} />;
 }
 
 export function TuChanFields({ data, groupNotes }: { data: TuChanData; groupNotes: Record<string, string | null> }) {
