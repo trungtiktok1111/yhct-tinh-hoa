@@ -378,8 +378,7 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
     if (typeof q === "number" && typeof c === "number" && itType && itUnit && !errors.length) {
       qtyBase = q * factor;
       const rawCost = c / factor;
-      unitCostBase = Math.round(rawCost);
-      if (Math.abs(rawCost - unitCostBase) > 1e-9) warnings.push(`Giá/${itUnit} lẻ (${fmt(rawCost)} đ) được làm tròn thành ${fmt(unitCostBase)} đ.`);
+      unitCostBase = Math.round(rawCost * 10000) / 10000; // giữ đơn giá lẻ (đ / ĐV gốc)
       if (unitCostBase === 0) warnings.push("Giá nhập bằng 0.");
       const last = it?.lots[0]?.unitCost;
       if (last && last > 0 && (unitCostBase > last * 3 || unitCostBase * 3 < last)) warnings.push(`Giá nhập lệch nhiều so với lần trước (${fmt(last)} đ).`);

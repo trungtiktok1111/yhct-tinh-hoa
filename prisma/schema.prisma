@@ -452,7 +452,7 @@ model StockLot {
   supplierRef  Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   receivedAt   DateTime  @default(now())
   expiryDate   DateTime?
-  unitCost     Int // giá nhập / đơn vị
+  unitCost     Float // giá nhập / đơn vị (cho phép đơn giá lẻ theo gam)
   qtyReceived  Float
   qtyRemaining Float
   note         String?
