@@ -16,7 +16,7 @@ function Field({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-[0.8rem] font-semibold text-brand-ink/65">{label}</div>
       <div className="whitespace-pre-wrap">{value}</div>
     </div>
   );
@@ -65,7 +65,7 @@ export default async function FormulaDetailPage({ params }: { params: { id: stri
         <Field label="Gia giảm" value={formula.modifications} />
         {formula.safetyNotes && (
           <div className="warn-box">
-            <div className="text-xs uppercase tracking-wide">An toàn / chống chỉ định</div>
+            <div className="text-[0.8rem] font-semibold">An toàn / chống chỉ định</div>
             <div className="whitespace-pre-wrap">{formula.safetyNotes}</div>
           </div>
         )}

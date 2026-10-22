@@ -44,7 +44,7 @@ export default async function TheoryTopicListPage({
       <div className="space-y-6">
         {[...byCategory.entries()].map(([category, items]) => (
           <div key={category}>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-2">{category}</h2>
+            <h2 className="text-sm font-semibold text-brand-ink/70 mb-2">{category}</h2>
             <div className="grid gap-3">
               {items.map((t) => (
                 <Link key={t.id} href={`/ly-luan/${t.id}`} className="card flex items-center justify-between">

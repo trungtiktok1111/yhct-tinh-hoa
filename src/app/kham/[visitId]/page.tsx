@@ -10,7 +10,6 @@ import {
 } from "@/actions/exam";
 import { BAT_CUONG, BAT_PHAP, parseDoseRange } from "@/lib/exam";
 import { input } from "@/lib/stock";
-import Image from "next/image";
 import { PrintButton } from "@/components/PrintButton";
 import { AlertTriangle, FolderOpen, Pencil, Save, XCircle } from "lucide-react";
 import { SaveDraftButton } from "@/components/SaveDraftButton";
@@ -66,9 +65,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
   const initials = p.fullName.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase();
   const header = (
     <>
-      <div className="relative overflow-hidden rounded-2xl bg-brand-deeper text-white shadow-md">
-        <Image src="/images/art/herbs-wide.jpg" alt="" width={900} height={300} className="absolute right-0 top-0 h-full w-1/2 object-cover opacity-70" />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-deeper from-50% via-brand-deeper/85 to-transparent" />
+      <div className="relative overflow-hidden rounded-[0.875rem] bg-[#133b2d] text-white">
         <div className="relative flex flex-wrap items-center gap-4 p-4">
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white/15 text-lg font-bold ring-2 ring-brand-goldLight/60">{initials}</span>
           <div className="min-w-0">
@@ -218,7 +215,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
             ["Lượt khám", `Số ${visit.queueNo} · ${timeVN(visit.createdAt)} · ${visit.branch.name}`],
             ["Lý do đến khám", visit.reason],
           ] as [string, string | null | undefined][]).map(([k, v]) => (
-            <div key={k}><dt className="text-xs uppercase tracking-wide text-brand-ink/70">{k}</dt><dd className="font-medium">{v || "—"}</dd></div>
+            <div key={k}><dt className="text-[0.8rem] font-semibold text-brand-ink/70">{k}</dt><dd className="font-medium">{v || "—"}</dd></div>
           ))}
         </dl>
         <form action={saveAllergies} className="flex flex-wrap items-end gap-2 rounded-xl border border-red-200 bg-red-50/60 p-3">
@@ -649,7 +646,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
       <p className="text-xs text-gray-500">
         <Link href={`/benh-nhan/${p.id}`} className="underline">Hồ sơ bệnh nhân</Link>
       </p>
-      <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center justify-end gap-2 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+      <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center justify-end gap-2 rounded-xl border border-[var(--line)] bg-white p-3 shadow-[0_-4px_16px_rgba(13,40,24,.08)]">
         <Link href="/kham" className="mr-auto rounded-xl border border-slate-300 px-4 py-2.5 font-semibold hover:bg-slate-50">◂ Danh sách khám</Link>
         {!locked && (
           <form action={cancelExam}>

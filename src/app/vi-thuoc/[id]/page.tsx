@@ -36,7 +36,7 @@ function Prose({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-brand-ink/70 font-semibold mb-1">{label}</div>
+      <div className="text-[0.8rem] font-semibold text-brand-ink/70 mb-1">{label}</div>
       <p className="text-sm text-brand-ink whitespace-pre-wrap leading-relaxed">{value}</p>
     </div>
   );
@@ -174,7 +174,7 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
         </div>
         {herb.meridians && (
           <div className="card flex flex-col items-center justify-center gap-1 px-6">
-            <span className="text-xs uppercase tracking-wide text-brand-ink/70">Vòng Quy Kinh</span>
+            <span className="text-[0.8rem] font-semibold text-brand-ink/70">Vòng Quy Kinh</span>
             <MeridianWheel meridians={herb.meridians} />
           </div>
         )}
@@ -221,7 +221,7 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
         <div className="warn-box flex gap-3">
           <ShieldAlert className="h-5 w-5 shrink-0 mt-0.5" strokeWidth={1.75} />
           <div>
-            <div className="text-xs uppercase tracking-wide font-semibold">Kiêng kỵ — Thận trọng</div>
+            <div className="text-[0.8rem] font-semibold">Kiêng kỵ — Thận trọng</div>
             <div className="whitespace-pre-wrap text-sm mt-0.5">{herb.safetyNotes}</div>
           </div>
         </div>

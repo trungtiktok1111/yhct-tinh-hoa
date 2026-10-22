@@ -205,7 +205,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
         </div>
 
         <section className="card space-y-3 text-sm xl:sticky xl:top-[4.5rem] 2xl:col-start-3 xl:col-start-2 print:border-0 print:shadow-none">
-          <div className="print:hidden text-xs font-semibold uppercase tracking-wide text-brand-ink/70">Xem trước hóa đơn</div>
+          <div className="print:hidden text-[0.8rem] font-semibold text-brand-ink/70">Xem trước hóa đơn</div>
           <div className="text-center">
             <Image src="/images/logo-badge.png" alt="" width={56} height={56} className="mx-auto rounded-full" />
             <div className="brand-serif text-lg font-bold text-brand-deep">YHCT TINH HOA</div>

@@ -10,7 +10,7 @@ function Field({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-[0.8rem] font-semibold text-brand-ink/65">{label}</div>
       <div className="whitespace-pre-wrap">{value}</div>
     </div>
   );
@@ -47,7 +47,7 @@ export default async function PointDetailPage({ params }: { params: { id: string
         <Field label="Kỹ thuật" value={point.technique} />
         {(point.contraindications || point.riskNotes) && (
           <div className="warn-box space-y-1">
-            <div className="text-xs uppercase tracking-wide">An toàn</div>
+            <div className="text-[0.8rem] font-semibold">An toàn</div>
             {point.contraindications && <div>Chống chỉ định: {point.contraindications}</div>}
             {point.riskNotes && <div>Rủi ro giải phẫu: {point.riskNotes}</div>}
           </div>

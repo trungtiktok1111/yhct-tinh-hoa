@@ -15,7 +15,7 @@ function Field({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-[0.8rem] font-semibold text-brand-ink/65">{label}</div>
       <div className="whitespace-pre-wrap">{value}</div>
     </div>
   );
@@ -61,7 +61,7 @@ export default async function DiseaseDetailPage({ params }: { params: { id: stri
         <Field label="Chẩn đoán phân biệt" value={disease.differential} />
         {disease.warnings && (
           <div className="warn-box">
-            <div className="text-xs uppercase tracking-wide">Cảnh báo</div>
+            <div className="text-[0.8rem] font-semibold">Cảnh báo</div>
             <div className="whitespace-pre-wrap">{disease.warnings}</div>
           </div>
         )}
