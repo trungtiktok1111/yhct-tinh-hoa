@@ -30,7 +30,10 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
     <div className="space-y-6">
       <BackLink href="/kho" label="Quay lại Kho" />
       <KhoTabs active="nhap" />
-      <h1 className="text-2xl font-bold font-display">Nhập kho</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold font-display">Nhập kho</h1>
+        <a href="/kho/nhap/excel" className="flex items-center gap-2 rounded-xl border border-brand-deep px-4 py-2 font-semibold text-brand-deep hover:bg-brand-deep/5">Nhập nhiều dòng từ Excel</a>
+      </div>
       {searchParams.loi && <div className="warn-box text-sm">{searchParams.loi}</div>}
       {searchParams.ok && <div className="card !bg-green-50 text-sm text-green-800">Đã nhập kho.</div>}
 

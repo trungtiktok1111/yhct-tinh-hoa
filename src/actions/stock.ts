@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { nextItemCode } from "@/lib/stock";
+import { analyzeSheet, MAX_BYTES } from "@/lib/stockSheet";
+import { randomUUID } from "crypto";
 import { logAudit, requireRole, type CurrentStaff } from "@/lib/auth";
 import { ITEM_MANAGER_ROLES, STOCK_WRITE_ROLES } from "@/lib/permissions";
 
@@ -268,4 +270,47 @@ export async function cancelLot(formData: FormData) {
   revalidatePath("/kho");
   revalidatePath("/kho/nhap");
   back(P);
+}
+
+// ---------- Nhập kho hàng loạt từ Excel ----------
+// Kiểm tra lại toàn bộ ở máy chủ; có lỗi thì không lưu dòng nào. Cảnh báo cần tích xác nhận.
+export async function importStockExcel(formData: FormData) {
+  const staff = await requireRole(...STOCK_WRITE_ROLES);
+  const P = "/kho/nhap/excel";
+  const branchId = assertBranch(staff, str(formData, "branchId"), P);
+  const branch = await prisma.branch.findUnique({ where: { id: branchId }, select: { id: true, name: true } });
+  if (!branch) back(P, "Không tìm thấy chi nhánh.");
+  const f = formData.get("file");
+  if (!(f instanceof File) || f.size === 0) back(P, "Chưa chọn file.");
+  if (f.size > MAX_BYTES) back(P, "File quá lớn (tối đa 2MB).");
+  const res = await analyzeSheet(Buffer.from(await f.arrayBuffer()), branch);
+  if (res.fileErrors.length) back(P, res.fileErrors[0]);
+  const bad = res.rows.filter((r) => r.errors.length);
+  if (bad.length) back(P, `Còn ${bad.length} dòng lỗi (dòng ${bad.slice(0, 5).map((r) => r.row).join(", ")}...). Sửa file rồi tải lại.`);
+  const warned = res.rows.filter((r) => r.warnings.length);
+  if (warned.length && formData.get("confirmOdd") !== "1") back(P, "Có dòng cảnh báo, hãy tích xác nhận đã kiểm tra rồi nhập lại.");
+  const dup = await prisma.auditLog.findFirst({
+    where: { action: "IMPORT_RECEIPT", branchId, detail: { contains: `#${res.hash}` } }, select: { id: true },
+  });
+  if (dup) back(P, "File này đã được nhập trước đó. Để tránh nhập trùng, hãy xuất phiếu mới.");
+
+  const label = `Excel ${f.name}`.slice(0, 60);
+  const lots = res.rows.map((r) => ({
+    id: randomUUID(), itemId: r.itemId as string, branchId, unitCost: r.unitCostBase,
+    expiryDate: r.expiry ? new Date(r.expiry + "T00:00:00Z") : null, supplier: r.supplier,
+    note: [label, r.note].filter(Boolean).join(" · "), qtyReceived: r.qtyBase, qtyRemaining: r.qtyBase, staffName: staff.fullName,
+  }));
+  await prisma.$transaction([
+    prisma.stockLot.createMany({ data: lots }),
+    prisma.stockMove.createMany({
+      data: lots.map((l) => ({ itemId: l.itemId, branchId, lotId: l.id, type: "RECEIPT", qty: l.qtyReceived, reason: l.supplier ?? label, staffName: staff.fullName })),
+    }),
+  ]);
+  await logAudit({
+    staffId: staff.id, staffName: staff.fullName, branchId, action: "IMPORT_RECEIPT", entity: "StockLot",
+    detail: `Nhập Excel ${lots.length} dòng, tổng ${res.total}đ #${res.hash}`,
+  });
+  revalidatePath("/kho");
+  revalidatePath("/kho/nhap");
+  back(`${P}?ok=${lots.length}`);
 }
