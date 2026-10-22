@@ -7,6 +7,7 @@ import { PageHead, Stat, Panel } from "@/components/ui";
 import Link from "next/link";
 import { PrintButton } from "@/components/PrintButton";
 import { Download, Stethoscope, ReceiptText, BarChart3, Banknote, FileText, Users, FileX, Leaf, AlertTriangle, CalendarClock, PieChart, TrendingUp } from "lucide-react";
+import { DateInput } from "@/components/DateInput";
 
 export const dynamic = "force-dynamic";
 
@@ -134,8 +135,8 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
             {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </label>
-        <label className="text-sm font-medium">Từ ngày<input type="hidden" name="tab" value={tab} /><input type="date" name="tu" defaultValue={from} className={input} /></label>
-        <label className="text-sm font-medium">Đến ngày<input type="date" name="den" defaultValue={to} className={input} /></label>
+        <label className="text-sm font-medium">Từ ngày<input type="hidden" name="tab" value={tab} /><DateInput name="tu" defaultValue={from} className={input} /></label>
+        <label className="text-sm font-medium">Đến ngày<DateInput name="den" defaultValue={to} className={input} /></label>
         <button className="rounded-xl bg-brand-deep px-6 py-2.5 font-semibold text-white hover:bg-brand-deeper">Xem báo cáo</button>
       </form>
 

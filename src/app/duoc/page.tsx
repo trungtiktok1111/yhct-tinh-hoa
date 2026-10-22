@@ -10,6 +10,7 @@ import { saveDispenseDraft, confirmDispense } from "@/actions/dispense";
 import { PageHead, Stat, Panel } from "@/components/ui";
 import { qty as fq } from "@/lib/format";
 import { ClipboardList, Pill, Hourglass, CheckCircle2, AlertTriangle, Package, ShoppingCart, CalendarClock, ScanLine, Printer, FileText, Save, Search } from "lucide-react";
+import { DateInput } from "@/components/DateInput";
 
 export const dynamic = "force-dynamic";
 
@@ -112,7 +113,7 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
               </div>
               <select name="bs" defaultValue={searchParams.bs ?? ""} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm"><option value="">Tất cả bác sĩ</option>{doctors.map((d) => <option key={d} value={d}>{d}</option>)}</select>
               <select name="uu" defaultValue={searchParams.uu ?? ""} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm"><option value="">Mọi mức ưu tiên</option><option value="1">Chỉ ưu tiên</option></select>
-              {tab === "da" && <input type="date" name="ngay" defaultValue={day} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />}
+              {tab === "da" && <DateInput name="ngay" defaultValue={day} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />}
               <button className="rounded-lg bg-brand-deep px-4 py-1.5 text-sm font-semibold text-white">Tìm kiếm</button>
             </form>
             {shown.length === 0 ? <p className="p-4 text-sm text-brand-ink/70">Không có đơn nào.</p> : (

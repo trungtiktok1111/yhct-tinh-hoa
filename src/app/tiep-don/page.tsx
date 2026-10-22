@@ -15,6 +15,7 @@ import { ageOf } from "@/lib/person";
 import { PageHead, Stat, Panel } from "@/components/ui";
 import { ChevronLeft, ChevronRight, ClipboardCheck, Users, Clock, Stethoscope, CheckCircle2, XCircle, UserPlus, Search, AlertTriangle, FolderOpen, StickyNote, Star, Save, Trash2 } from "lucide-react";
 import { canAccessPath } from "@/lib/permissions";
+import { DateInput } from "@/components/DateInput";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +85,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
           <form className="flex items-center gap-1">
             <input type="hidden" name="cn" value={branch.id} />
             <Link href={`/tiep-don?cn=${branch.id}&ngay=${shift(-1)}`} className="rounded-lg border border-slate-300 px-2 py-1 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></Link>
-            <input type="date" name="ngay" defaultValue={day} className="rounded-lg border border-slate-300 px-2 py-1 text-sm" />
+            <DateInput name="ngay" defaultValue={day} className="rounded-lg border border-slate-300 px-2 py-1 text-sm" />
             <button className="rounded-lg bg-brand-deep px-3 py-1 text-sm font-semibold text-white">Xem</button>
             <Link href={`/tiep-don?cn=${branch.id}&ngay=${shift(1)}`} className="rounded-lg border border-slate-300 px-2 py-1 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></Link>
           </form>}>

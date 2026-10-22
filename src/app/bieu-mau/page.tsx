@@ -7,6 +7,7 @@ import { KIND_NAME } from "@/lib/voucher";
 import { FORMS, GROUPS, type FormDef } from "@/lib/forms";
 import { PageHead } from "@/components/ui";
 import { FileSpreadsheet, Download, Upload } from "lucide-react";
+import { DateInput } from "@/components/DateInput";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +49,8 @@ export default async function FormsPage({ searchParams }: { searchParams: { cn?:
             {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </label>
-        <label className="text-xs text-brand-ink/65">Từ ngày<input type="date" name="tu" defaultValue={tu} className={cls} /></label>
-        <label className="text-xs text-brand-ink/65">Đến ngày<input type="date" name="den" defaultValue={den} className={cls} /></label>
+        <label className="text-xs text-brand-ink/65">Từ ngày<DateInput name="tu" defaultValue={tu} className={cls} /></label>
+        <label className="text-xs text-brand-ink/65">Đến ngày<DateInput name="den" defaultValue={den} className={cls} /></label>
         <button type="submit" className="rounded-xl bg-brand-deep px-5 py-2.5 text-sm font-semibold text-white">Áp dụng</button>
         <p className="ml-auto max-w-sm text-xs text-brand-ink/60">Chi nhánh và kỳ áp dụng cho các file có chọn kỳ hoặc chi nhánh. Báo cáo kho luôn theo một chi nhánh.</p>
       </form>

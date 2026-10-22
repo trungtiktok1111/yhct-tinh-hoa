@@ -5,11 +5,18 @@ import { Camera, ImageUp, QrCode, X } from "lucide-react";
 
 // Ô quét mã: nhận từ máy quét USB/Bluetooth (gõ vào ô) hoặc quét bằng camera điện thoại/máy tính.
 // Quét được mã QR trên CCCD gắn chip, thẻ BHYT, mã BN. Quét xong tự gửi form tìm kiếm.
-export function ScanInput({ name }: { name: string }) {
+export function ScanInput({ name, onText, placeholder = "Quét mã…" }: { name?: string; onText?: (text: string) => void; placeholder?: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Có onText: trả chuỗi quét được cho nơi gọi (không gửi form); không có: điền vào ô rồi gửi form tìm kiếm.
+  function deliver(text: string) {
+    if (onText) { if (inputRef.current) inputRef.current.value = ""; onText(text); return; }
+    if (inputRef.current) inputRef.current.value = text;
+    inputRef.current?.form?.requestSubmit();
+  }
 
   // Chụp ảnh thẻ bằng camera gốc của điện thoại (nét hơn video trực tiếp) rồi đọc mã QR trong ảnh.
   async function fromPhoto(f: File | undefined) {
@@ -22,8 +29,7 @@ export function ScanInput({ name }: { name: string }) {
       try {
         const sc = new Html5Qrcode("scan-file-tmp");
         const text = await sc.scanFile(f, false);
-        if (inputRef.current) inputRef.current.value = text;
-        inputRef.current?.form?.requestSubmit();
+        deliver(text);
       } finally { holder.remove(); }
     } catch {
       setErr("Không đọc được mã QR trong ảnh. Chụp lại gần hơn, đủ sáng, không chói, mã QR nằm trọn trong ảnh.");
@@ -44,10 +50,9 @@ export function ScanInput({ name }: { name: string }) {
           (text: string) => {
             if (dead) return;
             dead = true;
-            if (inputRef.current) inputRef.current.value = text;
             sc.stop().catch(() => {}).finally(() => {
               setOpen(false);
-              inputRef.current?.form?.requestSubmit();
+              deliver(text);
             });
           },
           () => {},
@@ -66,7 +71,7 @@ export function ScanInput({ name }: { name: string }) {
       <div className="flex gap-2">
         <div className="relative flex-1">
           <QrCode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          <input ref={inputRef} name={name} placeholder="Quét mã…" autoComplete="off" className="w-full rounded-xl border border-dashed border-slate-400 bg-slate-50 py-2.5 pl-9 pr-3" />
+          <input ref={inputRef} name={name} placeholder={placeholder} autoComplete="off" onKeyDown={onText ? (e) => { if (e.key === "Enter") { e.preventDefault(); const v = e.currentTarget.value.trim(); if (v) deliver(v); } } : undefined} className="w-full rounded-xl border border-dashed border-slate-400 bg-slate-50 py-2.5 pl-9 pr-3" />
         </div>
         <button type="button" onClick={() => { setErr(""); setOpen(true); }} className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold hover:border-brand-deep">
           <Camera className="h-4 w-4" />Camera

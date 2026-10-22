@@ -7,6 +7,7 @@ import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { branchesFor, input, btn } from "@/lib/stock";
 import { dateVN, qty, vnd } from "@/lib/format";
+import { DateInput } from "@/components/DateInput";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +75,7 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
             <input name="unitCost" inputMode="numeric" required placeholder="vd: 300" className={input} />
           </label>
           <label className="text-sm">Hạn dùng
-            <input name="expiryDate" type="date" className={input} />
+            <DateInput name="expiryDate" className={input} />
           </label>
           <label className="text-sm">Nhà cung cấp
             <select name="supplierId" defaultValue="" className={input}>

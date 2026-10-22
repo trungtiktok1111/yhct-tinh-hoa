@@ -8,6 +8,7 @@ import { patientCode, timeVN, vnDayStart, vnd } from "@/lib/format";
 import { PageHead, Stat, Panel } from "@/components/ui";
 import { Wallet, Banknote, Landmark, CreditCard, FileText, ShoppingCart, Receipt, Plus, CalendarDays, ChevronLeft, ChevronRight, Stethoscope } from "lucide-react";
 import { ITEM_MANAGER_ROLES, hasAny } from "@/lib/permissions";
+import { DateInput } from "@/components/DateInput";
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +80,7 @@ export default async function CashierPage({ searchParams }: { searchParams: { cn
           <input type="hidden" name="cn" value={branch.id} /><input type="hidden" name="tab" value={tab} />
           <div className="flex items-center gap-1">
             <Link href={`${href(tab).replace(/&ngay=[^&]*/, "")}&ngay=${shift(-1)}`} className="rounded-lg border border-slate-300 p-1 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></Link>
-            <input type="date" name="ngay" defaultValue={day} className="min-w-0 flex-1 rounded-lg border border-slate-300 px-1.5 py-1 text-sm" />
+            <DateInput name="ngay" defaultValue={day} className="min-w-0 flex-1 rounded-lg border border-slate-300 px-1.5 py-1 text-sm" />
             <Link href={`${href(tab).replace(/&ngay=[^&]*/, "")}&ngay=${shift(1)}`} className="rounded-lg border border-slate-300 p-1 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></Link>
           </div>
           <button className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-deep py-1.5 text-sm font-semibold text-white"><CalendarDays className="h-4 w-4" />Xem ngày</button>

@@ -22,6 +22,7 @@ import { applyProposal } from "@/actions/proposal";
 import { proposeFromTuChan } from "@/lib/proposal";
 import { SampleFill } from "@/components/SampleFill";
 import { TuChanFields } from "@/components/TuChanFields";
+import { DateInput } from "@/components/DateInput";
 
 export const dynamic = "force-dynamic";
 
@@ -629,7 +630,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
               <textarea name="advice" defaultValue={exam.advice ?? ""} className={ta} />
             </label>
             <label className="block text-sm">Ngày tái khám
-              <input name="followUpDate" type="date" defaultValue={toDateInput(exam.followUpDate)} className={`${input} w-52`} />
+              <DateInput name="followUpDate" defaultValue={toDateInput(exam.followUpDate)} className={`${input} w-52`} />
             </label>
           </fieldset>
           {!locked && (

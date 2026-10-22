@@ -11,6 +11,7 @@ import { KhoTabs } from "@/components/KhoTabs";
 import { MoreVertical } from "lucide-react";
 import { COST_VIEW_ROLES } from "@/lib/permissions";
 import { Package, Boxes, AlertTriangle, CalendarClock, PackageX, PackagePlus, ClipboardCheck, Tag, Leaf } from "lucide-react";
+import { DateInput } from "@/components/DateInput";
 
 export const dynamic = "force-dynamic";
 
@@ -142,8 +143,8 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
       <form action="/kho/nxt" method="get" className="card !p-3 flex flex-wrap items-end gap-3">
         <input type="hidden" name="cn" value={branch.id} />
         <span className="pb-2 text-sm font-semibold">Báo cáo nhập – xuất – tồn</span>
-        <label className="text-xs text-brand-ink/65">Từ ngày<input type="date" name="tu" required defaultValue={new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 8) + "01"} className="mt-0.5 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-brand-ink" /></label>
-        <label className="text-xs text-brand-ink/65">Đến ngày<input type="date" name="den" required defaultValue={new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10)} className="mt-0.5 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-brand-ink" /></label>
+        <label className="text-xs text-brand-ink/65">Từ ngày<DateInput name="tu" required defaultValue={new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 8) + "01"} className="mt-0.5 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-brand-ink" /></label>
+        <label className="text-xs text-brand-ink/65">Đến ngày<DateInput name="den" required defaultValue={new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10)} className="mt-0.5 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-brand-ink" /></label>
         <button type="submit" className={`${btn} !py-2 text-sm`}><Download className="h-4 w-4" />Tải báo cáo NXT và thẻ kho</button>
       </form>
 

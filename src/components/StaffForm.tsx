@@ -5,6 +5,7 @@ import { createStaff, updateStaff } from "@/actions/admin";
 import { PersonFields } from "@/components/PersonFields";
 import { ROLES, ROLE_KEYS } from "@/lib/permissions";
 import type { FormState } from "@/lib/person";
+import { DateInput } from "@/components/DateInput";
 
 const cls = "w-full rounded-lg border border-brand-gold/40 bg-white px-3 py-2.5 text-base";
 
@@ -51,7 +52,7 @@ export function StaffForm({
           <input name="licenseNo" defaultValue={staff?.licenseNo ?? ""} className={cls} />
         </label>
         <label className="text-sm">Ngày vào làm
-          <input name="hireDate" type="date" defaultValue={staff?.hireDate ?? ""} className={cls} />
+          <DateInput name="hireDate" defaultValue={staff?.hireDate ?? ""} className={cls} />
         </label>
         <label className="text-sm">Ghi chú
           <input name="note" defaultValue={staff?.note ?? ""} className={cls} />
