@@ -37,7 +37,7 @@ export async function runImport(formData: FormData) {
   if (a.rows.some((r) => r.warnings.length) && formData.get("confirmOdd") !== "1") back("Có dòng cảnh báo, hãy tích xác nhận đã kiểm tra rồi nhập lại.");
   const tag = `#${id}:${a.hash}`;
   const dup = await prisma.auditLog.findFirst({ where: { action: "IMPORT", detail: { contains: tag }, ...(branch ? { branchId: branch.id } : {}) }, select: { id: true } });
-  if (dup) back("File này đã được nhập trước đó. Để tránh nhập trùng, hãy tải mẫu mới.");
+  if (dup) back("Số phiếu này đã được nhập trước đó. Để tránh nhập trùng, hãy tải mẫu mới.");
   let msg: string;
   try {
     msg = await imp.commit(a, { ...ctx, fileName: file.name });

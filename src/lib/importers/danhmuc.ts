@@ -28,6 +28,7 @@ async function build(): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "YHCT Tinh Hoa";
   const ws = makeSheet(wb, {
+    prefix: "DM",
     name: SHEET, marker: MARKER, title: "DANH MỤC MẶT HÀNG VÀ BẢNG GIÁ", scope: "Toàn hệ thống",
     note: "Mặt hàng có sẵn: chỉ sửa Giá bán, Tồn tối thiểu, Trạng thái (ô vàng). Mặt hàng mới: điền ở các dòng xanh nhạt phía dưới.",
     cols: COLS, groups: [{ from: 1, to: 4, label: "THÔNG TIN (có sẵn không sửa; dòng mới điền được)" }, { from: 5, to: 7, label: "ĐIỀN / SỬA Ở ĐÂY", input: true }],
@@ -79,9 +80,9 @@ type Newi = { id: string; name: string; type: "HERB" | "PRODUCT"; unit: string; 
 type Payload = { ops: Op[]; news: Newi[] };
 
 async function analyze(buf: Buffer): Promise<Analysis> {
-  const hash = hashOf(buf);
   const o = await openSheet(buf, { name: SHEET, marker: MARKER, scope: "Toàn hệ thống", cols: COLS, what: "Danh mục mặt hàng và bảng giá" });
-  if (!o.ws) return emptyAnalysis(hash, o.error);
+  if (!o.ws) return emptyAnalysis(hashOf(buf), o.error);
+  const hash = o.voucher ?? hashOf(buf);
   const ws = o.ws;
   const items = (await prisma.item.findMany({ include: { prices: { orderBy: { effectiveFrom: "desc" }, take: 1 } } })) as unknown as ItemRow[];
   const stockRows = (await prisma.stockLot.groupBy({ by: ["itemId"], where: { qtyRemaining: { gt: 0 } }, _sum: { qtyRemaining: true } })) as unknown as { itemId: string; _sum: { qtyRemaining: number | null } }[];

@@ -30,6 +30,7 @@ async function build(branch: { id: string; name: string }): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "YHCT Tinh Hoa";
   const ws = makeSheet(wb, {
+    prefix: "XH",
     name: SHEET, marker: MARKER, title: "PHIẾU XUẤT HỦY HÀNG", scope: branch.name,
     note: "Liệt kê lô đã hết hạn hoặc hết hạn trong 30 ngày. Điền Số lượng hủy và Lý do cho lô cần hủy. Lô không điền được bỏ qua.",
     cols: COLS, groups: [{ from: 1, to: 8, label: "HỆ THỐNG (không sửa)" }, { from: 9, to: 10, label: "ĐIỀN VÀO ĐÂY", input: true }], frozenCols: 3,
@@ -39,7 +40,7 @@ async function build(branch: { id: string; name: string }): Promise<Buffer> {
     const r = FIRST_ROW + idx;
     const row = ws.getRow(r);
     const e = l.expiryDate as Date;
-    [l.id, l.item.code ?? "", l.item.name, l.item.unit, l.note?.match(/PN-[0-9]{8}-[0-9A-F]{4}/)?.[0] ?? "", dmy(e), q2(l.qtyRemaining), e.getTime() < now ? "Đã hết hạn" : "Sắp hết hạn"].forEach((v, i) => (row.getCell(i + 1).value = v));
+    [l.id, l.item.code ?? "", l.item.name, l.item.unit, l.note?.match(/PN-[0-9]{8}-[0-9A-F]{4,6}/)?.[0] ?? "", dmy(e), q2(l.qtyRemaining), e.getTime() < now ? "Đã hết hạn" : "Sắp hết hạn"].forEach((v, i) => (row.getCell(i + 1).value = v));
     styleRow(ws, r, COLS);
     row.getCell(1).font = { size: 7, color: { argb: "FF9CA3AF" } };
     row.getCell(1).alignment = { shrinkToFit: true };
@@ -69,9 +70,9 @@ async function build(branch: { id: string; name: string }): Promise<Buffer> {
 type Op = { lotId: string; itemId: string; name: string; unit: string; qty: number; reason: string; expect: number; value: number };
 
 async function analyze(buf: Buffer, branch: { id: string; name: string }): Promise<Analysis> {
-  const hash = hashOf(buf);
   const o = await openSheet(buf, { name: SHEET, marker: MARKER, scope: branch.name, cols: COLS, what: "Phiếu xuất hủy hàng" });
-  if (!o.ws) return emptyAnalysis(hash, o.error);
+  if (!o.ws) return emptyAnalysis(hashOf(buf), o.error);
+  const hash = o.voucher ?? hashOf(buf);
   const ws = o.ws;
   const lots = (await prisma.stockLot.findMany({ where: { branchId: branch.id }, include: { item: { select: { id: true, code: true, name: true, unit: true } } } })) as unknown as LotRow[];
   const byId = new Map(lots.map((l) => [l.id, l]));

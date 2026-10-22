@@ -30,6 +30,7 @@ async function build(): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "YHCT Tinh Hoa";
   const ws = makeSheet(wb, {
+    prefix: "BN",
     name: SHEET, marker: MARKER, title: "NHẬP HỒ SƠ BỆNH NHÂN", scope: "Toàn hệ thống",
     note: "Mỗi dòng một bệnh nhân. Cột có dấu * là bắt buộc. Họ tên + năm sinh + điện thoại, hoặc CCCD đã có thì app chặn để tránh trùng hồ sơ.",
     cols: COLS, groups: [{ from: 1, to: 1, label: "" }, { from: 2, to: 5, label: "BẮT BUỘC", input: true }, { from: 6, to: 16, label: "TÙY CHỌN", input: true }], frozenCols: 2,
@@ -67,9 +68,9 @@ async function build(): Promise<Buffer> {
 type Payload = { data: Record<string, unknown>[] };
 
 async function analyze(buf: Buffer): Promise<Analysis> {
-  const hash = hashOf(buf);
   const o = await openSheet(buf, { name: SHEET, marker: MARKER, scope: "Toàn hệ thống", cols: COLS, what: "Nhập hồ sơ bệnh nhân" });
-  if (!o.ws) return emptyAnalysis(hash, o.error);
+  if (!o.ws) return emptyAnalysis(hashOf(buf), o.error);
+  const hash = o.voucher ?? hashOf(buf);
   const ws = o.ws;
   const existing = (await prisma.patient.findMany({ select: { seq: true, fullName: true, birthYear: true, phone: true, nationalId: true } })) as unknown as { seq: number; fullName: string; birthYear: number; phone: string; nationalId: string | null }[];
   const idMap = new Map(existing.filter((p) => p.nationalId).map((p) => [p.nationalId as string, p]));

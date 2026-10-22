@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { createHash } from "crypto";
+import { newVoucher, readVoucher, stampVoucher } from "@/lib/sheetKit";
 import { prisma } from "@/lib/db";
 import { UNITS } from "@/lib/constants";
 
@@ -50,6 +51,7 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
   wb.creator = "YHCT Tinh Hoa";
   const ws = wb.addWorksheet(SHEET, { views: [{ state: "frozen", xSplit: 2, ySplit: HEADER_ROW }] });
 
+  stampVoucher(ws, newVoucher("PN"));
   ws.getCell("A1").value = `PHIẾU NHẬP KHO · ${MARKER}`;
   ws.getCell("A1").font = { bold: true, size: 14 };
   ws.getCell("A2").value = "Chi nhánh:";
@@ -247,7 +249,7 @@ function toDate(v: ExcelJS.CellValue): { iso: string | null; bad: boolean } {
 const fmt = (n: number) => n.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
 
 export async function analyzeSheet(buf: Buffer, branch: { id: string; name: string }, opts: { canCreate: boolean } = { canCreate: false }): Promise<SheetResult> {
-  const hash = createHash("sha256").update(buf).digest("hex").slice(0, 16);
+  let hash = createHash("sha256").update(buf).digest("hex").slice(0, 16);
   const out: SheetResult = { hash, branchName: null, fileErrors: [], rows: [], total: 0 };
   const wb = new ExcelJS.Workbook();
   try {
@@ -261,6 +263,13 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
     out.fileErrors.push("File này không phải phiếu nhập kho (thiếu trang “Nhập kho”). File xuất cũ chỉ là báo cáo. Hãy bấm “Tải phiếu nhập kho (Excel)” hoặc “Xuất Excel” ở trang Tồn kho để lấy file mới.");
     return out;
   }
+  const voucher = readVoucher(ws);
+  if (!voucher) {
+    out.fileErrors.push("File không có Số phiếu (ô F1). Đây là file cũ hoặc đã bị sửa. Hãy tải phiếu nhập kho mới từ trang Biểu mẫu để có số phiếu riêng.");
+    return out;
+  }
+  hash = voucher;
+  out.hash = voucher;
   out.branchName = text(ws.getCell("B2").value);
   if (out.branchName !== branch.name) {
     out.fileErrors.push(`File này của chi nhánh “${out.branchName}”, nhưng bạn đang chọn “${branch.name}”.`);

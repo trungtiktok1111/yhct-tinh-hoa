@@ -26,6 +26,7 @@ async function build(branch: { id: string; name: string }): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "YHCT Tinh Hoa";
   const ws = makeSheet(wb, {
+    prefix: "KK",
     name: SHEET, marker: MARKER, title: "PHIẾU KIỂM KÊ KHO", scope: branch.name,
     note: "Đếm thực tế rồi điền vào cột Số đếm thực tế (nền vàng). Mặt hàng không đếm thì để trống. Dược liệu tính bằng gam.",
     cols: COLS, groups: [{ from: 1, to: 5, label: "HỆ THỐNG (không sửa)" }, { from: 6, to: 8, label: "ĐIỀN VÀO ĐÂY (Chênh lệch tự tính)", input: true }],
@@ -62,9 +63,9 @@ async function build(branch: { id: string; name: string }): Promise<Buffer> {
 type Op = { itemId: string; name: string; unit: string; delta: number; reason: string; expect: number };
 
 async function analyze(buf: Buffer, branch: { id: string; name: string }): Promise<Analysis> {
-  const hash = hashOf(buf);
   const o = await openSheet(buf, { name: SHEET, marker: MARKER, scope: branch.name, cols: COLS, what: "Phiếu kiểm kê kho" });
-  if (!o.ws) return emptyAnalysis(hash, o.error);
+  if (!o.ws) return emptyAnalysis(hashOf(buf), o.error);
+  const hash = o.voucher ?? hashOf(buf);
   const ws = o.ws;
   const items = (await prisma.item.findMany({ where: { active: true }, include: { lots: { where: { branchId: branch.id, qtyRemaining: { gt: 0 } }, orderBy: { receivedAt: "desc" }, select: { qtyRemaining: true, unitCost: true } } } })) as unknown as ItemRow[];
   const byCode = new Map(items.filter((i) => i.code).map((i) => [i.code as string, i]));

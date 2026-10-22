@@ -320,9 +320,9 @@ export async function importStockExcel(formData: FormData) {
   const dup = await prisma.auditLog.findFirst({
     where: { action: "IMPORT_RECEIPT", branchId, detail: { contains: `#${res.hash}` } }, select: { id: true },
   });
-  if (dup) back(P, "File này đã được nhập trước đó. Để tránh nhập trùng, hãy xuất phiếu mới.");
+  if (dup) back(P, "Số phiếu này đã được nhập trước đó. Để tránh nhập trùng, hãy tải phiếu nhập kho mới.");
 
-  const pn = receiptNo();
+  const pn = res.hash; // số phiếu in trên file mẫu, mỗi số chỉ nhập được một lần
   const label = `${pn} · Excel ${f.name}`.slice(0, 80);
   // Mặt hàng mới: cấp mã liên tiếp theo loại, liên kết vị thuốc tri thức nếu trùng tên.
   const newRows = res.rows.filter((r) => r.newItem);

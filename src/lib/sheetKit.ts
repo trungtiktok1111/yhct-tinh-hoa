@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 
 // Khung chung cho mọi mẫu Excel điền rồi tải lên: cùng bố cục, cùng cách khóa ô, cùng cách đọc.
 // Cấu trúc mỗi mẫu: A1 tiêu đề + mã nhận diện, B2 chi nhánh (hoặc "Toàn hệ thống"), hàng 4 nhãn nhóm,
@@ -17,10 +17,24 @@ export type Group = { from: number; to: number; label: string; input?: boolean }
 
 const fill = (argb: string) => ({ type: "pattern", pattern: "solid", fgColor: { argb } }) as ExcelJS.Fill;
 
-export function makeSheet(wb: ExcelJS.Workbook, o: { name: string; marker: string; title: string; scope: string; note: string; cols: ColSpec[]; groups: Group[]; frozenCols?: number }): ExcelJS.Worksheet {
+// Số phiếu: mỗi lần tải mẫu sinh một số riêng (vd PN-20261022-A1B2C3), ghi ở ô F1 (khóa).
+// Mỗi số phiếu chỉ nhập được MỘT lần, dù file đã sửa hay chưa, nên không thể nhập trùng.
+export const newVoucher = (prefix: string) =>
+  `${prefix}-${new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10).replace(/-/g, "")}-${randomUUID().slice(0, 6).toUpperCase()}`;
+export function stampVoucher(ws: ExcelJS.Worksheet, code: string) {
+  const c = ws.getCell(1, 6);
+  c.value = `Số phiếu: ${code}`;
+  c.font = { bold: true, size: 12, color: { argb: "FFB42318" } };
+}
+export function readVoucher(ws: ExcelJS.Worksheet): string | null {
+  return text(ws.getCell(1, 6).value).match(/^Số phiếu:\s*([A-Z]{2}-\d{8}-[0-9A-F]{6})$/)?.[1] ?? null;
+}
+
+export function makeSheet(wb: ExcelJS.Workbook, o: { prefix: string; name: string; marker: string; title: string; scope: string; note: string; cols: ColSpec[]; groups: Group[]; frozenCols?: number }): ExcelJS.Worksheet {
   const ws = wb.addWorksheet(o.name, { views: [{ state: "frozen", xSplit: o.frozenCols ?? 2, ySplit: HEADER_ROW }] });
   ws.getCell("A1").value = `${o.title} · ${o.marker}`;
   ws.getCell("A1").font = { bold: true, size: 14 };
+  stampVoucher(ws, newVoucher(o.prefix));
   ws.getCell("A2").value = o.scope.startsWith("Toàn") ? "Phạm vi:" : "Chi nhánh:";
   ws.getCell("B2").value = o.scope;
   ws.getCell("A2").font = ws.getCell("B2").font = { bold: true };
@@ -120,7 +134,7 @@ export const hashOf = (buf: Buffer) => createHash("sha256").update(buf).digest("
 export const fmt = (n: number) => n.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
 
 // Mở file đã tải lên và kiểm tra đúng mẫu: tên trang, mã nhận diện, phạm vi (B2), tên các cột.
-export async function openSheet(buf: Buffer, o: { name: string; marker: string; scope: string; cols: ColSpec[]; what: string }): Promise<{ ws?: ExcelJS.Worksheet; error?: string }> {
+export async function openSheet(buf: Buffer, o: { name: string; marker: string; scope: string; cols: ColSpec[]; what: string }): Promise<{ ws?: ExcelJS.Worksheet; error?: string; voucher?: string }> {
   const wb = new ExcelJS.Workbook();
   try {
     await wb.xlsx.load(buf as unknown as ArrayBuffer);
@@ -135,5 +149,7 @@ export async function openSheet(buf: Buffer, o: { name: string; marker: string; 
   for (let i = 0; i < o.cols.length; i++) {
     if (text(ws.getRow(HEADER_ROW).getCell(i + 1).value) !== o.cols[i].header) return { error: `Cột ${i + 1} phải là “${o.cols[i].header.replace(/\n/g, " ")}”. Mẫu đã bị đổi cấu trúc, hãy tải mẫu mới.` };
   }
-  return { ws };
+  const voucher = readVoucher(ws);
+  if (!voucher) return { error: "File không có Số phiếu (ô F1). Đây là file cũ hoặc đã bị sửa. Hãy tải mẫu mới từ trang Biểu mẫu để có số phiếu riêng." };
+  return { ws, voucher };
 }
