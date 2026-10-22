@@ -33,7 +33,7 @@ const COLS = [
 const YELLOW = "FFFFF4C2";
 const GREY = "FFF1F3F2";
 
-export async function buildTemplate(branch: { id: string; name: string }): Promise<Buffer> {
+export async function buildTemplate(branch: { id: string; name: string }, opts: { cost: boolean } = { cost: false }): Promise<Buffer> {
   const items = await prisma.item.findMany({
     where: { active: true },
     orderBy: [{ type: "asc" }, { name: "asc" }],
@@ -72,7 +72,7 @@ export async function buildTemplate(branch: { id: string; name: string }): Promi
     const herb = it.type === "HERB";
     const vals: (string | number | null)[] = [
       it.code ?? "", it.name, herb ? "Vị thuốc" : "Thành phẩm", it.unit, Math.round(stock * 100) / 100,
-      it.lots[0]?.unitCost ?? null, it.prices[0]?.price ?? null,
+      opts.cost ? it.lots[0]?.unitCost ?? null : null, it.prices[0]?.price ?? null,
     ];
     vals.forEach((v, i) => {
       const cell = r.getCell(i + 1);
@@ -120,12 +120,14 @@ export async function buildTemplate(branch: { id: string; name: string }): Promi
   ws.autoFilter = { from: { row: HEADER_ROW, column: 1 }, to: { row: HEADER_ROW + Math.max(items.length, 1) + NEW_ROWS, column: COLS.length } };
   await ws.protect("", { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, formatColumns: true, formatRows: true });
 
+  addReportSheet(wb, branch, items, opts.cost);
+
   const g = wb.addWorksheet("Hướng dẫn");
   g.getColumn(1).width = 110;
   [
-    "HƯỚNG DẪN NHẬP KHO BẰNG EXCEL",
+    "HƯỚNG DẪN NHẬP KHO BẰNG EXCEL (file này cũng là báo cáo tồn kho: xem trang Tồn kho)",
     "",
-    "1. Chỉ điền các cột nền vàng (H đến M). Các cột xám là thông tin của hệ thống, không sửa được.",
+    "1. Một file dùng cho cả hai việc: trang Tồn kho để xem báo cáo, trang Nhập kho để nhập hàng. Chỉ điền các cột nền vàng (H đến M). Các cột xám là thông tin của hệ thống, không sửa được.",
     "2. Dòng nào có Số lượng nhập thì được nhập; dòng để trống bị bỏ qua. Một mặt hàng nhập nhiều lô thì dùng một file khác hoặc lần sau.",
     "3. Dược liệu: chọn ĐV nhập là g hoặc kg. Giá nhập tính theo ĐV nhập đã chọn (5 kg giá 120.000 đ/kg thì ghi 5, kg, 120000). Hệ thống tự đổi sang gam.",
     "4. Thành phẩm: ĐV nhập là đơn vị của mặt hàng (viên, hộp...).",
@@ -225,7 +227,7 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
   }
   const ws = wb.getWorksheet(SHEET);
   if (!ws || !text(ws.getCell("A1").value).includes(MARKER)) {
-    out.fileErrors.push("Đây không phải phiếu nhập kho do app xuất ra. Hãy tải file mẫu mới ở nút “Tải phiếu nhập kho (Excel)”.");
+    out.fileErrors.push("File này không phải phiếu nhập kho (thiếu trang “Nhập kho”). File xuất cũ chỉ là báo cáo. Hãy bấm “Tải phiếu nhập kho (Excel)” hoặc “Xuất Excel” ở trang Tồn kho để lấy file mới.");
     return out;
   }
   out.branchName = text(ws.getCell("B2").value);
@@ -351,4 +353,67 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
   }
   if (!out.rows.length && !out.fileErrors.length) out.fileErrors.push("Không có dòng nào được điền Số lượng nhập.");
   return out;
+}
+
+type ReportItem = {
+  code: string | null; name: string; type: string; unit: string; minStock: number;
+  prices: { price: number }[]; lots: { qtyRemaining: number; unitCost: number; expiryDate: Date | null }[];
+};
+
+// Trang "Tồn kho": báo cáo tồn, hạn dùng, giá trị. Cùng một file với phiếu nhập nên xuất một lần dùng cho cả hai việc.
+function addReportSheet(wb: ExcelJS.Workbook, branch: { name: string }, items: ReportItem[], cost: boolean) {
+  const ws = wb.addWorksheet("Tồn kho", { views: [{ state: "frozen", ySplit: 4 }] });
+  const cols: [string, number, string?][] = [
+    ["STT", 6], ["Mã hàng", 11], ["Tên mặt hàng", 30], ["Loại", 12], ["Đơn vị", 9], ["Tồn kho", 12, "#,##0.##"],
+    ["Tối thiểu", 11, "#,##0.##"], ["Hạn gần nhất", 14, "dd/mm/yyyy"],
+    ...(cost ? ([["Giá nhập TB", 14, "#,##0.##"], ["Giá trị tồn", 15, "#,##0"]] as [string, number, string][]) : []),
+    ["Giá bán", 12, "#,##0"], ["Trạng thái", 16],
+  ];
+  ws.getCell("A1").value = `TỒN KHO · ${branch.name}`;
+  ws.getCell("A1").font = { bold: true, size: 14 };
+  ws.getCell("A2").value = `Xuất lúc ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}`;
+  ws.getCell("A2").font = { italic: true, color: { argb: "FF6B7280" } };
+  const head = ws.getRow(4);
+  cols.forEach(([h, w], i) => {
+    const c = head.getCell(i + 1);
+    c.value = h;
+    c.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1B4332" } };
+    c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    ws.getColumn(i + 1).width = w;
+  });
+  head.height = 26;
+  const now = Date.now();
+  let totalValue = 0;
+  items.forEach((it, idx) => {
+    const lots = it.lots.filter((l) => l.qtyRemaining > 0);
+    const total = lots.reduce((a, l) => a + l.qtyRemaining, 0);
+    const value = lots.reduce((a, l) => a + l.qtyRemaining * l.unitCost, 0);
+    totalValue += value;
+    const exps = lots.map((l) => l.expiryDate).filter(Boolean) as Date[];
+    const nearest = exps.length ? new Date(Math.min(...exps.map((d) => d.getTime()))) : null;
+    const status = total <= 0 ? "Hết hàng" : it.minStock > 0 && total < it.minStock ? "Dưới tối thiểu"
+      : nearest && nearest.getTime() < now ? "Có lô hết hạn" : nearest && nearest.getTime() < now + 90 * 86400000 ? "Gần hết hạn" : "Còn hàng";
+    const vals: (string | number | Date | null)[] = [
+      idx + 1, it.code ?? "", it.name, it.type === "HERB" ? "Vị thuốc" : "Thành phẩm", it.unit, Math.round(total * 100) / 100, it.minStock, nearest,
+      ...(cost ? [total ? Math.round((value / total) * 100) / 100 : 0, Math.round(value)] : []), it.prices[0]?.price ?? null, status,
+    ];
+    const row = ws.getRow(5 + idx);
+    vals.forEach((v, i) => {
+      const c = row.getCell(i + 1);
+      c.value = v;
+      if (cols[i][2]) c.numFmt = cols[i][2] as string;
+      c.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
+    });
+    if (status !== "Còn hàng") row.getCell(cols.length).font = { bold: true, color: { argb: status === "Gần hết hạn" ? "FFB45309" : "FFB91C1C" } };
+  });
+  if (cost) {
+    const r = ws.getRow(5 + items.length + 1);
+    r.getCell(3).value = "Tổng giá trị tồn (theo giá nhập)";
+    r.getCell(3).font = { bold: true };
+    r.getCell(10).value = Math.round(totalValue);
+    r.getCell(10).numFmt = "#,##0";
+    r.getCell(10).font = { bold: true };
+  }
+  ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4 + Math.max(items.length, 1), column: cols.length } };
 }
