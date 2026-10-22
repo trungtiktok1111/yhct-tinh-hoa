@@ -53,7 +53,7 @@ export function PersonFields({ v = {}, phoneRequired = false }: { v?: V; phoneRe
         <ScanInput onText={onScan} placeholder="Quét mã QR trên CCCD hoặc ảnh VNeID…" />
         <div className="mt-2"><IdPhoto onInfo={apply} onError={(m) => setScan({ err: m })} /></div>
         <p className="mt-1.5 text-xs text-brand-ink/60">
-          <b>Camera</b>/<b>Chụp ảnh</b>: quét mã QR. <b>Đọc ảnh CCCD / VNeID</b>: chọn ảnh thẻ hoặc ảnh chụp màn hình VNeID, app đọc mã QR, không có QR thì đọc chữ. Máy quét USB: bấm vào ô rồi quét.
+          <b>Camera</b>/<b>Chụp ảnh</b>: quét mã QR. <b>Đọc ảnh / PDF</b>: chọn ảnh thẻ, ảnh chụp màn hình hoặc tệp PDF xuất từ VNeID, app đọc mã QR, không có QR thì đọc chữ. Máy quét USB: bấm vào ô rồi quét.
         </p>
         {scan.ok && <p className="mt-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">{scan.ok}</p>}
         {scan.err && <p className="warn-box mt-1.5 text-xs">{scan.err}</p>}
