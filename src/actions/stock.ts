@@ -322,7 +322,10 @@ export async function importStockExcel(formData: FormData) {
   try {
     await prisma.$transaction([
       prisma.item.createMany({ data: newItems.map(({ price, ...it }) => it) }),
-      prisma.itemPrice.createMany({ data: newItems.map((it) => ({ itemId: it.id, price: it.price, staffName: staff.fullName })) }),
+      prisma.itemPrice.createMany({ data: [
+        ...newItems.map((it) => ({ itemId: it.id, price: it.price, staffName: staff.fullName })),
+        ...res.rows.filter((r) => r.priceChange && r.itemId).map((r) => ({ itemId: r.itemId as string, price: r.priceChange!.to, staffName: staff.fullName })),
+      ] }),
       prisma.stockLot.createMany({ data: lots }),
       prisma.stockMove.createMany({
         data: lots.map((l) => ({ itemId: l.itemId, branchId, lotId: l.id, type: "RECEIPT", qty: l.qtyReceived, reason: l.supplier ?? label, staffName: staff.fullName })),
@@ -333,6 +336,9 @@ export async function importStockExcel(formData: FormData) {
   }
   for (const it of newItems) {
     await logAudit({ staffId: staff.id, staffName: staff.fullName, action: "CREATE", entity: "Item", entityId: it.id, detail: `${it.name} · ${it.price}đ/${it.unit} (nhập Excel)` });
+  }
+  for (const r of res.rows.filter((x) => x.priceChange)) {
+    await logAudit({ staffId: staff.id, staffName: staff.fullName, action: "UPDATE", entity: "ItemPrice", entityId: r.itemId ?? undefined, detail: `${r.name}: giá bán ${r.priceChange!.from ?? "?"} → ${r.priceChange!.to}đ (nhập Excel)` });
   }
   await logAudit({
     staffId: staff.id, staffName: staff.fullName, branchId, action: "IMPORT_RECEIPT", entity: "StockLot",

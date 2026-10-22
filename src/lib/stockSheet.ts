@@ -105,7 +105,7 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
     const herb = it.type === "HERB";
     const ref: [number, string | number | null][] = [
       [1, it.code ?? ""], [2, it.name], [3, herb ? "Vị thuốc" : "Thành phẩm"], [4, it.unit], [5, stock],
-      [12, opts.cost ? it.lots[0]?.unitCost ?? null : null], [13, it.prices[0]?.price ?? null],
+      [12, opts.cost ? it.lots[0]?.unitCost ?? null : null],
     ];
     for (const [c, v] of ref) {
       const cell = r.getCell(c);
@@ -113,6 +113,11 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: GREY } };
       cell.protection = { locked: true };
     }
+    const pc = r.getCell(13);
+    pc.value = it.prices[0]?.price ?? null;
+    pc.fill = { type: "pattern", pattern: "solid", fgColor: { argb: YELLOW } };
+    pc.protection = { locked: false };
+    pc.dataValidation = { type: "whole", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Giá bán", error: "Nhập số đồng nguyên, không âm." };
     r.getCell(5).numFmt = nf(stock);
     r.getCell(12).numFmt = r.getCell(13).numFmt = "#,##0";
     r.getCell(5).alignment = r.getCell(12).alignment = r.getCell(13).alignment = { horizontal: "right" };
@@ -184,6 +189,7 @@ export type SheetRow = {
   supplier: string | null;
   note: string | null;
   newItem: { name: string; type: "HERB" | "PRODUCT"; unit: string; price: number } | null;
+  priceChange: { from: number | null; to: number } | null; // sửa giá bán mặt hàng có sẵn (chỉ quản lý)
   errors: string[];
   warnings: string[];
 };
@@ -293,6 +299,7 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
     const warnings: string[] = [];
     let it = isNew ? undefined : byCode.get(code);
     let newItem: SheetRow["newItem"] = null;
+    let priceChange: SheetRow["priceChange"] = null;
     let itType: "HERB" | "PRODUCT" | undefined = it?.type as "HERB" | "PRODUCT" | undefined;
     let itUnit = it?.unit ?? "";
     let sell: number | undefined = it?.prices[0]?.price;
@@ -324,6 +331,18 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
       }
     } else if (!it) errors.push(`Mã hàng “${code}” không có trong hệ thống.`);
     else if (it.name !== fileName) errors.push(`Tên không khớp mã (file: ${fileName}, hệ thống: ${it.name}). Xuất lại file.`);
+    else {
+      const sp = toNumber(row.getCell(13).value);
+      if (sp === "bad" || (typeof sp === "number" && (sp < 0 || !Number.isInteger(sp)))) errors.push("Giá bán phải là số đồng nguyên, không âm.");
+      else if (typeof sp === "number" && sp !== it.prices[0]?.price) {
+        if (!opts.canCreate) errors.push("Chỉ quản lý được đổi giá bán.");
+        else {
+          priceChange = { from: it.prices[0]?.price ?? null, to: sp };
+          sell = sp;
+          warnings.push(`Đổi giá bán ${fmt(priceChange.from ?? 0)} → ${fmt(sp)} đ/${itUnit}.`);
+        }
+      }
+    }
 
     const q = toNumber(row.getCell(6).value);
     if (q === null) errors.push("Thiếu số lượng nhập.");
@@ -371,7 +390,7 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
     out.rows.push({
       row: r, code: isNew ? NEW_CODE : code, name: it?.name ?? fileName, itemId: it?.id ?? null, qtyBase, unitCostBase, baseUnit: itUnit,
       inText: typeof q === "number" && typeof c === "number" ? `${fmt(q)} ${inUnit} × ${fmt(c)} đ` : "",
-      total, expiry: d.iso, supplier, note: text(row.getCell(11).value) || null, newItem, errors, warnings,
+      total, expiry: d.iso, supplier, note: text(row.getCell(11).value) || null, newItem, priceChange, errors, warnings,
     });
     out.total += total;
   }
