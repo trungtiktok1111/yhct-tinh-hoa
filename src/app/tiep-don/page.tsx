@@ -105,7 +105,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
           {visits.length === 0 ? <p className="p-5 text-brand-ink/70">Không có lượt khám nào.</p> : (
             <div className="overflow-x-auto">
               <table>
-                <thead><tr><th className="w-14">STT</th><th>Bệnh nhân</th><th>Giờ đến</th><th>Lý do khám</th><th className="hidden 2xl:table-cell">Bác sĩ</th><th>Trạng thái</th><th className="text-center">Thao tác</th></tr></thead>
+                <thead><tr><th className="w-14">STT</th><th>Bệnh nhân</th><th>Giờ đến</th><th>Lý do khám</th><th className="hidden min-[1800px]:table-cell">Bác sĩ</th><th>Trạng thái</th><th className="text-center">Thao tác</th></tr></thead>
                 <tbody>
                   {visits.map((v) => {
                     const [t, c] = chip[v.status] ?? [v.status, "chip-gray"];
@@ -120,7 +120,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
                         </td>
                         <td className="whitespace-nowrap">{timeVN(v.createdAt)}</td>
                         <td className="min-w-[11rem] max-w-xs text-brand-ink/80">{v.reason ?? "—"}</td>
-                        <td className="hidden max-w-[9rem] truncate whitespace-nowrap text-sm 2xl:table-cell" title={doctorOf(v) || ""}>{doctorOf(v) || "—"}</td>
+                        <td className="hidden max-w-[9rem] truncate whitespace-nowrap text-sm min-[1800px]:table-cell" title={doctorOf(v) || ""}>{doctorOf(v) || "—"}</td>
                         <td className="whitespace-nowrap"><span className={`chip ${c}`}>{t}</span></td>
                         <td className="whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2 [&_a]:whitespace-nowrap [&_button]:whitespace-nowrap">
