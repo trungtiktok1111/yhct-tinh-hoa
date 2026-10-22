@@ -177,7 +177,7 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
                 ))}
               </div>
               {dt === "ds" && (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto [&_td]:px-2 [&_th]:px-2">
                   <table>
                     <thead><tr><th>Tên vị thuốc</th><th className="text-right">SL tổng</th><th className="text-right">Tồn kho</th><th>Hạn dùng</th><th></th></tr></thead>
                     <tbody>
