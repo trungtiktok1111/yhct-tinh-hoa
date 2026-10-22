@@ -14,25 +14,28 @@ export const MAX_BYTES = 2_000_000;
 export const NEW_ROWS = 40;
 export const NEW_CODE = "(mới)";
 
+// Bố cục: thông tin hệ thống (A đến E), vùng điền (F đến K) nằm sát tên mặt hàng, tham khảo (L, M) ở cuối.
+// Tổng bề rộng vừa một màn hình để không phải kéo ngang.
 const COLS = [
-  { key: "code", header: "Mã hàng", width: 11, ref: true },
-  { key: "name", header: "Tên mặt hàng", width: 30, ref: true },
+  { key: "code", header: "Mã hàng", width: 10, ref: true },
+  { key: "name", header: "Tên mặt hàng", width: 28, ref: true },
   { key: "type", header: "Loại", width: 12, ref: true },
-  { key: "unit", header: "ĐV gốc", width: 9, ref: true },
-  { key: "stock", header: "Tồn hiện tại", width: 13, ref: true },
-  { key: "lastCost", header: "Giá nhập gần nhất (đ/ĐV gốc)", width: 17, ref: true },
-  { key: "price", header: "Giá bán (đ/ĐV gốc)", width: 15, ref: true },
-  { key: "qty", header: "Số lượng nhập", width: 14, ref: false },
-  { key: "inUnit", header: "ĐV nhập", width: 10, ref: false },
-  { key: "cost", header: "Giá nhập (đ / ĐV nhập)", width: 17, ref: false },
-  { key: "expiry", header: "Hạn dùng (dd/mm/yyyy)", width: 16, ref: false },
-  { key: "supplier", header: "Nhà cung cấp", width: 22, ref: false },
-  { key: "note", header: "Số hóa đơn / ghi chú", width: 24, ref: false },
+  { key: "unit", header: "ĐV gốc", width: 8, ref: true },
+  { key: "stock", header: "Tồn hiện tại", width: 11, ref: true },
+  { key: "qty", header: "Số lượng nhập", width: 12, ref: false },
+  { key: "inUnit", header: "ĐV nhập", width: 9, ref: false },
+  { key: "cost", header: "Giá nhập\n(đ / ĐV nhập)", width: 14, ref: false },
+  { key: "expiry", header: "Hạn dùng\n(dd/mm/yyyy)", width: 13, ref: false },
+  { key: "supplier", header: "Nhà cung cấp", width: 20, ref: false },
+  { key: "note", header: "Số hóa đơn / ghi chú", width: 20, ref: false },
+  { key: "lastCost", header: "Giá nhập gần nhất\n(đ / ĐV gốc)", width: 15, ref: true },
+  { key: "price", header: "Giá bán\n(đ / ĐV gốc)", width: 13, ref: true },
 ] as const;
 
 const nf = (v: number) => (Number.isInteger(v) ? "#,##0" : "#,##0.00");
 const YELLOW = "FFFFF4C2";
 const GREY = "FFF1F3F2";
+const LAST_COL = 13;
 
 export async function buildTemplate(branch: { id: string; name: string }, opts: { cost: boolean } = { cost: false }): Promise<Buffer> {
   const items = await prisma.item.findMany({
@@ -52,84 +55,90 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
   ws.getCell("A2").value = "Chi nhánh:";
   ws.getCell("B2").value = branch.name;
   ws.getCell("A2").font = ws.getCell("B2").font = { bold: true };
-  ws.getCell("D2").value = `Xuất lúc ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}`;
-  ws.getCell("A3").value = "Chỉ điền các cột nền vàng (H đến M) ở dòng cần nhập. Dòng để trống Số lượng sẽ bị bỏ qua. Xem trang Hướng dẫn.";
+  ws.getCell("F2").value = `Xuất lúc ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}`;
+  ws.getCell("F2").font = { italic: true, color: { argb: "FF6B7280" } };
+  ws.getCell("A3").value = "Chỉ điền các ô nền vàng (cột F đến K). Dòng để trống Số lượng sẽ bị bỏ qua.";
   ws.getCell("A3").font = { italic: true, color: { argb: "FF7A5B00" } };
 
   const head = ws.getRow(HEADER_ROW);
   COLS.forEach((c, i) => {
     const cell = head.getCell(i + 1);
     cell.value = c.header;
-    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.font = { bold: true, size: 10, color: { argb: "FFFFFFFF" } };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: c.ref ? "FF4B5B54" : "FF1B4332" } };
     cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
-    ws.getColumn(i + 1).width = c.width + 3;
+    ws.getColumn(i + 1).width = c.width;
   });
   head.height = 44;
 
   // Nhãn nhóm cột, để biết chỗ nào điền.
-  ws.mergeCells("A4:G4");
-  ws.mergeCells("H4:M4");
-  const g1 = ws.getCell("A4"), g2 = ws.getCell("H4");
-  g1.value = "THÔNG TIN HỆ THỐNG (không sửa)";
-  g2.value = "ĐIỀN VÀO ĐÂY (cột nền vàng)";
-  for (const [c, bg, fg] of [[g1, "FFD9DEDB", "FF3F4A45"], [g2, "FFC9E4D2", "FF1B4332"]] as const) {
+  ws.mergeCells("A4:E4");
+  ws.mergeCells("F4:K4");
+  ws.mergeCells("L4:M4");
+  const g1 = ws.getCell("A4"), g2 = ws.getCell("F4"), g3 = ws.getCell("L4");
+  g1.value = "HỆ THỐNG (không sửa)";
+  g2.value = "ĐIỀN VÀO ĐÂY";
+  g3.value = "THAM KHẢO";
+  for (const [c, bg, fg] of [[g1, "FFD9DEDB", "FF3F4A45"], [g2, "FFC9E4D2", "FF1B4332"], [g3, "FFD9DEDB", "FF3F4A45"]] as const) {
     c.font = { bold: true, size: 10, color: { argb: fg } };
     c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
     c.alignment = { horizontal: "center" };
   }
 
+  const inputStyle = (r: ExcelJS.Row, bg: string) => {
+    for (let c = 6; c <= 11; c++) {
+      const cell = r.getCell(c);
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
+      cell.protection = { locked: false };
+    }
+    r.getCell(6).numFmt = "General";
+    r.getCell(8).numFmt = "General";
+    r.getCell(9).numFmt = "dd/mm/yyyy";
+    r.getCell(6).dataValidation = { type: "decimal", operator: "greaterThan", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Số lượng", error: "Nhập số lớn hơn 0." };
+    r.getCell(8).dataValidation = { type: "decimal", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Giá nhập", error: "Nhập số đồng, không âm." };
+    r.getCell(9).dataValidation = { type: "date", operator: "greaterThan", formulae: [new Date(Date.UTC(2000, 0, 1))], allowBlank: true, showErrorMessage: true, errorTitle: "Hạn dùng", error: "Nhập ngày theo dd/mm/yyyy." };
+  };
+
   items.forEach((it, idx) => {
     const r = ws.getRow(HEADER_ROW + 1 + idx);
-    const stock = it.lots.reduce((s, l) => s + l.qtyRemaining, 0);
+    const stock = Math.round(it.lots.reduce((s, l) => s + l.qtyRemaining, 0) * 100) / 100;
     const herb = it.type === "HERB";
-    const vals: (string | number | null)[] = [
-      it.code ?? "", it.name, herb ? "Vị thuốc" : "Thành phẩm", it.unit, Math.round(stock * 100) / 100,
-      opts.cost ? it.lots[0]?.unitCost ?? null : null, it.prices[0]?.price ?? null,
+    const ref: [number, string | number | null][] = [
+      [1, it.code ?? ""], [2, it.name], [3, herb ? "Vị thuốc" : "Thành phẩm"], [4, it.unit], [5, stock],
+      [12, opts.cost ? it.lots[0]?.unitCost ?? null : null], [13, it.prices[0]?.price ?? null],
     ];
-    vals.forEach((v, i) => {
-      const cell = r.getCell(i + 1);
+    for (const [c, v] of ref) {
+      const cell = r.getCell(c);
       cell.value = v;
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: GREY } };
       cell.protection = { locked: true };
-    });
-    r.getCell(5).numFmt = nf(Math.round(stock * 100) / 100);
-    r.getCell(6).numFmt = r.getCell(7).numFmt = "#,##0";
-    r.getCell(5).alignment = { horizontal: "right" };
-    for (let c = 8; c <= 13; c++) {
-      const cell = r.getCell(c);
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: YELLOW } };
-      cell.protection = { locked: false };
     }
-    r.getCell(8).numFmt = "General";
-    r.getCell(10).numFmt = "General";
-    r.getCell(11).numFmt = "dd/mm/yyyy";
-    r.getCell(8).dataValidation = { type: "decimal", operator: "greaterThan", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Số lượng", error: "Nhập số lớn hơn 0." };
-    r.getCell(9).dataValidation = { type: "list", allowBlank: true, formulae: [herb ? '"g,kg"' : `"${it.unit}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: herb ? "Chọn g hoặc kg." : `Chỉ nhập theo ${it.unit}.` };
-    r.getCell(10).dataValidation = { type: "decimal", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Giá nhập", error: "Nhập số đồng, không âm." };
-    r.getCell(11).dataValidation = { type: "date", operator: "greaterThan", formulae: [new Date(Date.UTC(2000, 0, 1))], allowBlank: true, showErrorMessage: true, errorTitle: "Hạn dùng", error: "Nhập ngày theo dd/mm/yyyy." };
+    r.getCell(5).numFmt = nf(stock);
+    r.getCell(12).numFmt = r.getCell(13).numFmt = "#,##0";
+    r.getCell(5).alignment = r.getCell(12).alignment = r.getCell(13).alignment = { horizontal: "right" };
+    inputStyle(r, YELLOW);
+    r.getCell(7).dataValidation = { type: "list", allowBlank: true, formulae: [herb ? '"g,kg"' : `"${it.unit}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: herb ? "Chọn g hoặc kg." : `Chỉ nhập theo ${it.unit}.` };
+    r.getCell(10).alignment = { wrapText: false };
   });
 
   // Dòng trống để thêm mặt hàng mới: điền Tên, Loại, ĐV gốc, Giá bán và các cột nhập. Mã hàng do app tự cấp.
   const base = HEADER_ROW + 1 + items.length;
   for (let k = 0; k < NEW_ROWS; k++) {
     const r = ws.getRow(base + k);
-    for (let c = 1; c <= 13; c++) {
+    for (let c = 1; c <= LAST_COL; c++) {
       const cell = r.getCell(c);
-      const input = c >= 2 && c <= 4 || c >= 7;
+      const input = c === 2 || c === 3 || c === 4 || c === 13 || (c >= 6 && c <= 11);
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: input ? "FFE4F1E8" : GREY } };
       cell.protection = { locked: !input };
     }
     r.getCell(1).value = NEW_CODE;
     r.getCell(3).dataValidation = { type: "list", allowBlank: true, formulae: ['"Vị thuốc,Thành phẩm"'], showErrorMessage: true, errorTitle: "Loại", error: "Chọn Vị thuốc hoặc Thành phẩm." };
     r.getCell(4).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,${UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Chọn trong danh sách (vị thuốc dùng g)." };
-    r.getCell(7).numFmt = "#,##0";
-    r.getCell(7).dataValidation = { type: "whole", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Giá bán", error: "Nhập số đồng nguyên, không âm." };
-    r.getCell(8).numFmt = "General";
-    r.getCell(10).numFmt = "General";
-    r.getCell(11).numFmt = "dd/mm/yyyy";
-    if (k === 0) for (let c = 1; c <= 13; c++) r.getCell(c).border = { top: { style: "medium", color: { argb: "FF1B4332" } } };
-    r.getCell(9).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,kg,${UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Chọn trong danh sách." };
+    r.getCell(13).numFmt = "#,##0";
+    r.getCell(13).dataValidation = { type: "whole", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Giá bán", error: "Nhập số đồng nguyên, không âm." };
+    inputStyle(r, "FFE4F1E8");
+    r.getCell(7).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,kg,${UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Chọn trong danh sách." };
+    if (k === 0) for (let c = 1; c <= LAST_COL; c++) r.getCell(c).border = { top: { style: "medium", color: { argb: "FF1B4332" } } };
   }
 
   ws.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: `${HEADER_ROW}:${HEADER_ROW}` };
@@ -142,7 +151,7 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
   [
     "HƯỚNG DẪN NHẬP KHO BẰNG EXCEL (file này cũng là báo cáo tồn kho: xem trang Tồn kho)",
     "",
-    "1. Một file dùng cho cả hai việc: trang Tồn kho để xem báo cáo, trang Nhập kho để nhập hàng. Chỉ điền các cột nền vàng (H đến M). Các cột xám là thông tin của hệ thống, không sửa được.",
+    "1. Một file dùng cho cả hai việc: trang Tồn kho để xem báo cáo, trang Nhập kho để nhập hàng. Chỉ điền các ô nền vàng (cột F đến K). Các ô xám là thông tin của hệ thống, không sửa được.",
     "2. Dòng nào có Số lượng nhập thì được nhập; dòng để trống bị bỏ qua. Một mặt hàng nhập nhiều lô thì dùng một file khác hoặc lần sau.",
     "3. Dược liệu: chọn ĐV nhập là g hoặc kg. Giá nhập tính theo ĐV nhập đã chọn (5 kg giá 120.000 đ/kg thì ghi 5, kg, 120000). Hệ thống tự đổi sang gam.",
     "4. Thành phẩm: ĐV nhập là đơn vị của mặt hàng (viên, hộp...).",
@@ -275,7 +284,7 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
     const row = ws.getRow(r);
     const code = text(row.getCell(1).value);
     const isNew = code === NEW_CODE || code === "";
-    const inputCols = isNew ? [2, 3, 4, 7, 8, 9, 10, 11, 12, 13] : [8, 9, 10, 11, 12, 13];
+    const inputCols = isNew ? [2, 3, 4, 13, 6, 7, 8, 9, 10, 11] : [6, 7, 8, 9, 10, 11];
     if (!inputCols.some((c) => text(row.getCell(c).value) !== "")) continue;
     if (out.rows.length >= MAX_ROWS) { out.fileErrors.push(`Tối đa ${MAX_ROWS} dòng mỗi lần nhập.`); break; }
 
@@ -302,7 +311,7 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
         if (!UNITS.includes(u)) errors.push(`ĐV gốc của thành phẩm phải là: ${UNITS.join(", ")}.`);
         else itUnit = u;
       }
-      const sp = toNumber(row.getCell(7).value);
+      const sp = toNumber(row.getCell(13).value);
       if (sp === null) errors.push("Mặt hàng mới thiếu giá bán.");
       else if (sp === "bad" || sp < 0 || !Number.isInteger(sp)) errors.push("Giá bán phải là số đồng nguyên, không âm.");
       else sell = sp;
@@ -316,14 +325,14 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
     } else if (!it) errors.push(`Mã hàng “${code}” không có trong hệ thống.`);
     else if (it.name !== fileName) errors.push(`Tên không khớp mã (file: ${fileName}, hệ thống: ${it.name}). Xuất lại file.`);
 
-    const q = toNumber(row.getCell(8).value);
+    const q = toNumber(row.getCell(6).value);
     if (q === null) errors.push("Thiếu số lượng nhập.");
     else if (q === "bad" || q <= 0) errors.push("Số lượng phải là số lớn hơn 0.");
-    const c = toNumber(row.getCell(10).value);
+    const c = toNumber(row.getCell(8).value);
     if (c === null) errors.push("Thiếu giá nhập.");
     else if (c === "bad" || c < 0) errors.push("Giá nhập phải là số đồng không âm.");
 
-    let inUnit = text(row.getCell(9).value);
+    let inUnit = text(row.getCell(7).value);
     let factor = 1;
     const herb = itType === "HERB";
     if (itType && itUnit) {
@@ -335,7 +344,7 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
       } else if (inUnit && inUnit !== itUnit) errors.push(`ĐV nhập phải là ${itUnit}.`);
       else inUnit = itUnit;
     }
-    const d = toDate(row.getCell(11).value);
+    const d = toDate(row.getCell(9).value);
     if (d.bad) errors.push("Hạn dùng không hợp lệ (dùng dd/mm/yyyy).");
     if (d.iso) {
       const t = new Date(d.iso + "T00:00:00Z").getTime();
@@ -343,7 +352,7 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
       else if (t < today + 30 * 86400000) warnings.push("Hạn dùng dưới 30 ngày.");
     } else if (herb && !d.bad) warnings.push("Dược liệu chưa có hạn dùng.");
 
-    const supplier = text(row.getCell(12).value) || null;
+    const supplier = text(row.getCell(10).value) || null;
     if (supplier && !supSet.has(supplier.toLowerCase())) warnings.push(`Nhà cung cấp “${supplier}” chưa có trong danh sách.`);
 
     let qtyBase = 0, unitCostBase = 0;
@@ -362,7 +371,7 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
     out.rows.push({
       row: r, code: isNew ? NEW_CODE : code, name: it?.name ?? fileName, itemId: it?.id ?? null, qtyBase, unitCostBase, baseUnit: itUnit,
       inText: typeof q === "number" && typeof c === "number" ? `${fmt(q)} ${inUnit} × ${fmt(c)} đ` : "",
-      total, expiry: d.iso, supplier, note: text(row.getCell(13).value) || null, newItem, errors, warnings,
+      total, expiry: d.iso, supplier, note: text(row.getCell(11).value) || null, newItem, errors, warnings,
     });
     out.total += total;
   }
@@ -379,9 +388,9 @@ type ReportItem = {
 function addReportSheet(wb: ExcelJS.Workbook, branch: { name: string }, items: ReportItem[], cost: boolean) {
   const ws = wb.addWorksheet("Tồn kho", { views: [{ state: "frozen", ySplit: 4 }] });
   const cols: [string, number, string?][] = [
-    ["STT", 8], ["Mã hàng", 13], ["Tên mặt hàng", 32], ["Loại", 14], ["Đơn vị", 10], ["Tồn kho", 13],
-    ["Tối thiểu", 13], ["Hạn gần nhất", 16, "dd/mm/yyyy"],
-    ...(cost ? ([["Giá nhập TB", 15], ["Giá trị tồn", 16, "#,##0"]] as [string, number, string][]) : []),
+    ["STT", 9], ["Mã hàng", 14], ["Tên mặt hàng", 32], ["Loại", 15], ["Đơn vị", 11], ["Tồn kho", 14],
+    ["Tối thiểu", 14], ["Hạn gần nhất", 18, "dd/mm/yyyy"],
+    ...(cost ? ([["Giá nhập TB", 17], ["Giá trị tồn", 16, "#,##0"]] as [string, number, string][]) : []),
     ["Giá bán", 13, "#,##0"], ["Trạng thái", 18],
   ];
   ws.getCell("A1").value = `TỒN KHO · ${branch.name}`;
