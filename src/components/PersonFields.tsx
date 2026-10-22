@@ -5,7 +5,8 @@ import { BadgeCheck } from "lucide-react";
 import { AddressFields } from "@/components/AddressFields";
 import { DateInput } from "@/components/DateInput";
 import { ScanInput } from "@/components/ScanInput";
-import { parseCccdQr } from "@/lib/cccd";
+import { IdPhoto } from "@/components/IdPhoto";
+import { parseCccdQr, type CccdInfo } from "@/lib/cccd";
 
 const cls = "w-full rounded-lg border border-brand-gold/40 bg-white px-3 py-2.5 text-base";
 
@@ -30,9 +31,17 @@ export function PersonFields({ v = {}, phoneRequired = false }: { v?: V; phoneRe
   function onScan(text: string) {
     const r = parseCccdQr(text);
     if ("error" in r) { setScan({ err: r.error }); return; }
-    setName(r.fullName); setDob(r.birthDate); setSex(r.sex); setNid(r.nationalId);
-    setAddr((a) => ({ address: r.address, ward: r.ward, province: r.province, k: a.k + 1 }));
-    setScan({ ok: `Đã điền từ thẻ: ${r.fullName} · CCCD ${r.nationalId}. Địa chỉ trên thẻ: ${r.rawAddress || "(trống)"}. Hãy kiểm tra lại các ô trước khi lưu.` });
+    apply(r, "qr");
+  }
+  function apply(r: CccdInfo, how: "qr" | "ocr") {
+    // chỉ ghi đè ô nào đọc được; ô không đọc được giữ nguyên
+    if (r.fullName) setName(r.fullName);
+    if (r.birthDate) setDob(r.birthDate);
+    if (r.sex !== "O" || how === "qr") setSex(r.sex);
+    if (r.nationalId) setNid(r.nationalId);
+    if (r.rawAddress) setAddr((a) => ({ address: r.address, ward: r.ward, province: r.province, k: a.k + 1 }));
+    const miss = [!r.fullName && "họ tên", !r.birthDate && "ngày sinh", !r.nationalId && "số CCCD", !r.rawAddress && "địa chỉ"].filter(Boolean);
+    setScan({ ok: `Đã điền (${how === "qr" ? "từ mã QR" : "đọc chữ trên ảnh — có thể sai dấu/số, kiểm tra kỹ"}): ${r.fullName || "—"} · CCCD ${r.nationalId || "—"}. Địa chỉ đọc được: ${r.rawAddress || "(trống)"}.${miss.length ? ` Chưa đọc được: ${miss.join(", ")} — nhập tay.` : ""}` });
   }
 
   return (
@@ -42,8 +51,9 @@ export function PersonFields({ v = {}, phoneRequired = false }: { v?: V; phoneRe
           <BadgeCheck className="h-4 w-4" />Quét CCCD / VNeID để tự điền thông tin
         </div>
         <ScanInput onText={onScan} placeholder="Quét mã QR trên CCCD hoặc ảnh VNeID…" />
+        <div className="mt-2"><IdPhoto onInfo={apply} onError={(m) => setScan({ err: m })} /></div>
         <p className="mt-1.5 text-xs text-brand-ink/60">
-          Dùng nút <b>Camera</b> (đưa mã QR mặt sau CCCD hoặc mã QR trong VNeID vào khung), <b>Chụp ảnh</b>, hoặc chọn ảnh chụp màn hình VNeID. Máy quét USB: bấm vào ô rồi quét.
+          <b>Camera</b>/<b>Chụp ảnh</b>: quét mã QR. <b>Đọc ảnh CCCD / VNeID</b>: chọn ảnh thẻ hoặc ảnh chụp màn hình VNeID, app đọc mã QR, không có QR thì đọc chữ. Máy quét USB: bấm vào ô rồi quét.
         </p>
         {scan.ok && <p className="mt-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">{scan.ok}</p>}
         {scan.err && <p className="warn-box mt-1.5 text-xs">{scan.err}</p>}
