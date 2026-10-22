@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return new Response(new Uint8Array(buf), {
     headers: {
       "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "content-disposition": `attachment; filename="${imp.fileName(ctx)}-${new Date().toISOString().slice(0, 10)}.xlsx"`,
+      "content-disposition": `attachment; filename="${imp.fileName(ctx).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").replace(/[^a-zA-Z0-9-]/g, "-")}-${new Date().toISOString().slice(0, 10)}.xlsx"`,
     },
   });
 }

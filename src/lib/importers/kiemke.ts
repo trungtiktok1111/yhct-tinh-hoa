@@ -111,7 +111,7 @@ async function analyze(buf: Buffer, branch: { id: string; name: string }): Promi
 export const kiemKe: Importer = {
   id: "kiem-ke", name: "Phiếu kiểm kê kho", roles: STOCK_WRITE_ROLES, needsBranch: true,
   columns: ["Mặt hàng", "Kết quả kiểm kê"], allowedHint: "Dòng khớp sổ không tạo điều chỉnh. Dòng lệch lập điều chỉnh tăng hoặc giảm.",
-  build: (c) => build(c.branch!), fileName: (c) => `kiem-ke-${c.branch!.name.replace(/\s+/g, "-")}`,
+  build: (c) => build(c.branch!), fileName: () => "phieu-kiem-ke",
   analyze: (b, c) => analyze(b, c.branch!),
   async commit(a, c) {
     const ops = a.payload as Op[];
