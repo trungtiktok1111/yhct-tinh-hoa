@@ -150,7 +150,7 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
     r.getCell(cc).value = { formula: `${L(5)}${R}+${L(5 + G)}${R}-${L(5 + 2 * G)}${R}`, result: round(cq) };
     if (cost) {
       r.getCell(cc + 2).value = { formula: `${L(7)}${R}+${L(7 + G)}${R}-${L(7 + 2 * G)}${R}`, result: Math.round(cv) };
-      r.getCell(cc + 1).value = { formula: `IF(${L(cc)}${R}=0,0,${L(cc + 2)}${R}/${L(cc)}${R})`, result: Math.abs(cq) < 0.005 ? 0 : cv / cq };
+      r.getCell(cc + 1).value = { formula: `IF(${L(cc)}${R}=0,0,ROUND(${L(cc + 2)}${R}/${L(cc)}${R},0))`, result: Math.abs(cq) < 0.005 ? 0 : Math.round(cv / cq) };
     }
     for (let k = 1; k <= nCols; k++) {
       const cell = r.getCell(k);
@@ -158,7 +158,7 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
       if (k >= 5) {
         const off = (k - 5) % G;
         const val = typeof cell.value === "object" && cell.value && "result" in cell.value ? Number(cell.value.result) : Number(cell.value);
-        cell.numFmt = cost && off === 2 ? nfV : nfQ(cost && off === 1 ? Math.round(val * 100) / 100 : val);
+        cell.numFmt = cost && off >= 1 ? nfV : nfQ(val); // đơn giá, thành tiền: đồng nguyên
         cell.alignment = { horizontal: "right" };
       }
       if (stt % 2 === 0) fill(cell, "FFF7F9F8");
