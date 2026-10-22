@@ -105,7 +105,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
           {visits.length === 0 ? <p className="p-5 text-brand-ink/70">Không có lượt khám nào.</p> : (
             <div className="overflow-x-auto">
               <table>
-                <thead><tr><th className="w-14">STT</th><th>Bệnh nhân</th><th>Mã BN</th><th>Giờ đến</th><th>Lý do khám</th><th>Bác sĩ</th><th>Trạng thái</th><th className="text-center">Thao tác</th></tr></thead>
+                <thead><tr><th className="w-14">STT</th><th>Bệnh nhân</th><th>Giờ đến</th><th>Lý do khám</th><th className="hidden 2xl:table-cell">Bác sĩ</th><th>Trạng thái</th><th className="text-center">Thao tác</th></tr></thead>
                 <tbody>
                   {visits.map((v) => {
                     const [t, c] = chip[v.status] ?? [v.status, "chip-gray"];
@@ -116,12 +116,11 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
                           <Link href={`/benh-nhan/${v.patient.id}`} className="font-semibold hover:underline">{v.patient.fullName}</Link>
                           {v.priority && <span className="chip chip-red ml-1.5">Ưu tiên</span>}
                           {v.patient.allergies && <AlertTriangle className="inline h-4 w-4 ml-1 text-red-600" aria-label="Có dị ứng" />}
-                          <div className="text-xs text-brand-ink/70">{SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi</div>
+                          <div className="text-xs text-brand-ink/70">{patientCode(v.patient.seq)} · {SEX_LABEL[v.patient.sex] ?? v.patient.sex} · {ageOf(v.patient.birthDate, v.patient.birthYear)} tuổi</div>
                         </td>
-                        <td className="whitespace-nowrap text-brand-ink/70">{patientCode(v.patient.seq)}</td>
                         <td className="whitespace-nowrap">{timeVN(v.createdAt)}</td>
                         <td className="min-w-[11rem] max-w-xs text-brand-ink/80">{v.reason ?? "—"}</td>
-                        <td className="max-w-[9rem] truncate whitespace-nowrap text-sm" title={doctorOf(v) || ""}>{doctorOf(v) || "—"}</td>
+                        <td className="hidden max-w-[9rem] truncate whitespace-nowrap text-sm 2xl:table-cell" title={doctorOf(v) || ""}>{doctorOf(v) || "—"}</td>
                         <td className="whitespace-nowrap"><span className={`chip ${c}`}>{t}</span></td>
                         <td className="whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2 [&_a]:whitespace-nowrap [&_button]:whitespace-nowrap">
