@@ -66,7 +66,7 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
   const cost = opts.cost;
   const ws = wb.addWorksheet("Nhập xuất tồn", { views: [{ state: "frozen", ySplit: 7 }] });
   const stamp = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
-  const G = cost ? 2 : 1;
+  const G = cost ? 3 : 1; // mỗi nhóm: Số lượng | Đơn giá | Thành tiền
   const nCols = 4 + 4 * G;
   ws.getCell("A1").value = "PHÒNG KHÁM ĐÔNG Y TINH HOA";
   ws.getCell("A1").font = { bold: true, size: 12 };
@@ -98,11 +98,11 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
   });
   let col = 5;
   groups.forEach((g) => {
-    if (cost) ws.mergeCells(6, col, 6, col + 1);
+    if (cost) ws.mergeCells(6, col, 6, col + 2);
     r6.getCell(col).value = g;
     r7.getCell(col).value = "Số lượng";
-    ws.getColumn(col).width = 14;
-    if (cost) { r7.getCell(col + 1).value = "Thành tiền"; ws.getColumn(col + 1).width = 16; }
+    ws.getColumn(col).width = 13;
+    if (cost) { r7.getCell(col + 1).value = "Đơn giá"; ws.getColumn(col + 1).width = 11; r7.getCell(col + 2).value = "Thành tiền"; ws.getColumn(col + 2).width = 15; }
     col += G;
   });
   for (let c = 1; c <= nCols; c++) for (const r of [r6, r7]) {
@@ -116,7 +116,7 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
 
   // Hàng cột số thứ tự cột (A, B, 1, 2, ...) như mẫu sổ kế toán
   const L = (n: number) => ws.getColumn(n).letter;
-  let row = 8, stt = 0;
+  let row = 8, stt = 0, negOpen = 0;
   const first = row;
   const tot = { ov: 0, iv: 0, xv: 0 };
   for (const it of items) {
@@ -143,19 +143,22 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
     vals.forEach(([q, v], gi) => {
       const c = 5 + gi * G;
       r.getCell(c).value = round(q);
-      if (cost) r.getCell(c + 1).value = Math.round(v);
+      if (cost) { r.getCell(c + 2).value = Math.round(v); r.getCell(c + 1).value = { formula: `IF(${L(c)}${R}=0,0,${L(c + 2)}${R}/${L(c)}${R})`, result: Math.abs(q) < 0.005 ? 0 : v / q }; }
     });
     // Tồn cuối = đầu + nhập − xuất (công thức Excel để kế toán kiểm tra)
     const cc = 5 + 3 * G;
     r.getCell(cc).value = { formula: `${L(5)}${R}+${L(5 + G)}${R}-${L(5 + 2 * G)}${R}`, result: round(cq) };
-    if (cost) r.getCell(cc + 1).value = { formula: `${L(6)}${R}+${L(6 + G)}${R}-${L(6 + 2 * G)}${R}`, result: Math.round(cv) };
+    if (cost) {
+      r.getCell(cc + 2).value = { formula: `${L(7)}${R}+${L(7 + G)}${R}-${L(7 + 2 * G)}${R}`, result: Math.round(cv) };
+      r.getCell(cc + 1).value = { formula: `IF(${L(cc)}${R}=0,0,${L(cc + 2)}${R}/${L(cc)}${R})`, result: Math.abs(cq) < 0.005 ? 0 : cv / cq };
+    }
     for (let k = 1; k <= nCols; k++) {
       const cell = r.getCell(k);
       cell.border = box;
       if (k >= 5) {
-        const isMoney = cost && (k - 5) % 2 === 1;
+        const off = (k - 5) % G;
         const val = typeof cell.value === "object" && cell.value && "result" in cell.value ? Number(cell.value.result) : Number(cell.value);
-        cell.numFmt = isMoney ? nfV : nfQ(val);
+        cell.numFmt = cost && off === 2 ? nfV : nfQ(cost && off === 1 ? Math.round(val * 100) / 100 : val);
         cell.alignment = { horizontal: "right" };
       }
       if (stt % 2 === 0) fill(cell, "FFF7F9F8");
@@ -163,6 +166,7 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
     r.getCell(1).alignment = { horizontal: "center" };
     r.getCell(4).alignment = { horizontal: "center" };
     tot.ov += ov; tot.iv += iv; tot.xv += xv;
+    if (oq < -0.005 || ov < -0.5) negOpen++;
     row++;
   }
   const last = row - 1;
@@ -173,7 +177,7 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
   if (cost) {
     const tv = [tot.ov, tot.iv, tot.xv, tot.ov + tot.iv - tot.xv];
     tv.forEach((v, gi) => {
-      const c = 6 + gi * G;
+      const c = 7 + gi * G;
       tr.getCell(c).value = { formula: `SUM(${L(c)}${first}:${L(c)}${last})`, result: Math.round(v) };
     });
   }
@@ -187,7 +191,8 @@ export async function buildNxt(branch: { id: string; name: string }, fromDay: Da
   row += 2;
   const note = (txt: string) => { ws.mergeCells(row, 1, row, nCols); const c = ws.getCell(row, 1); c.value = txt; c.font = { italic: true, size: 9, color: { argb: "FF6B7280" } }; c.alignment = { wrapText: true, vertical: "top" }; row++; };
   if (stt === 0) note("Không có phát sinh trong kỳ.");
-  note(cost ? "Số lượng không cộng chung vì khác đơn vị tính; chỉ cộng cột thành tiền." : "Số lượng không cộng chung vì khác đơn vị tính.");
+  if (negOpen) note(`Lưu ý: ${negOpen} mặt hàng có tồn đầu kỳ âm. Nghĩa là sổ ghi xuất nhiều hơn nhập (tồn ban đầu hoặc điều chỉnh chưa có chứng từ). Cần kiểm kê lại các mặt hàng này.`);
+  note(cost ? "Đơn giá = thành tiền / số lượng (bình quân các lô). Số lượng không cộng chung vì khác đơn vị tính; chỉ cộng cột thành tiền." : "Số lượng không cộng chung vì khác đơn vị tính.");
   row += 1;
   const now = new Date(Date.now() + VN);
   ws.mergeCells(row, nCols - 3, row, nCols);
