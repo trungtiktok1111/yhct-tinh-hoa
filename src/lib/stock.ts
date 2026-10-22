@@ -9,13 +9,14 @@ export async function branchesFor(staff: CurrentStaff) {
   });
 }
 
-export { UNITS } from "@/lib/constants";
+export { UNITS, ALL_UNITS, SUPPLY_UNITS, typeLabel } from "@/lib/constants";
+import { codePrefix } from "@/lib/constants";
 export const input = "w-full rounded-lg border border-brand-gold/40 bg-white px-3 py-2.5 text-base";
 export const btn = "bg-brand-deep hover:bg-brand-deeper text-brand-cream rounded-lg px-4 py-2.5 font-semibold";
 
 // Mã hàng tự tăng: VT001 (vị thuốc), TP001 (thành phẩm).
 export async function nextItemCode(type: string) {
-  const prefix = type === "HERB" ? "VT" : "TP";
+  const prefix = codePrefix(type);
   const rows = await prisma.item.findMany({ where: { code: { startsWith: prefix } }, select: { code: true } });
   let max = 0;
   for (const r of rows) {

@@ -5,7 +5,7 @@ import { createItem, updateItem, setItemActive, deleteItem } from "@/actions/sto
 import { KhoTabs } from "@/components/KhoTabs";
 import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
-import { UNITS, input, btn } from "@/lib/stock";
+import { ALL_UNITS, typeLabel, input, btn } from "@/lib/stock";
 import { dateVN, vnd } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -36,14 +36,15 @@ export default async function ItemsPage({ searchParams }: { searchParams: { loi?
               <select name="type" className={input} defaultValue="HERB">
                 <option value="HERB">Dược liệu (bán theo gam)</option>
                 <option value="PRODUCT">Thành phẩm (viên, hộp, chai...)</option>
+                <option value="SUPPLY">Vật tư y tế tiêu hao (kim, chỉ, găng, bông, cồn, ngải cứu…)</option>
               </select>
             </label>
-            <label className="text-sm">Đơn vị (chỉ cho thành phẩm)
+            <label className="text-sm">Đơn vị (thành phẩm / vật tư; dược liệu luôn là g)
               <select name="unit" className={input}>
-                {UNITS.map((u) => <option key={u}>{u}</option>)}
+                {ALL_UNITS.map((u) => <option key={u}>{u}</option>)}
               </select>
             </label>
-            <label className="text-sm">Giá bán (đồng / gam hoặc / đơn vị)
+            <label className="text-sm">Giá bán (đồng / gam hoặc / đơn vị; vật tư tiêu hao để 0)
               <input name="price" inputMode="numeric" placeholder="vd: 450" required className={input} />
             </label>
             <label className="text-sm">Tồn tối thiểu (cảnh báo)
@@ -70,7 +71,7 @@ export default async function ItemsPage({ searchParams }: { searchParams: { loi?
                 <div>
                   <div className="font-semibold">
                     {it.name}{" "}
-                    <span className="text-xs text-gray-500">({it.type === "HERB" ? "dược liệu" : "thành phẩm"})</span>
+                    <span className="text-xs text-gray-500">({typeLabel(it.type).toLowerCase()})</span>
                     {!it.active && <span className="status-pill status-RETIRED ml-2">Ngừng</span>}
                   </div>
                   <div className="text-sm text-gray-700">

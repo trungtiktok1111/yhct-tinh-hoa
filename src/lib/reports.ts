@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { typeLabel } from "@/lib/constants";
 import { tableBook, fmtDay, fmtTime, VN, type KitCol, type KitCell } from "@/lib/xlsxKit";
 
 // Các báo cáo Excel dạng bảng. Mỗi hàm trả về một file theo khung chung (xlsxKit).
@@ -107,7 +108,7 @@ export const BUILDERS: Record<string, (c: Ctx) => Promise<{ buf: Buffer; file: s
       where: { active: true }, orderBy: [{ type: "asc" }, { name: "asc" }],
       include: { prices: { orderBy: { effectiveFrom: "desc" }, take: 1 }, lots: { where: { branchId: { in: c.branchIds } }, orderBy: { receivedAt: "desc" }, take: 1, select: { unitCost: true } } },
     });
-    const rows: Row[] = items.map((i, k) => ({ stt: k + 1, code: i.code ?? "", name: i.name, type: i.type === "HERB" ? "Vị thuốc" : "Thành phẩm", unit: i.unit, price: i.prices[0]?.price ?? null, min: i.minStock, cost: c.cost ? i.lots[0]?.unitCost ?? null : null }));
+    const rows: Row[] = items.map((i, k) => ({ stt: k + 1, code: i.code ?? "", name: i.name, type: typeLabel(i.type), unit: i.unit, price: i.prices[0]?.price ?? null, min: i.minStock, cost: c.cost ? i.lots[0]?.unitCost ?? null : null }));
     const cols: KitCol[] = [
       { h: "STT", w: 6, key: "stt", kind: "center" }, { h: "Mã hàng", w: 11, key: "code", kind: "center" }, { h: "Tên mặt hàng", w: 32, key: "name" }, { h: "Loại", w: 12, key: "type", kind: "center" }, { h: "ĐVT", w: 8, key: "unit", kind: "center" },
       { h: "Giá bán (đ / ĐVT)", w: 16, key: "price", kind: "money" }, { h: "Tồn tối thiểu", w: 14, key: "min", kind: "num" },

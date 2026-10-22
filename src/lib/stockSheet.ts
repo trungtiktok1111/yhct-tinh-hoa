@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { readVoucher, stampVoucher } from "@/lib/sheetKit";
 import { issueVoucher } from "@/lib/voucher";
 import { prisma } from "@/lib/db";
-import { UNITS } from "@/lib/constants";
+import { UNITS, ALL_UNITS, typeLabel, typeFromLabel } from "@/lib/constants";
 
 // Phiếu nhập kho Excel: app xuất ra (có tồn kho và giá hiện tại), người dùng điền các cột vàng,
 // tải lên để xem trước từng dòng rồi mới lưu. Mọi kiểm tra chạy ở máy chủ, file chỉ là dữ liệu đầu vào.
@@ -107,7 +107,7 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
     const stock = Math.round(it.lots.reduce((s, l) => s + l.qtyRemaining, 0) * 100) / 100;
     const herb = it.type === "HERB";
     const ref: [number, string | number | null][] = [
-      [1, it.code ?? ""], [2, it.name], [3, herb ? "Vị thuốc" : "Thành phẩm"], [4, it.unit], [5, stock],
+      [1, it.code ?? ""], [2, it.name], [3, typeLabel(it.type)], [4, it.unit], [5, stock],
       [12, opts.cost ? it.lots[0]?.unitCost ?? null : null],
     ];
     for (const [c, v] of ref) {
@@ -141,8 +141,8 @@ export async function buildTemplate(branch: { id: string; name: string }, opts: 
       cell.protection = { locked: !input };
     }
     r.getCell(1).value = NEW_CODE;
-    r.getCell(3).dataValidation = { type: "list", allowBlank: true, formulae: ['"Vị thuốc,Thành phẩm"'], showErrorMessage: true, errorTitle: "Loại", error: "Chọn Vị thuốc hoặc Thành phẩm." };
-    r.getCell(4).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,${UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Chọn trong danh sách (vị thuốc dùng g)." };
+    r.getCell(3).dataValidation = { type: "list", allowBlank: true, formulae: ['"Vị thuốc,Thành phẩm,Vật tư y tế"'], showErrorMessage: true, errorTitle: "Loại", error: "Chọn Vị thuốc, Thành phẩm hoặc Vật tư y tế." };
+    r.getCell(4).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,${ALL_UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Chọn trong danh sách (vị thuốc dùng g)." };
     r.getCell(13).numFmt = "#,##0";
     r.getCell(13).dataValidation = { type: "whole", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Giá bán", error: "Nhập số đồng nguyên, không âm." };
     inputStyle(r, "FFE4F1E8");
@@ -192,7 +192,7 @@ export type SheetRow = {
   expiry: string | null; // yyyy-mm-dd
   supplier: string | null;
   note: string | null;
-  newItem: { name: string; type: "HERB" | "PRODUCT"; unit: string; price: number } | null;
+  newItem: { name: string; type: "HERB" | "PRODUCT" | "SUPPLY"; unit: string; price: number } | null;
   priceChange: { from: number | null; to: number } | null; // sửa giá bán mặt hàng có sẵn (chỉ quản lý)
   errors: string[];
   warnings: string[];
@@ -311,22 +311,22 @@ export async function analyzeSheet(buf: Buffer, branch: { id: string; name: stri
     let it = isNew ? undefined : byCode.get(code);
     let newItem: SheetRow["newItem"] = null;
     let priceChange: SheetRow["priceChange"] = null;
-    let itType: "HERB" | "PRODUCT" | undefined = it?.type as "HERB" | "PRODUCT" | undefined;
+    let itType: "HERB" | "PRODUCT" | "SUPPLY" | undefined = it?.type as "HERB" | "PRODUCT" | "SUPPLY" | undefined;
     let itUnit = it?.unit ?? "";
     let sell: number | undefined = it?.prices[0]?.price;
 
     if (isNew) {
       // Mặt hàng mới: tạo kèm lô nhập đầu tiên.
       const typeText = text(row.getCell(3).value).toLowerCase();
-      itType = typeText === "vị thuốc" ? "HERB" : typeText === "thành phẩm" ? "PRODUCT" : undefined;
+      itType = typeFromLabel(typeText);
       if (!opts.canCreate) errors.push("Chỉ quản lý được tạo mặt hàng mới.");
       if (!fileName) errors.push("Mặt hàng mới thiếu tên.");
       else if (fileName.length > 120) errors.push("Tên mặt hàng quá dài (tối đa 120 ký tự).");
-      if (!itType) errors.push("Loại phải là Vị thuốc hoặc Thành phẩm.");
+      if (!itType) errors.push("Loại phải là Vị thuốc, Thành phẩm hoặc Vật tư y tế.");
       const u = text(row.getCell(4).value);
       if (itType === "HERB") itUnit = "g";
-      else if (itType === "PRODUCT") {
-        if (!UNITS.includes(u)) errors.push(`ĐV gốc của thành phẩm phải là: ${UNITS.join(", ")}.`);
+      else if (itType === "PRODUCT" || itType === "SUPPLY") {
+        if (!ALL_UNITS.includes(u)) errors.push(`ĐV gốc phải là: ${ALL_UNITS.join(", ")}.`);
         else itUnit = u;
       }
       const sp = toNumber(row.getCell(13).value);
@@ -444,7 +444,7 @@ function addReportSheet(wb: ExcelJS.Workbook, branch: { name: string }, items: R
     const nearest = exps.length ? new Date(Math.min(...exps.map((d) => d.getTime()))) : null;
     const status = statusOf(it, now);
     const vals: (string | number | Date | null)[] = [
-      idx + 1, it.code ?? "", it.name, it.type === "HERB" ? "Vị thuốc" : "Thành phẩm", it.unit, Math.round(total * 100) / 100, it.minStock, nearest,
+      idx + 1, it.code ?? "", it.name, typeLabel(it.type), it.unit, Math.round(total * 100) / 100, it.minStock, nearest,
       ...(cost ? [total ? Math.round((value / total) * 100) / 100 : 0, Math.round(value)] : []), it.prices[0]?.price ?? null, status,
     ];
     const row = ws.getRow(5 + idx);

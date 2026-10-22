@@ -274,6 +274,7 @@ export async function addPrescriptionLine(formData: FormData) {
   const item = await prisma.item.findUnique({ where: { id: itemId } });
   if (!item || !item.active) to(visit.id, "don-thuoc", "Thuốc không có trong danh mục hoặc đã ngừng.");
   const rx = await ensurePrescription(exam.id);
+  if (item.type === "SUPPLY") to(visit.id, "don-thuoc", `“${item.name}” là vật tư y tế, không kê vào đơn thuốc.`);
   const dup = await prisma.prescriptionLine.findFirst({ where: { prescriptionId: rx.id, itemId } });
   if (dup) to(visit.id, "don-thuoc", `“${item.name}” đã có trong đơn. Sửa số lượng ở dòng đó.`);
   const count = await prisma.prescriptionLine.count({ where: { prescriptionId: rx.id } });

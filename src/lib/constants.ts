@@ -72,3 +72,13 @@ export const ADMIN_SUB: NavLink[] = [
 
 // Đơn vị của thành phẩm trong kho (dược liệu luôn tính bằng g).
 export const UNITS = ["viên", "hộp", "chai", "lọ", "gói", "túi", "tuýp"];
+
+// Loại mặt hàng: HERB (vị thuốc, tính bằng g) | PRODUCT (thành phẩm bán) | SUPPLY (vật tư y tế tiêu hao, không bán).
+export const SUPPLY_UNITS = ["cái", "cuộn", "đôi", "bộ", "ống", "que", "miếng", "ml", "g", "chai", "lọ", "hộp", "gói", "túi", "tuýp"];
+export const ALL_UNITS = Array.from(new Set([...UNITS, ...SUPPLY_UNITS]));
+export const typeLabel = (t: string) => (t === "HERB" ? "Vị thuốc" : t === "SUPPLY" ? "Vật tư y tế" : "Thành phẩm");
+export const typeFromLabel = (l: string): "HERB" | "PRODUCT" | "SUPPLY" | undefined => {
+  const x = l.trim().toLowerCase();
+  return x === "vị thuốc" ? "HERB" : x === "thành phẩm" ? "PRODUCT" : x === "vật tư y tế" || x === "vật tư" ? "SUPPLY" : undefined;
+};
+export const codePrefix = (t: string) => (t === "HERB" ? "VT" : t === "SUPPLY" ? "YT" : "TP");

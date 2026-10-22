@@ -140,7 +140,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
         prisma.disease.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" }, take: 500 }),
         prisma.pattern.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" }, take: 500 }),
         prisma.treatmentPrinciple.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" }, take: 500 }),
-        prisma.item.findMany({ where: { active: true }, select: { id: true, name: true, type: true, unit: true }, orderBy: { name: "asc" }, take: 1500 }),
+        prisma.item.findMany({ where: { active: true, type: { not: "SUPPLY" } }, select: { id: true, name: true, type: true, unit: true }, orderBy: { name: "asc" }, take: 1500 }),
         prisma.acupuncturePoint.findMany({ select: { code: true, standardName: true }, orderBy: { code: "asc" }, take: 600 }),
         prisma.manualTherapy.findMany({ select: { name: true }, orderBy: { name: "asc" }, take: 200 }),
       ]);

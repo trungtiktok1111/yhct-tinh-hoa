@@ -67,6 +67,7 @@ export async function saveSupply(formData: FormData) {
     prisma.item.findUnique({ where: { id: itemId } }),
   ]);
   if (!svc || !item) back("Không tìm thấy dịch vụ hoặc vật tư.");
+  if (item!.type !== "SUPPLY") back("Chỉ chọn vật tư y tế (kim, chỉ, găng, bông, cồn…). Thuốc và dược liệu không phải vật tư tiêu hao.");
   await prisma.serviceSupply.upsert({ where: { serviceId_itemId: { serviceId, itemId } }, create: { serviceId, itemId, qty }, update: { qty } });
   await logAudit({ staffId: staff.id, staffName: staff.fullName, action: "UPDATE", entity: "ServiceItem", entityId: serviceId, detail: `${svc!.name}: vật tư ${item!.name} ${qty}${item!.unit}/lần` });
   revalidatePath("/thu-ngan/dich-vu");

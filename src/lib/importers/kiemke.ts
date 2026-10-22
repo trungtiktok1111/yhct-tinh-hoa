@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { typeLabel } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/auth";
 import { STOCK_WRITE_ROLES } from "@/lib/permissions";
@@ -35,7 +36,7 @@ async function build(branch: { id: string; name: string }, voucher: string): Pro
     const r = FIRST_ROW + idx;
     const row = ws.getRow(r);
     const st = stockOf(it.lots);
-    [it.code ?? "", it.name, it.type === "HERB" ? "Vị thuốc" : "Thành phẩm", it.unit, st].forEach((v, i) => (row.getCell(i + 1).value = v));
+    [it.code ?? "", it.name, typeLabel(it.type), it.unit, st].forEach((v, i) => (row.getCell(i + 1).value = v));
     row.getCell(7).value = { formula: `IF(F${r}="","",F${r}-E${r})`, result: "" };
     styleRow(ws, r, COLS);
     row.getCell(5).numFmt = row.getCell(6).numFmt = row.getCell(7).numFmt = '#,##0.##;-#,##0.##;0';

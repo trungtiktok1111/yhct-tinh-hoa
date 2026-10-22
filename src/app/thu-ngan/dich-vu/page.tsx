@@ -14,7 +14,7 @@ export default async function ServicesPage({ searchParams }: { searchParams: { l
   await requireRole(...ITEM_MANAGER_ROLES);
   const [list, items] = await Promise.all([
     prisma.serviceItem.findMany({ orderBy: [{ position: "asc" }, { createdAt: "asc" }], include: { supplies: true } }),
-    prisma.item.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true, unit: true } }),
+    prisma.item.findMany({ where: { active: true, type: "SUPPLY" }, orderBy: { name: "asc" }, select: { id: true, name: true, unit: true } }),
   ]);
   const iname = new Map((items as { id: string; name: string; unit: string }[]).map((i) => [i.id, i]));
   return (
@@ -52,7 +52,7 @@ export default async function ServicesPage({ searchParams }: { searchParams: { l
                     <div className="rounded-xl border border-dashed border-brand-deep/40 bg-brand-deep/5 p-3 text-sm">
                       <div className="mb-1.5 font-semibold text-brand-deep">Vật tư tiêu hao mỗi lần làm (tự trừ kho khi y sĩ hoàn thành)</div>
                       <div className="mb-2 flex flex-wrap gap-2">
-                        {s.supplies.length === 0 && <span className="text-brand-ink/60">Chưa khai báo vật tư.</span>}
+                        {s.supplies.length === 0 && <span className="text-brand-ink/60">Chưa khai báo vật tư. Chưa có trong danh sách? Thêm ở Kho → Mặt hàng, chọn loại “Vật tư y tế”.</span>}
                         {s.supplies.map((u) => (
                           <form key={u.id} action={removeSupply} className="flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1">
                             <input type="hidden" name="id" value={u.id} />
@@ -64,7 +64,7 @@ export default async function ServicesPage({ searchParams }: { searchParams: { l
                       <form action={saveSupply} className="flex flex-wrap items-end gap-2">
                         <input type="hidden" name="serviceId" value={s.id} />
                         <select name="itemId" required className={`${input} w-64`}>
-                          <option value="">Chọn vật tư (kim, chỉ, thuốc thủy châm…)</option>
+                          <option value="">Chọn vật tư y tế (kim, chỉ cấy, găng, bông, cồn, ngải cứu…)</option>
                           {(items as { id: string; name: string; unit: string }[]).map((i) => <option key={i.id} value={i.id}>{i.name} ({i.unit})</option>)}
                         </select>
                         <input name="qty" required inputMode="decimal" placeholder="Số lượng" className={`${input} w-28`} />

@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/auth";
 import { ITEM_MANAGER_ROLES } from "@/lib/permissions";
-import { UNITS } from "@/lib/constants";
+import { UNITS, ALL_UNITS, typeLabel, typeFromLabel, codePrefix } from "@/lib/constants";
 import { emptyAnalysis, MAX_ROWS, type Analysis, type ImportRow, type Importer } from "@/lib/importKit";
 import { FIRST_ROW, GREEN_IN, fmt, guideSheet, hashOf, makeSheet, openSheet, protect, styleRow, text, toNumber, type ColSpec } from "@/lib/sheetKit";
 
@@ -37,7 +37,7 @@ async function build(voucher: string): Promise<Buffer> {
   items.forEach((it, idx) => {
     const r = FIRST_ROW + idx;
     const row = ws.getRow(r);
-    [it.code ?? "", it.name, it.type === "HERB" ? "Vị thuốc" : "Thành phẩm", it.unit, it.prices[0]?.price ?? null, q2(it.minStock), it.active ? ON : OFF].forEach((v, i) => (row.getCell(i + 1).value = v));
+    [it.code ?? "", it.name, typeLabel(it.type), it.unit, it.prices[0]?.price ?? null, q2(it.minStock), it.active ? ON : OFF].forEach((v, i) => (row.getCell(i + 1).value = v));
     styleRow(ws, r, editable);
     row.getCell(5).numFmt = "#,##0";
     row.getCell(6).numFmt = '#,##0.##;-#,##0.##;0';
@@ -52,8 +52,8 @@ async function build(voucher: string): Promise<Buffer> {
     const row = ws.getRow(r);
     row.getCell(1).value = NEW_CODE;
     styleRow(ws, r, COLS.map((c, i) => ({ ...c, input: i > 0 })), { inputFill: GREEN_IN });
-    row.getCell(3).dataValidation = { type: "list", allowBlank: true, formulae: ['"Vị thuốc,Thành phẩm"'], showErrorMessage: true, errorTitle: "Loại", error: "Chọn Vị thuốc hoặc Thành phẩm." };
-    row.getCell(4).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,${UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Vị thuốc dùng g; thành phẩm chọn trong danh sách." };
+    row.getCell(3).dataValidation = { type: "list", allowBlank: true, formulae: ['"Vị thuốc,Thành phẩm,Vật tư y tế"'], showErrorMessage: true, errorTitle: "Loại", error: "Chọn Vị thuốc hoặc Thành phẩm." };
+    row.getCell(4).dataValidation = { type: "list", allowBlank: true, formulae: [`"g,${ALL_UNITS.join(",")}"`], showErrorMessage: true, errorTitle: "Đơn vị", error: "Vị thuốc dùng g; thành phẩm chọn trong danh sách." };
     row.getCell(5).numFmt = "#,##0";
     row.getCell(5).dataValidation = { type: "whole", operator: "greaterThanOrEqual", formulae: [0], allowBlank: true, showErrorMessage: true, errorTitle: "Giá bán", error: "Nhập số đồng nguyên, không âm." };
     row.getCell(7).value = ON;
@@ -76,7 +76,7 @@ async function build(voucher: string): Promise<Buffer> {
 }
 
 type Op = { itemId: string; name: string; price?: number; oldPrice?: number | null; min?: number; active?: boolean };
-type Newi = { id: string; name: string; type: "HERB" | "PRODUCT"; unit: string; price: number; min: number; active: boolean };
+type Newi = { id: string; name: string; type: "HERB" | "PRODUCT" | "SUPPLY"; unit: string; price: number; min: number; active: boolean };
 type Payload = { ops: Op[]; news: Newi[] };
 
 async function analyze(buf: Buffer): Promise<Analysis> {
@@ -109,11 +109,11 @@ async function analyze(buf: Buffer): Promise<Analysis> {
       const errors: string[] = [], warnings: string[] = [];
       if (!name) errors.push("Mặt hàng mới thiếu tên.");
       else if (name.length > 120) errors.push("Tên quá dài (tối đa 120 ký tự).");
-      const type = typeT === "vị thuốc" ? "HERB" : typeT === "thành phẩm" ? "PRODUCT" : undefined;
-      if (!type) errors.push("Loại phải là Vị thuốc hoặc Thành phẩm.");
+      const type = typeFromLabel(typeT);
+      if (!type) errors.push("Loại phải là Vị thuốc, Thành phẩm hoặc Vật tư y tế.");
       let unit = "";
       if (type === "HERB") unit = "g";
-      else if (type === "PRODUCT") { if (!UNITS.includes(u)) errors.push(`ĐVT của thành phẩm phải là: ${UNITS.join(", ")}.`); else unit = u; }
+      else if (type === "PRODUCT" || type === "SUPPLY") { if (!ALL_UNITS.includes(u)) errors.push(`ĐVT phải là: ${ALL_UNITS.join(", ")}.`); else unit = u; }
       const pr = price(row.getCell(5).value, errors, true);
       const mn = toNumber(row.getCell(6).value);
       if (mn === "bad" || (typeof mn === "number" && mn < 0)) errors.push("Tồn tối thiểu phải là số không âm.");
@@ -126,7 +126,7 @@ async function analyze(buf: Buffer): Promise<Analysis> {
         seenNew.add(key);
       }
       if (!errors.length && type && typeof pr === "number") p.news.push({ id: randomUUID(), name, type, unit, price: pr, min: typeof mn === "number" ? mn : 0, active: st === ON });
-      rows.push({ row: r, label: `(mới) ${name}`, detail: type && typeof pr === "number" ? `${type === "HERB" ? "Vị thuốc" : "Thành phẩm"} · ${fmt(pr)} đ/${unit || "?"}` : "", errors, warnings });
+      rows.push({ row: r, label: `(mới) ${name}`, detail: type && typeof pr === "number" ? `${typeLabel(type)} · ${fmt(pr)} đ/${unit || "?"}` : "", errors, warnings });
       continue;
     }
     // Mặt hàng có sẵn: chỉ ghi nhận phần đã đổi.
@@ -134,7 +134,7 @@ async function analyze(buf: Buffer): Promise<Analysis> {
     const errors: string[] = [], warnings: string[] = [];
     if (!it) { rows.push({ row: r, label: code, detail: "", errors: [`Mã hàng “${code}” không có trong hệ thống.`], warnings }); continue; }
     if (it.name !== text(row.getCell(2).value)) errors.push(`Không sửa tên mặt hàng có sẵn (file: ${text(row.getCell(2).value)}, hệ thống: ${it.name}).`);
-    if ((it.type === "HERB" ? "vị thuốc" : "thành phẩm") !== text(row.getCell(3).value).toLowerCase()) errors.push("Không sửa loại mặt hàng có sẵn.");
+    if (typeLabel(it.type).toLowerCase() !== text(row.getCell(3).value).toLowerCase()) errors.push("Không sửa loại mặt hàng có sẵn.");
     if (it.unit !== text(row.getCell(4).value)) errors.push("Không sửa đơn vị của mặt hàng có sẵn.");
     const pr = price(row.getCell(5).value, errors, true);
     const mn = toNumber(row.getCell(6).value);
@@ -173,16 +173,16 @@ export const danhMuc: Importer = {
   async commit(a, c) {
     const p = a.payload as Payload;
     const nextCode: Record<string, number> = {};
-    for (const t of ["HERB", "PRODUCT"] as const) {
+    for (const t of ["HERB", "PRODUCT", "SUPPLY"] as const) {
       if (!p.news.some((n) => n.type === t)) continue;
-      const prefix = t === "HERB" ? "VT" : "TP";
+      const prefix = codePrefix(t);
       const codes = (await prisma.item.findMany({ where: { code: { startsWith: prefix } }, select: { code: true } })) as unknown as { code: string | null }[];
       nextCode[t] = codes.reduce((m, x) => Math.max(m, parseInt((x.code ?? "").slice(prefix.length), 10) || 0), 0) + 1;
     }
     const created = [] as (Newi & { code: string; herbId: string | null })[];
     for (const n of p.news) {
       const herb = n.type === "HERB" ? ((await prisma.herb.findFirst({ where: { standardName: { equals: n.name, mode: "insensitive" } }, select: { id: true } })) as { id: string } | null) : null;
-      created.push({ ...n, code: `${n.type === "HERB" ? "VT" : "TP"}${String(nextCode[n.type]++).padStart(3, "0")}`, herbId: herb?.id ?? null });
+      created.push({ ...n, code: `${codePrefix(n.type)}${String(nextCode[n.type]++).padStart(3, "0")}`, herbId: herb?.id ?? null });
     }
     try {
       await prisma.$transaction([

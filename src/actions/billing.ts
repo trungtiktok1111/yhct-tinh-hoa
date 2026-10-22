@@ -153,6 +153,7 @@ export async function addRetailLine(formData: FormData) {
   if (q === undefined || Number.isNaN(q) || q <= 0) go(inv.id, "Số lượng phải lớn hơn 0.");
   const item = await prisma.item.findUnique({ where: { id: itemId } });
   if (!item || !item.active) go(inv.id, "Mặt hàng không còn bán.");
+  if (item.type === "SUPPLY") go(inv.id, `“${item.name}” là vật tư y tế tiêu hao, không bán trên hóa đơn.`);
   const price = (await currentPrices([itemId])).get(itemId);
   if (price === undefined) go(inv.id, `“${item.name}” chưa có giá bán.`);
   const stock = await prisma.stockLot.aggregate({

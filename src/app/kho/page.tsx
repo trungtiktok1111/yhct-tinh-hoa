@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
-import { branchesFor } from "@/lib/stock";
+import { branchesFor, typeLabel } from "@/lib/stock";
 import { STOCK_WRITE_ROLES, ITEM_MANAGER_ROLES, hasAny } from "@/lib/permissions";
 import { dateVN, qty, vnd } from "@/lib/format";
 import Image from "next/image";
@@ -38,7 +38,7 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
 
   const [items, lots] = await Promise.all([
     prisma.item.findMany({
-      where: { active: true, ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { code: { contains: q, mode: "insensitive" } }] } : {}), ...(searchParams.loai === "HERB" || searchParams.loai === "PRODUCT" ? { type: searchParams.loai } : {}) },
+      where: { active: true, ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { code: { contains: q, mode: "insensitive" } }] } : {}), ...(searchParams.loai === "HERB" || searchParams.loai === "PRODUCT" || searchParams.loai === "SUPPLY" ? { type: searchParams.loai } : {}) },
       orderBy: { name: "asc" },
       include: { prices: { orderBy: { effectiveFrom: "desc" }, take: 1 }, herb: { select: { imageUrl: true, latinName: true, actions: true } } },
     }),
@@ -121,7 +121,7 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
       <KhoTabs active="ton" />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon={Boxes} label="Tổng số mặt hàng (SKU)" value={items.length} unit="vị thuốc, dược liệu, thành phẩm" tone="green" />
+        <Stat icon={Boxes} label="Tổng số mặt hàng (SKU)" value={items.length} unit="vị thuốc, thành phẩm, vật tư y tế" tone="green" />
         {canCost ? <Stat icon={Coins} label="Tổng giá trị tồn kho" value={vnd(totalValue)} unit="theo giá nhập" tone="gold" /> : <Stat icon={Coins} label="Số lô còn hàng" value={lots.length} unit="lô" tone="gold" />}
         <Stat icon={AlertTriangle} label="Dưới mức tối thiểu" value={lowCount} unit="mặt hàng cần nhập" tone="red" href={`/kho?cn=${branch.id}&chi=thap`} />
         <Stat icon={CalendarClock} label="Gần hết hạn" value={soonCount} unit={`mặt hàng (≤ ${SOON_DAYS} ngày)${expiredCount ? ` · ${expiredCount} đã hết hạn` : ""}`} tone="purple" />
@@ -129,7 +129,7 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
 
       <form className="card !p-3 flex flex-wrap items-end gap-3" method="get">
         <input type="hidden" name="cn" value={branch.id} />
-        <label className="text-xs text-brand-ink/65">Danh mục<select name="loai" defaultValue={searchParams.loai ?? ""} className="mt-0.5 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-brand-ink"><option value="">Tất cả danh mục</option><option value="HERB">Vị thuốc</option><option value="PRODUCT">Thành phẩm</option></select></label>
+        <label className="text-xs text-brand-ink/65">Danh mục<select name="loai" defaultValue={searchParams.loai ?? ""} className="mt-0.5 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-brand-ink"><option value="">Tất cả danh mục</option><option value="HERB">Vị thuốc</option><option value="PRODUCT">Thành phẩm</option><option value="SUPPLY">Vật tư y tế</option></select></label>
         <label className="text-xs text-brand-ink/65">Trạng thái tồn kho<select name="tt" defaultValue={searchParams.tt ?? ""} className="mt-0.5 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-brand-ink"><option value="">Tất cả</option><option value="con">Còn hàng</option><option value="thap">Dưới tối thiểu</option><option value="sap">Gần hết hạn</option><option value="het">Có lô hết hạn</option></select></label>
         <label className="text-xs text-brand-ink/65">Hạn dùng<select name="han" defaultValue={searchParams.han ?? ""} className="mt-0.5 block rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-brand-ink"><option value="">Tất cả</option><option value="30">Trong 30 ngày</option><option value="90">Trong 90 ngày</option><option value="het">Đã hết hạn</option></select></label>
         <label className="min-w-[14rem] flex-1 text-xs text-brand-ink/65">Tìm kiếm
@@ -170,7 +170,7 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
                           <div><Link href={link({ sel: it.id })} className="font-semibold hover:underline">{it.name}</Link>{latin(it) && <div className="text-xs italic text-brand-ink/70">{latin(it)}</div>}</div>
                         </div>
                       </td>
-                      <td className="whitespace-nowrap">{it.type === "HERB" ? "Vị thuốc" : "Thành phẩm"}</td>
+                      <td className="whitespace-nowrap">{typeLabel(it.type)}</td>
                       <td className="text-sm">{a.nearest ? <>{a.lot}<div className="text-xs text-brand-ink/70">{dateVN(a.nearest)}</div></> : "—"}</td>
                       <td className="text-sm">{a.supplier ?? "—"}</td>
                       <td className={`text-right font-bold tabular-nums ${low ? "text-red-700" : ""}`}>{qty(a.total)}</td>
@@ -221,7 +221,7 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
             {selPic ? <Image src={selPic} alt="" width={64} height={64} className="h-16 w-16 rounded-xl object-cover ring-1 ring-slate-200" /> : <span className="grid h-16 w-16 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><Leaf className="h-7 w-7" /></span>}
             <div className="min-w-0 flex-1">
               <div className="text-lg font-bold">{selItem.name}</div>
-              <div className="text-sm italic text-brand-ink/70">{latin(selItem) || (selItem.type === "HERB" ? "Vị thuốc" : "Thành phẩm")}</div>
+              <div className="text-sm italic text-brand-ink/70">{latin(selItem) || typeLabel(selItem.type)}</div>
               {(() => { const a = agg.get(selItem.id); const lowS = selItem.minStock > 0 && (a?.total ?? 0) < selItem.minStock; return lowS ? <span className="chip chip-red mt-1">Dưới tối thiểu</span> : <span className="chip chip-green mt-1">Còn hàng</span>; })()}
             </div>
             <Link href={link({})} className="rounded-full p-1.5 hover:bg-slate-100"><X className="h-5 w-5" /></Link>
@@ -234,7 +234,7 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
           {dt === "tt" && (
             <dl className="space-y-1.5 text-sm">
               <div className="flex justify-between"><dt className="text-brand-ink/65">Mã hàng</dt><dd className="font-mono font-bold">{selItem.code ?? "—"}</dd></div>
-              <div className="flex justify-between"><dt className="text-brand-ink/65">Danh mục</dt><dd className="font-bold">{selItem.type === "HERB" ? "Dược liệu" : "Thành phẩm"}</dd></div>
+              <div className="flex justify-between"><dt className="text-brand-ink/65">Danh mục</dt><dd className="font-bold">{selItem.type === "HERB" ? "Dược liệu" : typeLabel(selItem.type)}</dd></div>
               <div className="flex justify-between"><dt className="text-brand-ink/65">Đơn vị tính</dt><dd className="font-bold">{selItem.unit}</dd></div>
               {selItem.herb?.actions && <div><dt className="text-brand-ink/65">Mô tả</dt><dd>{selItem.herb.actions.slice(0, 160)}</dd></div>}
               <div className="flex justify-between border-t pt-1.5"><dt className="text-brand-ink/65">Tồn kho hiện tại</dt><dd className="font-bold">{qty(agg.get(selItem.id)?.total ?? 0)} {selItem.unit}</dd></div>

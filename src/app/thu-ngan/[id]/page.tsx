@@ -44,7 +44,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
   const open = inv.status === "UNPAID";
   const [items, services] = open
     ? await Promise.all([
-        prisma.item.findMany({ where: { active: true, prices: { some: {} } }, select: { id: true, name: true, unit: true }, orderBy: { name: "asc" }, take: 1500 }),
+        prisma.item.findMany({ where: { active: true, type: { not: "SUPPLY" }, prices: { some: {} } }, select: { id: true, name: true, unit: true }, orderBy: { name: "asc" }, take: 1500 }),
         prisma.serviceItem.findMany({ where: { active: true }, orderBy: { position: "asc" } }),
       ])
     : [[], []];

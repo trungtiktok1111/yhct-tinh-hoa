@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { nextItemCode } from "@/lib/stock";
+import { codePrefix } from "@/lib/constants";
 import { analyzeSheet, MAX_BYTES } from "@/lib/stockSheet";
 import { randomUUID } from "crypto";
 import { checkVoucher, claimVoucher, releaseVoucher } from "@/lib/voucher";
@@ -49,10 +50,10 @@ export async function createItem(formData: FormData) {
   const name = str(formData, "name");
   const type = str(formData, "type");
   if (!name) back(P, "Nhập tên mặt hàng.");
-  if (type !== "HERB" && type !== "PRODUCT") back(P, "Chọn loại mặt hàng.");
+  if (type !== "HERB" && type !== "PRODUCT" && type !== "SUPPLY") back(P, "Chọn loại mặt hàng.");
   const unit = type === "HERB" ? "g" : str(formData, "unit");
   if (!unit) back(P, "Chọn đơn vị.");
-  const price = money(formData, "price");
+  const price = type === "SUPPLY" ? (money(formData, "price") ?? 0) : money(formData, "price"); // vật tư tiêu hao không bán: giá 0
   if (price === undefined) back(P, "Nhập giá bán (số, đồng).");
   const minStock = num(formData, "minStock") ?? 0;
   if (minStock < 0) back(P, "Mức tối thiểu không được âm.");
@@ -355,9 +356,9 @@ export async function importStockExcel(formData: FormData) {
   // Mặt hàng mới: cấp mã liên tiếp theo loại, liên kết vị thuốc tri thức nếu trùng tên.
   const newRows = res.rows.filter((r) => r.newItem);
   const nextCode: Record<string, number> = {};
-  for (const t of ["HERB", "PRODUCT"]) {
+  for (const t of ["HERB", "PRODUCT", "SUPPLY"]) {
     if (!newRows.some((r) => r.newItem?.type === t)) continue;
-    const prefix = t === "HERB" ? "VT" : "TP";
+    const prefix = codePrefix(t);
     const codes = await prisma.item.findMany({ where: { code: { startsWith: prefix } }, select: { code: true } });
     nextCode[t] = codes.reduce((m, c) => Math.max(m, parseInt((c.code ?? "").slice(prefix.length), 10) || 0), 0) + 1;
   }
@@ -369,7 +370,7 @@ export async function importStockExcel(formData: FormData) {
       : null;
     const id = randomUUID();
     r.itemId = id;
-    newItems.push({ id, code: `${n.type === "HERB" ? "VT" : "TP"}${String(nextCode[n.type]++).padStart(3, "0")}`, name: n.name, type: n.type, unit: n.unit, herbId: herb?.id ?? null, price: n.price });
+    newItems.push({ id, code: `${codePrefix(n.type)}${String(nextCode[n.type]++).padStart(3, "0")}`, name: n.name, type: n.type, unit: n.unit, herbId: herb?.id ?? null, price: n.price });
   }
   const lots = res.rows.map((r) => ({
     id: randomUUID(), itemId: r.itemId as string, branchId, unitCost: r.unitCostBase,
