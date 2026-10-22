@@ -18,7 +18,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const branch = imp.needsBranch ? branches.find((b) => b.id === req.nextUrl.searchParams.get("cn")) ?? branches[0] ?? null : null;
   if (imp.needsBranch && !branch) return new Response("Chưa có chi nhánh", { status: 400 });
   const ctx = { branch, staff, cost: hasAny(staff.roles, COST_VIEW_ROLES) };
-  const buf = await imp.build(ctx);
+  let buf: Buffer;
+  try {
+    buf = await imp.build(ctx);
+  } catch (e) {
+    console.error("Lỗi dựng mẫu", params.id, e);
+    return new Response(`Không tạo được mẫu: ${e instanceof Error ? e.message : "lỗi không rõ"}`, { status: 500 });
+  }
   return new Response(new Uint8Array(buf), {
     headers: {
       "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

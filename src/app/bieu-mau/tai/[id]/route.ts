@@ -37,10 +37,17 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const iso = (d: Date) => d.toISOString().slice(0, 10);
   const start = new Date(from.getTime() - 7 * 3600_000);
   const end = new Date(to.getTime() + 86400_000 - 7 * 3600_000);
-  const { buf, file } = await build({
+  let out: { buf: Buffer; file: string };
+  try {
+    out = await build({
     branchIds: ids, branchLabel: label, singleBranch: single, from: iso(from), to: iso(to), start, end,
     cost: hasAny(staff.roles, COST_VIEW_ROLES), by: staff.fullName,
-  });
+    });
+  } catch (e) {
+    console.error("Lỗi dựng báo cáo", params.id, e);
+    return new Response(`Không tạo được báo cáo: ${e instanceof Error ? e.message : "lỗi không rõ"}`, { status: 500 });
+  }
+  const { buf, file } = out;
   if (params.id === "ds-benh-nhan") {
     await logAudit({ staffId: staff.id, staffName: staff.fullName, action: "EXPORT", entity: "Patient", detail: "Tải danh sách bệnh nhân (Excel)" });
   }
