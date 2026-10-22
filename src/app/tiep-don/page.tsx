@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ScanInput } from "@/components/ScanInput";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { PATIENT_ROLES } from "@/lib/permissions";
@@ -12,7 +13,7 @@ import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { SEX_LABEL, VISIT_STATUS, patientCode, timeVN, vnDayStart } from "@/lib/format";
 import { ageOf } from "@/lib/person";
 import { PageHead, Stat, Panel } from "@/components/ui";
-import { ChevronLeft, ChevronRight, ClipboardCheck, Users, Clock, Stethoscope, CheckCircle2, XCircle, UserPlus, Search, AlertTriangle, FolderOpen, QrCode, StickyNote, Star, Save, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardCheck, Users, Clock, Stethoscope, CheckCircle2, XCircle, UserPlus, Search, AlertTriangle, FolderOpen, StickyNote, Star, Save, Trash2 } from "lucide-react";
 import { canAccessPath } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
@@ -161,11 +162,8 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input name="q" defaultValue={q} placeholder="Nhập tên, SĐT hoặc mã BN…" className="w-full rounded-xl border border-slate-300 py-2.5 pl-9 pr-3" />
               </div>
-              <div className="text-xs text-brand-ink/70">hoặc quét CCCD / thẻ BHYT / mã BN (máy quét gõ vào ô bên dưới)</div>
-              <div className="relative">
-                <QrCode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                <input name="ma" placeholder="Quét mã…" className="w-full rounded-xl border border-dashed border-slate-400 bg-slate-50 py-2.5 pl-9 pr-3" />
-              </div>
+              <div className="text-xs text-brand-ink/70">hoặc quét CCCD / thẻ BHYT / mã BN: máy quét gõ vào ô bên dưới, hoặc bấm Camera (điện thoại)</div>
+              <ScanInput name="ma" />
               <button className="w-full rounded-xl bg-brand-deep py-2.5 font-semibold text-white hover:bg-brand-deeper">Tìm bệnh nhân để tiếp đón</button>
             </form>
             {q && (
