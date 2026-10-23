@@ -52,7 +52,7 @@ export default async function HerbListPage({ searchParams }: { searchParams: { q
             <div className="flex items-center gap-3 min-w-0">
               {(h.imageUrl || herbRefImages(h.standardName, h.aliases)) && (
                 <Image
-                  src={h.imageUrl ?? herbRefImages(h.standardName, h.aliases)!.fresh}
+                  src={h.imageUrl ?? herbRefImages(h.standardName, h.aliases)!.thumb}
                   alt=""
                   width={48}
                   height={48}

@@ -26,15 +26,84 @@ export const HERB_REF_IMAGES: { name: string; slug: string }[] = [
   { name: "Nhẫn đông đằng", slug: "nhan-dong-dang" },
 ];
 
-const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/\s+/g, " ").trim();
-const BY_NAME = new Map(HERB_REF_IMAGES.map((h) => [fold(h.name), h.slug]));
+// Vị thuốc chỉ có một ảnh (dược liệu đã chế/khô hoặc cây). Lưu sẵn cả vị chưa có trong kho tri thức: khi thêm vị thuốc cùng tên, ảnh tự hiện.
+export const HERB_REF_SINGLE: { name: string; slug: string }[] = [
+  { name: "Ma hoàng", slug: "ma-hoang" },
+  { name: "Quế chi", slug: "que-chi" },
+  { name: "Tử tô diệp", slug: "tu-to-diep" },
+  { name: "Tô diệp", slug: "to-diep" },
+  { name: "Tô ngạnh", slug: "to-nganh" },
+  { name: "Kinh giới", slug: "kinh-gioi" },
+  { name: "Phòng phong", slug: "phong-phong" },
+  { name: "Bạch chỉ", slug: "bach-chi" },
+  { name: "Sinh khương", slug: "sinh-khuong" },
+  { name: "Tế tân", slug: "te-tan" },
+  { name: "Cảo bản", slug: "cao-ban" },
+  { name: "Khương hoạt", slug: "khuong-hoat" },
+  { name: "Thương nhĩ tử", slug: "thuong-nhi-tu" },
+  { name: "Tân di", slug: "tan-di" },
+  { name: "Hương nhu", slug: "huong-nhu" },
+  { name: "Thông bạch", slug: "thong-bach" },
+  { name: "Thạch cao", slug: "thach-cao" },
+  { name: "Tri mẫu", slug: "tri-mau" },
+  { name: "Chi tử", slug: "chi-tu" },
+  { name: "Hạ khô thảo", slug: "ha-kho-thao" },
+  { name: "Lô căn", slug: "lo-can" },
+  { name: "Thiên hoa phấn", slug: "thien-hoa-phan" },
+  { name: "Quyết minh tử", slug: "quyet-minh-tu" },
+  { name: "Hàn thủy thạch", slug: "han-thuy-thach" },
+  { name: "Trúc diệp", slug: "truc-diep" },
+  { name: "Đạm trúc diệp", slug: "dam-truc-diep" },
+  { name: "Đỗ trọng", slug: "do-trong" },
+  { name: "Tục đoạn", slug: "tuc-doan" },
+  { name: "Cẩu tích", slug: "cau-tich" },
+  { name: "Ngưu tất", slug: "nguu-tat" },
+  { name: "Cốt toái bổ", slug: "cot-toai-bo" },
+  { name: "Kê huyết đằng", slug: "ke-huyet-dang" },
+  { name: "Tang ký sinh", slug: "tang-ky-sinh" },
+  { name: "Bạc hà", slug: "bac-ha" },
+  { name: "Ngưu bàng tử", slug: "nguu-bang-tu" },
+  { name: "Cát căn", slug: "cat-can" },
+  { name: "Sài hồ", slug: "sai-ho" },
+  { name: "Thăng ma", slug: "thang-ma" },
+  { name: "Cúc hoa", slug: "cuc-hoa" },
+  { name: "Tang diệp", slug: "tang-diep" },
+  { name: "Phù bình", slug: "phu-binh" },
+  { name: "Đạm đậu xị", slug: "dam-dau-xi" },
+  { name: "Mạn kinh tử", slug: "man-kinh-tu" },
+  { name: "Đậu quyển", slug: "dau-quyen" },
+  { name: "Độc hoạt", slug: "doc-hoat" },
+  { name: "Uy linh tiên", slug: "uy-linh-tien" },
+  { name: "Phòng kỷ", slug: "phong-ky" },
+  { name: "Tần giao", slug: "tan-giao" },
+  { name: "Tầm cốt phong", slug: "tam-cot-phong" },
+  { name: "Hải phong đằng", slug: "hai-phong-dang" },
+  { name: "Lạc thạch đằng", slug: "lac-thach-dang" },
+  { name: "Tang chi", slug: "tang-chi" },
+  { name: "Mộc qua", slug: "moc-qua" },
+  { name: "Ngũ gia bì", slug: "ngu-gia-bi" },
+  { name: "Thiên niên kiện", slug: "thien-nien-kien" },
+  { name: "Hy thiêm", slug: "hy-thiem" },
+  { name: "Tỳ giải", slug: "ty-giai" },
+];
 
-// Tìm ảnh tham khảo (tươi/khô) theo tên chuẩn hoặc tên khác của vị thuốc; không khớp thì null.
-export function herbRefImages(standardName: string, aliases?: string | null): { fresh: string; dry: string } | null {
+const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/\s+/g, " ").trim();
+const PAIR = new Map(HERB_REF_IMAGES.map((h) => [fold(h.name), h.slug]));
+const ONE = new Map(HERB_REF_SINGLE.map((h) => [fold(h.name), h.slug]));
+
+export type HerbRef = { images: { cap: string; src: string }[]; thumb: string };
+
+// Tìm ảnh tham khảo theo tên chuẩn hoặc tên khác của vị thuốc; không khớp thì null.
+export function herbRefImages(standardName: string, aliases?: string | null): HerbRef | null {
   const names = [standardName, ...(aliases ?? "").split(/[;,\/]/)].map(fold).filter(Boolean);
   for (const n of names) {
-    const slug = BY_NAME.get(n);
-    if (slug) return { fresh: `/images/herbs/ref/${slug}-tuoi.jpg`, dry: `/images/herbs/ref/${slug}-kho.jpg` };
+    const p = PAIR.get(n);
+    if (p) {
+      const fresh = `/images/herbs/ref/${p}-tuoi.jpg`, dry = `/images/herbs/ref/${p}-kho.jpg`;
+      return { images: [{ cap: "Tươi", src: fresh }, { cap: "Khô", src: dry }], thumb: fresh };
+    }
+    const o = ONE.get(n);
+    if (o) return { images: [{ cap: "Dược liệu", src: `/images/herbs/ref/${o}.jpg` }], thumb: `/images/herbs/ref/${o}.jpg` };
   }
   return null;
 }
