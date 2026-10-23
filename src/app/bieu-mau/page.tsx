@@ -89,7 +89,7 @@ export default async function FormsPage({ searchParams }: { searchParams: { cn?:
       {canVoid && (
         <section id="so-phieu" className="scroll-mt-20 space-y-2">
           <h2 className="px-1 text-sm font-semibold text-brand-ink/75">Sổ số phiếu (40 phiếu gần nhất)</h2>
-          <p className="px-1 text-xs text-brand-ink/60">Mỗi lần tải mẫu điền, app cấp một số phiếu liên tục trong ngày (vd PN-20261022-001, -002). Số chỉ dùng một lần. Phiếu tải về mà không nhập thì vẫn “Đã cấp”; hủy nếu không dùng nữa. Phiếu chưa nhập: bấm “Tải lại” để lấy đúng phiếu đó (cùng số). Số đã hủy không cấp lại để dãy số luôn liên tục, dễ đối chiếu.</p>
+          <p className="px-1 text-xs text-brand-ink/60">Mỗi lần tải mẫu điền, app cấp một số phiếu liên tục trong ngày (vd PN-20261022-001, -002). Số chỉ dùng một lần. Phiếu tải về mà không nhập thì vẫn “Đã cấp”; hủy nếu không dùng nữa. Phiếu chưa nhập: bấm “Tải lại” để lấy đúng phiếu đó (cùng số). Số của phiếu đã hủy hoặc xóa (chưa nhập) được cấp lại cho phiếu kế tiếp, nên số thứ tự trong ngày luôn khớp số lô thực nhập.</p>
           <div className="card overflow-x-auto !p-0">
             <table>
               <thead><tr><th>Số phiếu</th><th>Loại</th><th>Cấp lúc</th><th>Người cấp</th><th>Trạng thái</th><th></th></tr></thead>
@@ -119,7 +119,7 @@ export default async function FormsPage({ searchParams }: { searchParams: { cn?:
                         {v.status !== "USED" && (
                           <form action={deleteVoucher}>
                             <input type="hidden" name="code" value={v.code} />
-                            <ConfirmSubmit message={`Xóa phiếu ${v.code} khỏi sổ? Số này vẫn được giữ, không cấp lại.`} className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-800 hover:bg-red-50">Xóa</ConfirmSubmit>
+                            <ConfirmSubmit message={`Xóa phiếu ${v.code} khỏi sổ? Số này sẽ được cấp lại cho phiếu kế tiếp.`} className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-800 hover:bg-red-50">Xóa</ConfirmSubmit>
                           </form>
                         )}
                       </div>
