@@ -21,10 +21,15 @@ export default async function HerbListPage({ searchParams }: { searchParams: { q
         ],
       }
     : undefined;
-  const [herbs, total] = await Promise.all([
-    prisma.herb.findMany({ where, orderBy: { standardName: "asc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
-    prisma.herb.count({ where }),
-  ]);
+  // Vị thuốc có ảnh xếp trước, chưa có ảnh xếp sau; trong mỗi nhóm theo A-Z.
+  const slim = await prisma.herb.findMany({ where, select: { id: true, standardName: true, aliases: true, imageUrl: true } });
+  const total = slim.length;
+  const rank = (h: (typeof slim)[number]) => (h.imageUrl || herbRefImages(h.standardName, h.aliases) ? 0 : 1);
+  slim.sort((a, b) => rank(a) - rank(b) || a.standardName.localeCompare(b.standardName, "vi"));
+  const ids = slim.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((h) => h.id);
+  const rows = await prisma.herb.findMany({ where: { id: { in: ids } } });
+  const byId = new Map(rows.map((h) => [h.id, h]));
+  const herbs = ids.map((id) => byId.get(id)!).filter(Boolean);
   return (
     <div className="space-y-4">
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-deep to-brand-deeper px-5 py-4 flex items-center justify-between gap-3">

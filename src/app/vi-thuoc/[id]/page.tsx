@@ -1,7 +1,6 @@
 import { EntityToolbar } from "@/components/EntityToolbar";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Microscope, Sprout, Thermometer, Route, ShieldAlert, ScrollText, Link2, FlaskConical, MapPin, Warehouse, TestTube, Leaf } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
@@ -10,6 +9,7 @@ import { ClauseCard } from "@/components/ClauseCard";
 import { splitClauses } from "@/lib/clauses";
 import { herbRefImages } from "@/lib/herbRefImages";
 import { herbTitle } from "@/lib/viName";
+import { HerbGallery } from "@/components/HerbGallery";
 
 export const dynamic = "force-dynamic";
 
@@ -92,39 +92,7 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
       </div>
 
       <div className="grid md:grid-cols-[minmax(0,220px)_1fr] gap-5">
-        <div className="space-y-3">
-        {/* Khung tiêu bản */}
-        <div className="specimen-frame flex items-center justify-center min-h-[180px]">
-          {herb.imageUrl ? (
-            <Image
-              src={herb.imageUrl}
-              alt={herb.standardName}
-              width={300}
-              height={260}
-              className="relative max-h-56 w-auto object-contain rounded"
-            />
-          ) : (
-            <div className="relative flex flex-col items-center gap-2 text-brand-ink/35 py-10">
-              <Sprout className="h-10 w-10" strokeWidth={1.25} />
-              <span className="text-xs">Chưa có ảnh tiêu bản</span>
-            </div>
-          )}
-        </div>
-        {(() => {
-          const ref = herbRefImages(herb.standardName, herb.aliases);
-          if (!ref) return null;
-          return (
-            <div className={`grid gap-2 ${ref.images.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-              {ref.images.map(({ cap, src }) => (
-                <figure key={cap} className="specimen-frame overflow-hidden rounded-lg">
-                  <Image src={src} alt={`${herb.standardName} - ${cap.toLowerCase()}`} width={360} height={280} className="h-28 w-full object-cover" />
-                  <figcaption className="py-1 text-center text-xs font-semibold text-brand-deep">{cap}</figcaption>
-                </figure>
-              ))}
-            </div>
-          );
-        })()}
-        </div>
+        <HerbGallery name={herbTitle(herb.standardName)} main={herb.imageUrl} refs={herbRefImages(herb.standardName, herb.aliases)?.images ?? []} />
 
         {/* Đặc điểm dược liệu */}
         <div className="card space-y-2.5">
