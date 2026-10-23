@@ -8,6 +8,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { MeridianWheel } from "@/components/MeridianWheel";
 import { ClauseCard } from "@/components/ClauseCard";
 import { splitClauses } from "@/lib/clauses";
+import { herbRefImages } from "@/lib/herbRefImages";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +91,7 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
       </div>
 
       <div className="grid md:grid-cols-[minmax(0,220px)_1fr] gap-5">
+        <div className="space-y-3">
         {/* Khung tiêu bản */}
         <div className="specimen-frame flex items-center justify-center min-h-[180px]">
           {herb.imageUrl ? (
@@ -106,6 +108,21 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
               <span className="text-xs">Chưa có ảnh tiêu bản</span>
             </div>
           )}
+        </div>
+        {(() => {
+          const ref = herbRefImages(herb.standardName, herb.aliases);
+          if (!ref) return null;
+          return (
+            <div className="grid grid-cols-2 gap-2">
+              {([["Tươi", ref.fresh], ["Khô", ref.dry]] as const).map(([cap, src]) => (
+                <figure key={cap} className="specimen-frame overflow-hidden rounded-lg">
+                  <Image src={src} alt={`${herb.standardName} - ${cap.toLowerCase()}`} width={360} height={280} className="h-28 w-full object-cover" />
+                  <figcaption className="py-1 text-center text-xs font-semibold text-brand-deep">{cap}</figcaption>
+                </figure>
+              ))}
+            </div>
+          );
+        })()}
         </div>
 
         {/* Đặc điểm dược liệu */}

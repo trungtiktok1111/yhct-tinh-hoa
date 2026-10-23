@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
+import { herbRefImages } from "@/lib/herbRefImages";
 
 export const dynamic = "force-dynamic";
 
@@ -49,9 +50,9 @@ export default async function HerbListPage({ searchParams }: { searchParams: { q
         {herbs.map((h) => (
           <Link key={h.id} href={`/vi-thuoc/${h.id}`} className="card flex items-center gap-3 justify-between">
             <div className="flex items-center gap-3 min-w-0">
-              {h.imageUrl && (
+              {(h.imageUrl || herbRefImages(h.standardName, h.aliases)) && (
                 <Image
-                  src={h.imageUrl}
+                  src={h.imageUrl ?? herbRefImages(h.standardName, h.aliases)!.fresh}
                   alt=""
                   width={48}
                   height={48}
