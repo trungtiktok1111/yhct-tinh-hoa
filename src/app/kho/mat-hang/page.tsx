@@ -7,6 +7,7 @@ import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { ALL_UNITS, typeLabel, input, btn } from "@/lib/stock";
 import { dateVN, vnd } from "@/lib/format";
+import { itemTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +71,7 @@ export default async function ItemsPage({ searchParams }: { searchParams: { loi?
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold">
-                    {it.name}{" "}
+                    {itemTitle(it.name, it.type)}{" "}
                     <span className="text-xs text-gray-500">({typeLabel(it.type).toLowerCase()})</span>
                     {!it.active && <span className="status-pill status-RETIRED ml-2">Ngừng</span>}
                   </div>
@@ -111,7 +112,7 @@ export default async function ItemsPage({ searchParams }: { searchParams: { loi?
                   </form>
                   <form action={deleteItem}>
                     <input type="hidden" name="id" value={it.id} />
-                    <ConfirmSubmit message={`Xóa mặt hàng "${it.name}"? Chỉ xóa được khi chưa có giao dịch kho.`}>Xóa</ConfirmSubmit>
+                    <ConfirmSubmit message={`Xóa mặt hàng "${itemTitle(it.name, it.type)}"? Chỉ xóa được khi chưa có giao dịch kho.`}>Xóa</ConfirmSubmit>
                   </form>
                 </div>
               )}

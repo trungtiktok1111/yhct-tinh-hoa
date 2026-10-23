@@ -76,7 +76,7 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
 
   const top = new Map<string, { name: string; unit: string; qty: number; sum: number }>();
   for (const l of lines) {
-    const e = top.get(l.itemId as string) ?? { name: l.name.replace(/ \(.*thang\)$/, ""), unit: l.unit, qty: 0, sum: 0 };
+    const e = top.get(l.itemId as string) ?? { name: itemTitle(l.name.replace(/ \(.*thang\)$/, ""), l.kind), unit: l.unit, qty: 0, sum: 0 };
     e.qty += l.qty; e.sum += l.amount; top.set(l.itemId as string, e);
   }
   const topList = [...top.values()].sort((a, b) => b.sum - a.sum).slice(0, 15);
