@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { nextItemCode } from "@/lib/stock";
+import { findHerbByName, nameKey } from "@/lib/herbName";
 import { codePrefix } from "@/lib/constants";
 import { analyzeSheet, MAX_BYTES } from "@/lib/stockSheet";
 import { randomUUID } from "crypto";
@@ -57,11 +58,11 @@ export async function createItem(formData: FormData) {
   if (price === undefined) back(P, "Nhập giá bán (số, đồng).");
   const minStock = num(formData, "minStock") ?? 0;
   if (minStock < 0) back(P, "Mức tối thiểu không được âm.");
-  if (await prisma.item.findFirst({ where: { name: { equals: name, mode: "insensitive" }, unit } }))
+  if ((await prisma.item.findMany({ where: { unit }, select: { name: true } })).some((x) => nameKey(x.name) === nameKey(name)))
     back(P, "Mặt hàng này đã có.");
 
   const herb = type === "HERB"
-    ? await prisma.herb.findFirst({ where: { standardName: { equals: name, mode: "insensitive" } }, select: { id: true } })
+    ? await findHerbByName(name)
     : null;
   const item = await prisma.item.create({
     data: {
@@ -366,7 +367,7 @@ export async function importStockExcel(formData: FormData) {
   for (const r of newRows) {
     const n = r.newItem!;
     const herb = n.type === "HERB"
-      ? await prisma.herb.findFirst({ where: { standardName: { equals: n.name, mode: "insensitive" } }, select: { id: true } })
+      ? await findHerbByName(n.name)
       : null;
     const id = randomUUID();
     r.itemId = id;

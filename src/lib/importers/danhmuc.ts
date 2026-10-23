@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
+import { findHerbByName } from "@/lib/herbName";
 import { logAudit } from "@/lib/auth";
 import { ITEM_MANAGER_ROLES } from "@/lib/permissions";
 import { UNITS, ALL_UNITS, typeLabel, typeFromLabel, codePrefix } from "@/lib/constants";
@@ -181,7 +182,7 @@ export const danhMuc: Importer = {
     }
     const created = [] as (Newi & { code: string; herbId: string | null })[];
     for (const n of p.news) {
-      const herb = n.type === "HERB" ? ((await prisma.herb.findFirst({ where: { standardName: { equals: n.name, mode: "insensitive" } }, select: { id: true } })) as { id: string } | null) : null;
+      const herb = n.type === "HERB" ? await findHerbByName(n.name) : null;
       created.push({ ...n, code: `${codePrefix(n.type)}${String(nextCode[n.type]++).padStart(3, "0")}`, herbId: herb?.id ?? null });
     }
     try {
