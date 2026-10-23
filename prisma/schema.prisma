@@ -421,6 +421,7 @@ model Voucher {
   voidedAt DateTime?
   voidedBy String?
   note     String?
+  hidden   Boolean   @default(false) // đã xóa khỏi sổ; số vẫn giữ để không cấp lại
 
   @@index([kind, day])
   @@index([status])

@@ -2,12 +2,13 @@ import { requireStaff } from "@/lib/auth";
 import { branchesFor } from "@/lib/stock";
 import { hasAny, ITEM_MANAGER_ROLES } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
-import { voidVoucher } from "@/actions/voucher";
+import { voidVoucher, deleteVoucher } from "@/actions/voucher";
 import { KIND_NAME } from "@/lib/voucher";
 import { FORMS, GROUPS, type FormDef } from "@/lib/forms";
 import { PageHead } from "@/components/ui";
 import { FileSpreadsheet, Download, Upload } from "lucide-react";
 import { DateInput } from "@/components/DateInput";
+import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export default async function FormsPage({ searchParams }: { searchParams: { cn?:
   const cn = branches.find((b) => b.id === searchParams.cn)?.id ?? (branches.length === 1 ? branches[0].id : "");
   const canVoid = hasAny(staff.roles, ITEM_MANAGER_ROLES);
   const vouchers = canVoid
-    ? ((await prisma.voucher.findMany({ orderBy: [{ issuedAt: "desc" }], take: 40 })) as unknown as { code: string; kind: string; status: string; issuedAt: Date; issuedBy: string | null; usedAt: Date | null; usedBy: string | null; voidedAt: Date | null }[])
+    ? ((await prisma.voucher.findMany({ where: { hidden: false }, orderBy: [{ issuedAt: "desc" }], take: 40 })) as unknown as { code: string; kind: string; status: string; issuedAt: Date; issuedBy: string | null; usedAt: Date | null; usedBy: string | null; voidedAt: Date | null }[])
     : [];
   const when = (d: Date | null) => (d ? d.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "");
   const mine = FORMS.filter((f) => hasAny(staff.roles, f.roles));
@@ -105,12 +106,20 @@ export default async function FormsPage({ searchParams }: { searchParams: { cn?:
                       {v.status === "VOID" && <span className="chip chip-red">Đã hủy {when(v.voidedAt)}</span>}
                     </td>
                     <td>
-                      {v.status === "ISSUED" && (
-                        <form action={voidVoucher}>
-                          <input type="hidden" name="code" value={v.code} />
-                          <button className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-800">Hủy phiếu</button>
-                        </form>
-                      )}
+                      <div className="flex justify-end gap-1.5">
+                        {v.status === "ISSUED" && (
+                          <form action={voidVoucher}>
+                            <input type="hidden" name="code" value={v.code} />
+                            <button className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-800 hover:bg-red-50">Hủy phiếu</button>
+                          </form>
+                        )}
+                        {v.status !== "USED" && (
+                          <form action={deleteVoucher}>
+                            <input type="hidden" name="code" value={v.code} />
+                            <ConfirmSubmit message={`Xóa phiếu ${v.code} khỏi sổ? Số này vẫn được giữ, không cấp lại.`} className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-800 hover:bg-red-50">Xóa</ConfirmSubmit>
+                          </form>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
