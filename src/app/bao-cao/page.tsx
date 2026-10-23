@@ -8,6 +8,7 @@ import Link from "next/link";
 import { PrintButton } from "@/components/PrintButton";
 import { Download, Stethoscope, ReceiptText, BarChart3, Banknote, FileText, Users, FileX, Leaf, AlertTriangle, CalendarClock, PieChart, TrendingUp } from "lucide-react";
 import { DateInput } from "@/components/DateInput";
+import { itemTitle, herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -42,10 +43,10 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
       where: { itemId: { not: null }, invoice: { branchId: { in: branchIds }, status: "PAID", paidAt: { gte: start, lt: end } } },
       select: { itemId: true, name: true, unit: true, qty: true, amount: true, kind: true },
     }),
-    prisma.item.findMany({ where: { active: true, minStock: { gt: 0 } }, select: { id: true, name: true, unit: true, minStock: true } }),
+    prisma.item.findMany({ where: { active: true, minStock: { gt: 0 } }, select: { id: true, name: true, type: true, unit: true, minStock: true } }),
     prisma.stockLot.findMany({
       where: { branchId: { in: branchIds }, qtyRemaining: { gt: 0 } },
-      select: { itemId: true, branchId: true, qtyRemaining: true, expiryDate: true, item: { select: { name: true, unit: true } }, branch: { select: { name: true } } },
+      select: { itemId: true, branchId: true, qtyRemaining: true, expiryDate: true, item: { select: { name: true, type: true, unit: true } }, branch: { select: { name: true } } },
     }),
     prisma.invoice.aggregate({ _sum: { total: true }, _count: true, where: { branchId: { in: branchIds }, status: "PAID", paidAt: { gte: pStart, lt: start } } }),
     prisma.visit.count({ where: { branchId: { in: branchIds }, createdAt: { gte: pStart, lt: start } } }),
@@ -233,12 +234,12 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
               <ul className="space-y-1.5 text-sm">
                 {expiring.length === 0 && <li className="text-brand-ink/70">Không có.</li>}
                 {expiring.slice(0, 6).map((l, n) => { const dd = Math.ceil(((l.expiryDate as Date).getTime() - Date.now()) / DAY); return (
-                  <li key={n} className="flex justify-between gap-2"><span>{l.item.name}</span><span className={`chip ${dd < 0 ? "chip-red" : dd <= 30 ? "chip-amber" : "chip-blue"} tabular-nums`}>{fq(l.qtyRemaining)} {l.item.unit} · {dd < 0 ? "hết hạn" : `${dd} ngày`}</span></li>); })}
+                  <li key={n} className="flex justify-between gap-2"><span>{itemTitle(l.item.name, l.item.type)}</span><span className={`chip ${dd < 0 ? "chip-red" : dd <= 30 ? "chip-amber" : "chip-blue"} tabular-nums`}>{fq(l.qtyRemaining)} {l.item.unit} · {dd < 0 ? "hết hạn" : `${dd} ngày`}</span></li>); })}
               </ul>
             ) : (
               <ul className="space-y-1.5 text-sm">
                 {low.length === 0 && <li className="text-brand-ink/70">Không có.</li>}
-                {low.slice(0, 6).map((i) => <li key={i.id} className="flex justify-between gap-2"><span>{i.name}</span><span className="chip chip-red tabular-nums">{fq(i.have)}/{fq(i.minStock)} {i.unit}</span></li>)}
+                {low.slice(0, 6).map((i) => <li key={i.id} className="flex justify-between gap-2"><span>{itemTitle(i.name, i.type)}</span><span className="chip chip-red tabular-nums">{fq(i.have)}/{fq(i.minStock)} {i.unit}</span></li>)}
               </ul>
             )}
           </Panel>
@@ -291,7 +292,7 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
           <p className="mb-2 text-xs text-brand-ink/70">Tính tồn của chi nhánh đang chọn, không tính lô hết hạn.</p>
           {low.length === 0 && <p className="text-sm text-brand-ink/70">Không có.</p>}
           <ul className="space-y-1.5 text-sm">
-            {low.map((i) => <li key={i.id} className="flex justify-between gap-2"><span>{i.name}</span><span className="chip chip-red tabular-nums">{fq(i.have)}/{fq(i.minStock)} {i.unit}</span></li>)}
+            {low.map((i) => <li key={i.id} className="flex justify-between gap-2"><span>{itemTitle(i.name, i.type)}</span><span className="chip chip-red tabular-nums">{fq(i.have)}/{fq(i.minStock)} {i.unit}</span></li>)}
           </ul>
         </Panel>
         <Panel icon={CalendarClock} title="Hết hạn trong 30 ngày" tone="text-amber-600">
@@ -299,7 +300,7 @@ export default async function ReportPage({ searchParams }: { searchParams: { cn?
           <ul className="space-y-1.5 text-sm">
             {expiring.map((l, n) => (
               <li key={n} className="flex justify-between gap-2">
-                <span>{l.item.name}{branchIds.length > 1 ? ` · ${l.branch.name}` : ""}</span>
+                <span>{itemTitle(l.item.name, l.item.type)}{branchIds.length > 1 ? ` · ${l.branch.name}` : ""}</span>
                 <span className={`tabular-nums ${(l.expiryDate as Date) < new Date() ? "font-semibold text-red-700" : ""}`}>{fq(l.qtyRemaining)} {l.item.unit} · {dateVN(l.expiryDate as Date)}</span>
               </li>
             ))}

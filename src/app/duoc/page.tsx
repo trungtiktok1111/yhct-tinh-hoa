@@ -11,6 +11,7 @@ import { PageHead, Stat, Panel } from "@/components/ui";
 import { qty as fq } from "@/lib/format";
 import { ClipboardList, Pill, Hourglass, CheckCircle2, AlertTriangle, Package, ShoppingCart, CalendarClock, ScanLine, Printer, FileText, Save, Search } from "lucide-react";
 import { DateInput } from "@/components/DateInput";
+import { itemTitle, herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -189,7 +190,7 @@ export default async function DispenseQueuePage({ searchParams }: { searchParams
                         const w = l.itemId ? checks.weighed.includes(l.itemId) : false;
                         return (
                           <tr key={l.id} className={w ? "bg-emerald-50/60" : ""}>
-                            <td className="text-sm">{l.name}</td>
+                            <td className="text-sm">{itemTitle(l.name, l.kind)}</td>
                             <td className="text-right text-sm">{fq(l.qty)} {l.unit}</td>
                             <td className="text-right text-sm">{fq(h)}</td>
                             <td className="text-sm">{e ? `${String(e.getUTCMonth() + 1).padStart(2, "0")}/${e.getUTCFullYear()}` : "—"}</td>

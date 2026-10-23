@@ -8,6 +8,7 @@ import { removeFormulaIngredient, updateFormulaIngredient } from "@/actions/enti
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { getCurrentStaff } from "@/lib/auth";
 import { canEditKnowledge } from "@/lib/permissions";
+import { herbTitle } from "@/lib/viName";
 
 
 export const dynamic = "force-dynamic";
@@ -91,7 +92,7 @@ export default async function FormulaDetailPage({ params }: { params: { id: stri
                 <tr key={ing.id} className="border-b last:border-0">
                   <td className="py-1.5 pr-2">
                     <Link href={`/vi-thuoc/${ing.herb.id}`} className="text-brand-deep underline">
-                      {ing.herb.standardName}
+                      {herbTitle(ing.herb.standardName)}
                     </Link>
                   </td>
                   <td className="py-1.5 pr-2">
@@ -143,7 +144,7 @@ export default async function FormulaDetailPage({ params }: { params: { id: stri
             <option value="">— Chọn vị thuốc —</option>
             {allHerbs.map((h) => (
               <option key={h.id} value={h.id}>
-                {h.standardName}
+                {herbTitle(h.standardName)}
               </option>
             ))}
           </select>

@@ -12,6 +12,7 @@ import { MoreVertical } from "lucide-react";
 import { COST_VIEW_ROLES } from "@/lib/permissions";
 import { Package, Boxes, AlertTriangle, CalendarClock, PackageX, PackagePlus, ClipboardCheck, Tag, Leaf } from "lucide-react";
 import { DateInput } from "@/components/DateInput";
+import { itemTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -167,7 +168,7 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
                       <td>
                         <div className="flex items-center gap-3">
                           {pic ? <Image src={pic} alt="" width={44} height={44} className="h-11 w-11 rounded-lg object-cover ring-1 ring-slate-200" /> : <span className="grid h-11 w-11 place-items-center rounded-lg bg-emerald-50 text-emerald-700"><Leaf className="h-5 w-5" /></span>}
-                          <div><Link href={link({ sel: it.id })} className="font-semibold hover:underline">{it.name}</Link>{latin(it) && <div className="text-xs italic text-brand-ink/70">{latin(it)}</div>}</div>
+                          <div><Link href={link({ sel: it.id })} className="font-semibold hover:underline">{itemTitle(it.name, it.type)}</Link>{latin(it) && <div className="text-xs italic text-brand-ink/70">{latin(it)}</div>}</div>
                         </div>
                       </td>
                       <td className="whitespace-nowrap">{typeLabel(it.type)}</td>
@@ -220,7 +221,7 @@ export default async function StockPage({ searchParams }: { searchParams: { cn?:
           <div className="flex items-start gap-3">
             {selPic ? <Image src={selPic} alt="" width={64} height={64} className="h-16 w-16 rounded-xl object-cover ring-1 ring-slate-200" /> : <span className="grid h-16 w-16 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><Leaf className="h-7 w-7" /></span>}
             <div className="min-w-0 flex-1">
-              <div className="text-lg font-bold">{selItem.name}</div>
+              <div className="text-lg font-bold">{itemTitle(selItem.name, selItem.type)}</div>
               <div className="text-sm italic text-brand-ink/70">{latin(selItem) || typeLabel(selItem.type)}</div>
               {(() => { const a = agg.get(selItem.id); const lowS = selItem.minStock > 0 && (a?.total ?? 0) < selItem.minStock; return lowS ? <span className="chip chip-red mt-1">Dưới tối thiểu</span> : <span className="chip chip-green mt-1">Còn hàng</span>; })()}
             </div>

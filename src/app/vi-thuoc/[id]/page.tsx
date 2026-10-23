@@ -9,6 +9,7 @@ import { MeridianWheel } from "@/components/MeridianWheel";
 import { ClauseCard } from "@/components/ClauseCard";
 import { splitClauses } from "@/lib/clauses";
 import { herbRefImages } from "@/lib/herbRefImages";
+import { herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,7 @@ export default async function HerbDetailPage({ params }: { params: { id: string 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="font-display text-3xl font-bold text-brand-deep tracking-wide">
-                {herb.standardName}
+                {herbTitle(herb.standardName)}
               </h1>
               <StatusPill status={herb.status} />
             </div>

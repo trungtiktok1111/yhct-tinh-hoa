@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { logAudit, requireRole, type CurrentStaff } from "@/lib/auth";
 import { CASHIER_ROLES } from "@/lib/permissions";
+import { herbTitle, itemTitle } from "@/lib/viName";
 
 const str = (fd: FormData, k: string) => {
   const v = fd.get(k);
@@ -165,7 +166,7 @@ export async function addRetailLine(formData: FormData) {
   if (already + q > have) go(inv.id, `Không đủ tồn: “${item.name}” còn ${have} ${item.unit} tại chi nhánh.`);
   await prisma.invoiceLine.create({
     data: {
-      invoiceId: inv.id, kind: item.type === "HERB" ? "HERB" : "PRODUCT", itemId, name: item.name, unit: item.unit,
+      invoiceId: inv.id, kind: item.type === "HERB" ? "HERB" : "PRODUCT", itemId, name: itemTitle(item.name, item.type), unit: item.unit,
       qty: q, unitPrice: price, amount: Math.round(q * price), position: inv.lines.length,
     },
   });

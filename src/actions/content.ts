@@ -5,6 +5,7 @@ import { requireKnowledgeEditor } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { findHerbByName } from "@/lib/herbName";
+import { herbTitle, itemTitle } from "@/lib/viName";
 
 function str(fd: FormData, key: string): string | undefined {
   const v = fd.get(key);
@@ -128,7 +129,7 @@ export async function linkPatternPrinciple(formData: FormData) {
 
 export async function createHerb(formData: FormData) {
   await requireKnowledgeEditor();
-  const stdName = str(formData, "standardName") ?? "Chưa đặt tên";
+  const stdName = herbTitle(str(formData, "standardName")) || "Chưa đặt tên";
   const dup = await findHerbByName(stdName);
   if (dup) redirect(`/vi-thuoc/moi?loi=${encodeURIComponent(`Vị thuốc "${dup.standardName}" đã có (không phân biệt chữ hoa/thường). Hãy mở vị đó để sửa, đừng tạo trùng.`)}`);
   const sourceId = await resolveSourceId(formData);

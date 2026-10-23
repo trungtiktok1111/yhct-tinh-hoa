@@ -14,6 +14,7 @@ import { patientCode, qty as fq, vnd } from "@/lib/format";
 import { ageOf } from "@/lib/person";
 import { PageHead } from "@/components/ui";
 import { Receipt, User, Stethoscope, Pill, Trash2, Plus, Save, Calculator, CreditCard } from "lucide-react";
+import { itemTitle, herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
   const open = inv.status === "UNPAID";
   const [items, services] = open
     ? await Promise.all([
-        prisma.item.findMany({ where: { active: true, type: { not: "SUPPLY" }, prices: { some: {} } }, select: { id: true, name: true, unit: true }, orderBy: { name: "asc" }, take: 1500 }),
+        prisma.item.findMany({ where: { active: true, type: { not: "SUPPLY" }, prices: { some: {} } }, select: { id: true, name: true, type: true, unit: true }, orderBy: { name: "asc" }, take: 1500 }),
         prisma.serviceItem.findMany({ where: { active: true }, orderBy: { position: "asc" } }),
       ])
     : [[], []];
@@ -61,7 +62,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
   const lineRow = (l: (typeof inv.lines)[number], k: number) => (
     <tr key={l.id}>
       <td className="text-brand-ink/70">{k + 1}</td>
-      <td className="text-sm">{l.name}</td>
+      <td className="text-sm">{itemTitle(l.name, l.kind)}</td>
       <td className="text-sm">{l.unit}</td>
       {open ? (
         <td colSpan={2}>
@@ -142,7 +143,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
                 {hidden}
                 <select name="itemId" defaultValue="" required className={`${input} min-w-[14rem] flex-1`}>
                   <option value="" disabled>Chọn thuốc / mặt hàng…</option>
-                  {items.map((i) => <option key={i.id} value={i.id}>{i.name} ({i.unit})</option>)}
+                  {items.map((i) => <option key={i.id} value={i.id}>{itemTitle(i.name, i.type)} ({i.unit})</option>)}
                 </select>
                 <input name="qty" required placeholder="SL" inputMode="decimal" className={`${input} w-24`} />
                 <button className="flex items-center gap-1.5 rounded-xl border border-brand-deep px-4 py-2.5 font-semibold text-brand-deep hover:bg-emerald-50"><Plus className="h-4 w-4" />Thêm thuốc</button>
@@ -220,7 +221,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
           </div>
           <table className="!text-xs">
             <thead><tr><th>Nội dung</th><th className="text-right">SL</th><th className="text-right">Đơn giá</th><th className="text-right">Thành tiền</th></tr></thead>
-            <tbody>{inv.lines.map((l) => <tr key={l.id}><td>{l.name}{l.discountPct > 0 ? ` (-${l.discountPct}%)` : ""}</td><td className="text-right">{fq(l.qty)}</td><td className="text-right tabular-nums">{vnd(l.unitPrice)}</td><td className="text-right tabular-nums">{vnd(l.amount)}</td></tr>)}</tbody>
+            <tbody>{inv.lines.map((l) => <tr key={l.id}><td>{itemTitle(l.name, l.kind)}{l.discountPct > 0 ? ` (-${l.discountPct}%)` : ""}</td><td className="text-right">{fq(l.qty)}</td><td className="text-right tabular-nums">{vnd(l.unitPrice)}</td><td className="text-right tabular-nums">{vnd(l.amount)}</td></tr>)}</tbody>
           </table>
           <div className="space-y-1 border-t pt-2 text-xs">
             <div className="flex justify-between"><span>Tổng tiền dịch vụ</span><span>{vnd(svcTotal)}</span></div>

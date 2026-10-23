@@ -8,6 +8,7 @@ import { dateVN, qty, vnd } from "@/lib/format";
 import { KhoTabs } from "@/components/KhoTabs";
 import { PageHead, Panel } from "@/components/ui";
 import { CalendarClock } from "lucide-react";
+import { itemTitle, herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export default async function LotsPage({ searchParams }: { searchParams: { cn?: 
   };
   const lots = await prisma.stockLot.findMany({
     where, orderBy: [{ expiryDate: { sort: "asc", nulls: "last" } }], take: 300,
-    include: { item: { select: { name: true, unit: true, code: true } } },
+    include: { item: { select: { name: true, type: true, unit: true, code: true } } },
   });
   const tab = (k: string, l: string) => <Link key={k} href={`/kho/lo?cn=${branch.id}${k ? `&han=${k}` : ""}`} className={`rounded-full px-4 py-1.5 text-sm font-semibold ${(searchParams.han ?? "") === k ? "bg-brand-deep text-white" : "border border-slate-200 bg-white hover:bg-slate-50"}`}>{l}</Link>;
   return (
@@ -44,7 +45,7 @@ export default async function LotsPage({ searchParams }: { searchParams: { cn?: 
                 return (
                   <tr key={l.id}>
                     <td className="font-mono text-sm">{l.item.code ?? "—"}</td>
-                    <td className="font-semibold">{l.item.name}</td>
+                    <td className="font-semibold">{itemTitle(l.item.name, l.item.type)}</td>
                     <td>{dateVN(l.receivedAt)}</td>
                     <td>{l.expiryDate ? dateVN(l.expiryDate) : "—"}</td>
                     <td>{days === null ? "—" : days < 0 ? <span className="chip chip-red">Hết hạn</span> : <span className={`chip ${days <= 30 ? "chip-red" : days <= 90 ? "chip-amber" : "chip-green"}`}>{days} ngày</span>}</td>

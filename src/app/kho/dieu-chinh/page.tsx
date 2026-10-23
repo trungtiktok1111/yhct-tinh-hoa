@@ -6,6 +6,7 @@ import { KhoTabs } from "@/components/KhoTabs";
 import { BackLink } from "@/components/BackLink";
 import { branchesFor, input, btn } from "@/lib/stock";
 import { qty } from "@/lib/format";
+import { itemTitle, herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -13,13 +14,13 @@ export default async function AdjustPage({ searchParams }: { searchParams: { loi
   const staff = await requireRole(...STOCK_WRITE_ROLES);
   const [branches, items] = await Promise.all([
     branchesFor(staff),
-    prisma.item.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, unit: true } }),
+    prisma.item.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, type: true, unit: true } }),
   ]);
   const moves = await prisma.stockMove.findMany({
     where: { branchId: { in: branches.map((b) => b.id) }, type: "ADJUST" },
     orderBy: { at: "desc" },
     take: 20,
-    include: { item: { select: { name: true, unit: true } }, branch: { select: { name: true } } },
+    include: { item: { select: { name: true, type: true, unit: true } }, branch: { select: { name: true } } },
   });
 
   return (
@@ -44,7 +45,7 @@ export default async function AdjustPage({ searchParams }: { searchParams: { loi
         </label>
         <label className="text-sm">Mặt hàng
           <select name="itemId" className={input} required>
-            {items.map((i) => <option key={i.id} value={i.id}>{i.name} ({i.unit})</option>)}
+            {items.map((i) => <option key={i.id} value={i.id}>{itemTitle(i.name, i.type)} ({i.unit})</option>)}
           </select>
         </label>
         <label className="text-sm">Số lượng thay đổi (vd: -200 hoặc 150)
@@ -64,7 +65,7 @@ export default async function AdjustPage({ searchParams }: { searchParams: { loi
             <span className="text-gray-600 tabular-nums">
               {m.at.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
             </span>
-            <span className="font-semibold">{m.item.name}</span>
+            <span className="font-semibold">{itemTitle(m.item.name, m.item.type)}</span>
             <span className={m.qty < 0 ? "text-red-700" : "text-green-700"}>
               {m.qty > 0 ? "+" : ""}{qty(m.qty)}{m.item.unit}
             </span>

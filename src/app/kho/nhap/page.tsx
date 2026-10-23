@@ -8,6 +8,7 @@ import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { branchesFor, input, btn } from "@/lib/stock";
 import { dateVN, qty, vnd } from "@/lib/format";
 import { DateInput } from "@/components/DateInput";
+import { itemTitle, herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
   const staff = await requireRole(...STOCK_WRITE_ROLES);
   const [branches, items, suppliers] = await Promise.all([
     branchesFor(staff),
-    prisma.item.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true, unit: true } }),
+    prisma.item.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true, type: true, unit: true } }),
     prisma.supplier.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   const branchIds = branches.map((b) => b.id);
@@ -23,7 +24,7 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
     where: { branchId: { in: branchIds } },
     orderBy: { receivedAt: "desc" },
     take: 15,
-    include: { item: { select: { name: true, unit: true } }, branch: { select: { name: true } } },
+    include: { item: { select: { name: true, type: true, unit: true } }, branch: { select: { name: true } } },
   });
   const showCost = hasAny(staff.roles, COST_VIEW_ROLES);
   const canCancelReceipt = hasAny(staff.roles, ITEM_MANAGER_ROLES);
@@ -65,7 +66,7 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
           </label>
           <label className="text-sm">Mặt hàng
             <select name="itemId" className={input} required>
-              {items.map((i) => <option key={i.id} value={i.id}>{i.name} ({i.unit})</option>)}
+              {items.map((i) => <option key={i.id} value={i.id}>{itemTitle(i.name, i.type)} ({i.unit})</option>)}
             </select>
           </label>
           <label className="text-sm">Số lượng nhập (g hoặc theo đơn vị)
@@ -121,7 +122,7 @@ export default async function ReceivePage({ searchParams }: { searchParams: { lo
         {recent.map((l) => (
           <div key={l.id} className="card !py-2.5 text-sm flex flex-wrap gap-x-4 gap-y-1">
             <span className="text-gray-600 tabular-nums">{dateVN(l.receivedAt)}</span>
-            <span className="font-semibold">{l.item.name}</span>
+            <span className="font-semibold">{itemTitle(l.item.name, l.item.type)}</span>
             <span>+{qty(l.qtyReceived)}{l.item.unit}</span>
             {showCost && <span>giá nhập {vnd(l.unitCost)}</span>}
             {l.expiryDate && <span>HSD {dateVN(l.expiryDate)}</span>}

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { nextItemCode } from "@/lib/stock";
 import { findHerbByName, nameKey } from "@/lib/herbName";
+import { herbTitle } from "@/lib/viName";
 import { codePrefix } from "@/lib/constants";
 import { analyzeSheet, MAX_BYTES } from "@/lib/stockSheet";
 import { randomUUID } from "crypto";
@@ -48,9 +49,10 @@ function assertBranch(staff: CurrentStaff, branchId: string | undefined, path: s
 export async function createItem(formData: FormData) {
   const staff = await requireRole(...ITEM_MANAGER_ROLES);
   const P = "/kho/mat-hang";
-  const name = str(formData, "name");
+  const name0 = str(formData, "name");
   const type = str(formData, "type");
-  if (!name) back(P, "Nhập tên mặt hàng.");
+  if (!name0) back(P, "Nhập tên mặt hàng.");
+  const name = type === "HERB" ? herbTitle(name0) : name0;
   if (type !== "HERB" && type !== "PRODUCT" && type !== "SUPPLY") back(P, "Chọn loại mặt hàng.");
   const unit = type === "HERB" ? "g" : str(formData, "unit");
   if (!unit) back(P, "Chọn đơn vị.");

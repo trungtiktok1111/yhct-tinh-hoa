@@ -5,6 +5,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
 import { herbRefImages } from "@/lib/herbRefImages";
+import { herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +61,7 @@ export default async function HerbListPage({ searchParams }: { searchParams: { q
                 />
               )}
               <div className="min-w-0">
-                <div className="font-semibold text-brand-deep truncate">{h.standardName}</div>
+                <div className="font-semibold text-brand-deep truncate">{herbTitle(h.standardName)}</div>
                 {h.natureFlavor && <div className="text-xs text-gray-500 truncate">{h.natureFlavor}</div>}
               </div>
             </div>

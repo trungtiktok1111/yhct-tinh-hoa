@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { itemTitle, herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
     { label: "Chứng hậu", items: patterns, hrefBase: "/chung-hau", name: (i: any) => i.name },
     { label: "Pháp trị", items: principles, hrefBase: "/phap-tri", name: (i: any) => i.name },
     { label: "Bài thuốc", items: formulas, hrefBase: "/bai-thuoc", name: (i: any) => i.name },
-    { label: "Vị thuốc", items: herbs, hrefBase: "/vi-thuoc", name: (i: any) => i.standardName },
+    { label: "Vị thuốc", items: herbs, hrefBase: "/vi-thuoc", name: (i: any) => herbTitle(i.standardName) },
     { label: "Huyệt vị", items: points, hrefBase: "/cham-cuu", name: (i: any) => i.standardName },
   ];
 

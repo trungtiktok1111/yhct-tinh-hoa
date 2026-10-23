@@ -5,6 +5,7 @@ import { DISPENSE_ROLES } from "@/lib/permissions";
 import { BackLink } from "@/components/BackLink";
 import { PrintButton } from "@/components/PrintButton";
 import { patientCode, qty as fq, dateVN } from "@/lib/format";
+import { itemTitle, herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ export default async function PrintPage({ params, searchParams }: { params: { id
           {drugs.map((l) => (
             <div key={l.id} className="card space-y-1 border-2 border-dashed text-sm">
               <div className="text-center font-bold text-brand-deep">YHCT TINH HOA</div>
-              <div className="text-base font-bold">{l.name}</div>
+              <div className="text-base font-bold">{itemTitle(l.name, l.kind)}</div>
               <div>Số lượng: <b>{fq(l.qty)} {l.unit}</b></div>
               <div>BN: {who} · {dateVN(inv.dispensedAt ?? inv.createdAt)}</div>
               <div className="text-xs text-brand-ink/70">{rx?.decoctionNote || ""}</div>

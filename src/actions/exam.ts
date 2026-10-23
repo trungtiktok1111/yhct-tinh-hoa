@@ -9,6 +9,7 @@ import { parseDate } from "@/lib/person";
 import { parseAmount } from "@/lib/exam";
 import { fold } from "@/lib/fold";
 import { parseTuChanForm } from "@/lib/tuchan";
+import { herbTitle, itemTitle } from "@/lib/viName";
 
 function str(fd: FormData, key: string): string | undefined {
   const v = fd.get(key);
@@ -232,7 +233,7 @@ export async function addFormulaToPrescription(formData: FormData) {
     have.add(item.id);
     const { qty, unitNote } = parseAmount(ing.amount, ing.unit);
     toCreate.push({
-      prescriptionId: rx.id, kind: "HERB", itemId: item.id, itemName: item.name, unit: item.unit,
+      prescriptionId: rx.id, kind: "HERB", itemId: item.id, itemName: herbTitle(item.name), unit: item.unit,
       qty: qty ?? 0,
       note: [ing.preparation, ing.role && `(${ing.role})`, unitNote, qty === null ? "chưa có liều, bác sĩ nhập" : null]
         .filter(Boolean).join(" · ") || null,
@@ -280,7 +281,7 @@ export async function addPrescriptionLine(formData: FormData) {
   const count = await prisma.prescriptionLine.count({ where: { prescriptionId: rx.id } });
   await prisma.prescriptionLine.create({
     data: {
-      prescriptionId: rx.id, kind: item.type === "HERB" ? "HERB" : "PRODUCT", itemId, itemName: item.name,
+      prescriptionId: rx.id, kind: item.type === "HERB" ? "HERB" : "PRODUCT", itemId, itemName: itemTitle(item.name, item.type),
       unit: item.unit, qty, usage: str(formData, "usage") ?? null, note: str(formData, "note") ?? null, position: count,
     },
   });

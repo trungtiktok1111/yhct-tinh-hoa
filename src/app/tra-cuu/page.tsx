@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/db";
+import { herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -83,7 +84,7 @@ export default async function ReferenceHome() {
             {herbPics.map((h) => (
               <Link key={h.id} href={`/vi-thuoc/${h.id}`} className="group text-center">
                 <Image src={h.imageUrl!} alt={h.standardName} width={200} height={200} className="aspect-square w-full rounded-2xl object-cover ring-1 ring-slate-200 group-hover:ring-brand-deep" />
-                <div className="mt-1.5 text-sm font-semibold leading-tight">{h.standardName}</div>
+                <div className="mt-1.5 text-sm font-semibold leading-tight">{herbTitle(h.standardName)}</div>
                 {h.natureFlavor && <div className="text-[11px] text-brand-ink/70 truncate">{h.natureFlavor}</div>}
               </Link>
             ))}

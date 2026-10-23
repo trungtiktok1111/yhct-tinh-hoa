@@ -23,6 +23,7 @@ import { proposeFromTuChan } from "@/lib/proposal";
 import { SampleFill } from "@/components/SampleFill";
 import { TuChanFields } from "@/components/TuChanFields";
 import { DateInput } from "@/components/DateInput";
+import { itemTitle, herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -522,7 +523,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
                       <div key={l.id} className="border-b border-brand-gold/20 py-2 space-y-1">
                         <form action={updatePrescriptionLine} className="flex flex-wrap items-end gap-2">
                           {hidden}<input type="hidden" name="lineId" value={l.id} />
-                          <div className="min-w-[8rem] flex-1 text-sm font-medium">{l.itemName}</div>
+                          <div className="min-w-[8rem] flex-1 text-sm font-medium">{itemTitle(l.itemName, l.kind)}</div>
                           <fieldset disabled={locked} className="flex flex-wrap items-end gap-2">
                             <label className="text-xs">SL ({l.unit})
                               <input name="qty" type="number" step="any" min="0" defaultValue={l.qty} className={`${input} w-24`} />
@@ -538,7 +539,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
                         {!locked && (
                           <form action={removePrescriptionLine}>
                             {hidden}<input type="hidden" name="lineId" value={l.id} />
-                            <ConfirmSubmit message={`Bỏ “${l.itemName}” khỏi đơn?`}>Bỏ</ConfirmSubmit>
+                            <ConfirmSubmit message={`Bỏ “${itemTitle(l.itemName, l.kind)}” khỏi đơn?`}>Bỏ</ConfirmSubmit>
                           </form>
                         )}
                         <div className="text-xs">
@@ -563,7 +564,7 @@ export default async function ExamPage({ params, searchParams }: { params: { vis
             <label className="text-sm flex-1 min-w-[12rem]">Thêm thuốc
               <select name="itemId" defaultValue="" className={input} required>
                 <option value="" disabled>Chọn thuốc</option>
-                {items.map((i) => <option key={i.id} value={i.id}>{i.name} ({i.type === "HERB" ? "vị thuốc" : "thành phẩm"}, {i.unit})</option>)}
+                {items.map((i) => <option key={i.id} value={i.id}>{itemTitle(i.name, i.type)} ({i.type === "HERB" ? "vị thuốc" : "thành phẩm"}, {i.unit})</option>)}
               </select>
             </label>
             <label className="text-sm">Số lượng

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { logAudit, requireKnowledgeEditor } from "@/lib/auth";
 import { getEntity } from "@/lib/entities";
 import { REVIEW_STATUS_LABEL } from "@/lib/constants";
+import { herbTitle } from "@/lib/viName";
 
 function str(fd: FormData, key: string): string | undefined {
   const v = fd.get(key);
@@ -41,7 +42,7 @@ export async function updateEntity(formData: FormData) {
         data[f.name] = n;
       }
     } else {
-      data[f.name] = v ?? null;
+      data[f.name] = v && key === "vi-thuoc" && f.name === "standardName" ? herbTitle(v) : (v ?? null);
     }
   }
   if (def.status) {

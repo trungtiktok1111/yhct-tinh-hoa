@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { StatusPill } from "@/components/StatusPill";
+import { herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,7 @@ export default async function FormulaListPage({ searchParams }: { searchParams: 
             </div>
             {f.principle && <div className="text-xs text-gray-500 mt-1">Pháp trị: {f.principle.name}</div>}
             <div className="text-xs text-gray-500">
-              Thành phần: {f.ingredients.map((i) => i.herb.standardName).join(", ") || "chưa có"}
+              Thành phần: {f.ingredients.map((i) => herbTitle(i.herb.standardName)).join(", ") || "chưa có"}
             </div>
           </Link>
         ))}

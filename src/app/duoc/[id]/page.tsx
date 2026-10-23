@@ -7,6 +7,7 @@ import { BackLink } from "@/components/BackLink";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { PrintButton } from "@/components/PrintButton";
 import { patientCode, qty as fq } from "@/lib/format";
+import { itemTitle, herbTitle } from "@/lib/viName";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,7 @@ export default async function DispensePage({ params, searchParams }: { params: {
               const short = have + 1e-9 < l.qty;
               return (
                 <tr key={l.id} className="border-t border-brand-gold/20">
-                  <td className="p-2">{l.name}</td>
+                  <td className="p-2">{itemTitle(l.name, l.kind)}</td>
                   <td className="p-2 text-right tabular-nums">{fq(l.qty)} {l.unit}</td>
                   <td className={`p-2 text-right tabular-nums print:hidden ${short ? "text-red-700 font-semibold" : ""}`}>{fq(have)}{short ? " (thiếu)" : ""}</td>
                   <td className="p-2">{usageOf(l.itemId) ?? ""}</td>
