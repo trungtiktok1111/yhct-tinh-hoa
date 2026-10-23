@@ -11,6 +11,7 @@ import { SideNav } from "@/components/SideNav";
 import { BranchSwitch } from "@/components/BranchSwitch";
 import { branchesFor } from "@/lib/stock";
 import { NotificationBell } from "@/components/NotificationBell";
+import { AlertBanner } from "@/components/AlertBanner";
 import { getCurrentStaff } from "@/lib/auth";
 import { rolesLabel, canAccessPath } from "@/lib/permissions";
 import { logout } from "@/actions/auth";
@@ -101,6 +102,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </details>
                 </div>
               </header>
+
+              <Suspense fallback={null}><AlertBanner staff={staff} branchIds={branches.map((b) => b.id)} /></Suspense>
 
               <main className="flex-1 p-4 md:px-6 md:py-5 pb-24 md:pb-5 w-full">
                 {children}

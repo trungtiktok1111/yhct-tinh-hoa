@@ -86,7 +86,7 @@ export default async function FormsPage({ searchParams }: { searchParams: { cn?:
 
 
       {canVoid && (
-        <section className="space-y-2">
+        <section id="so-phieu" className="scroll-mt-20 space-y-2">
           <h2 className="px-1 text-sm font-semibold text-brand-ink/75">Sổ số phiếu (40 phiếu gần nhất)</h2>
           <p className="px-1 text-xs text-brand-ink/60">Mỗi lần tải mẫu điền, app cấp một số phiếu liên tục trong ngày (vd PN-20261022-001, -002). Số chỉ dùng một lần. Phiếu tải về mà không nhập thì vẫn “Đã cấp”; hủy nếu không dùng nữa. Số đã hủy không cấp lại để dãy số luôn liên tục, dễ đối chiếu.</p>
           <div className="card overflow-x-auto !p-0">
@@ -94,7 +94,7 @@ export default async function FormsPage({ searchParams }: { searchParams: { cn?:
               <thead><tr><th>Số phiếu</th><th>Loại</th><th>Cấp lúc</th><th>Người cấp</th><th>Trạng thái</th><th></th></tr></thead>
               <tbody>
                 {vouchers.map((v) => (
-                  <tr key={v.code}>
+                  <tr key={v.code} className={v.status === "ISSUED" ? "bg-red-50" : undefined}>
                     <td className="font-mono font-semibold">{v.code}</td>
                     <td>{KIND_NAME[v.kind] ?? v.kind}</td>
                     <td className="tabular-nums">{when(v.issuedAt)}</td>

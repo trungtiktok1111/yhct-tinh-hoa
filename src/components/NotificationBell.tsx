@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Bell, Clock, FileText, Pill, AlertTriangle, CalendarClock } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { canAccessPath } from "@/lib/permissions";
+import { canAccessPath, hasAny, ITEM_MANAGER_ROLES } from "@/lib/permissions";
 import { vnDayStart } from "@/lib/format";
 import type { CurrentStaff } from "@/lib/auth";
 
@@ -11,7 +11,8 @@ export async function NotificationBell({ staff, branchIds }: { staff: CurrentSta
   const can = (p: string) => canAccessPath(staff.role, p);
   const since = vnDayStart();
   const inB = { in: branchIds };
-  const [waiting, unpaid, toDispense, lots, items] = await Promise.all([
+  const [pendingVouchers, waiting, unpaid, toDispense, lots, items] = await Promise.all([
+    hasAny(staff.roles, ITEM_MANAGER_ROLES) && can("/bieu-mau") ? prisma.voucher.count({ where: { status: "ISSUED" } }).catch(() => 0) : 0,
     can("/kham") ? prisma.visit.count({ where: { branchId: inB, createdAt: { gte: since }, status: "WAITING" } }) : 0,
     can("/thu-ngan") ? prisma.invoice.count({ where: { branchId: inB, status: "UNPAID" } }) : 0,
     can("/duoc") ? prisma.invoice.count({ where: { branchId: inB, status: "PAID", dispensedAt: null, lines: { some: { itemId: { not: null } } } } }) : 0,
@@ -27,6 +28,7 @@ export async function NotificationBell({ staff, branchIds }: { staff: CurrentSta
   }
   const low = items.filter((i) => (have.get(i.id) ?? 0) < i.minStock).length;
   const rows = [
+    { n: pendingVouchers, Icon: FileText, tx: "phiếu đã cấp số, chưa nhập (cần nhập hoặc hủy)", href: "/bieu-mau#so-phieu", c: "text-red-600 bg-red-100" },
     { n: waiting, Icon: Clock, tx: "bệnh nhân đang chờ khám", href: "/kham", c: "text-amber-600 bg-amber-100" },
     { n: unpaid, Icon: FileText, tx: "hóa đơn chờ thu tiền", href: "/thu-ngan", c: "text-rose-600 bg-rose-100" },
     { n: toDispense, Icon: Pill, tx: "đơn chờ phát thuốc", href: "/duoc", c: "text-violet-700 bg-violet-100" },
